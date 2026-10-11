@@ -266,6 +266,8 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .cloudcover.puff{animation:puff .32s forwards}
 @keyframes cloudin{from{opacity:0;transform:translateX(-40px)}}
 @keyframes puff{to{opacity:0;transform:scale(1.5) translateY(-12px)}}
+.codebox{min-height:0!important;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px!important;line-height:1.35;word-break:break-all}
+#s-save .row{margin:8px 0}
 .lore{font-size:13px;font-style:italic;font-weight:700;color:var(--ink-soft);max-width:30em;line-height:1.35}
 .story p{font-size:16px;line-height:1.5;margin:0 0 12px}
 .story .cast{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin:6px 0 14px}
@@ -422,6 +424,7 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
           <button class="btn primary" type="submit">Готово</button>
         </form>
         <p class="msg err" id="name-msg"></p>
+        <button class="link" id="btn-name-load" type="button">Уже играл? Загрузить по коду</button>
       </div>
     </div>
   </section>
@@ -431,6 +434,20 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
     <div class="cast" id="story-cast"></div>
     <div id="story-text"></div>
     <button class="btn primary" id="btn-story-go">В поход!</button>
+  </section>
+
+  <section class="screen" id="s-save" hidden>
+    <h1>Код сохранения</h1>
+    <p class="lead">В этом коде весь прогресс: имя, уровень, монеты, вещи и побеждённые боссы. Сохрани его, например отправь себе в Telegram, и продолжай с того же места на другом телефоне или компьютере.</p>
+    <textarea id="save-code" class="codebox" readonly rows="5" aria-label="Код сохранения"></textarea>
+    <div class="row"><button class="btn primary small" id="btn-save-copy">Скопировать</button><button class="btn small" id="btn-save-share" hidden>Отправить</button></div>
+    <p class="msg" id="save-copy-msg"></p>
+    <h2>Загрузить прогресс</h2>
+    <p class="note">Вставь код, и прогресс из него заменит то, что сейчас на этом устройстве.</p>
+    <textarea id="load-code" class="codebox" rows="4" placeholder="Вставь код сюда" aria-label="Код для загрузки"></textarea>
+    <div class="row"><button class="btn small" id="btn-load-code">Загрузить</button></div>
+    <p class="msg" id="load-msg"></p>
+    <button class="btn" id="btn-save-back">Назад</button>
   </section>
 
   <!-- HOME -->
@@ -470,7 +487,7 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
     <h2>Боссы кампании</h2>
     <div class="map" id="map"></div>
     <p class="note">С каждым боссом больше жизней, меньше времени и новые подлые приёмы. Нажми на любого открытого, чтобы начать с него.</p>
-    <div class="row" style="justify-content:space-between"><span class="row"><button class="link" id="btn-teacher-1">Для учителя</button><button class="link" id="btn-story">История</button></span><span class="row"><button class="link" id="btn-music-home">Музыка: вкл</button><button class="link" id="btn-mute-home">Звук: вкл</button></span></div>
+    <div class="row" style="justify-content:space-between"><span class="row"><button class="link" id="btn-teacher-1">Для учителя</button><button class="link" id="btn-story">История</button><button class="link" id="btn-save">Сохранить прогресс</button></span><span class="row"><button class="link" id="btn-music-home">Музыка: вкл</button><button class="link" id="btn-mute-home">Звук: вкл</button></span></div>
     <p class="note">Нет звука на айфоне? Проверь переключатель беззвучного режима сбоку и громкость, потом нажми на любую кнопку в игре.</p>
   </section>
 
@@ -2241,7 +2258,7 @@ const TOUCH = !!(window.matchMedia && matchMedia("(hover: none) and (pointer: co
 function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.random()*(i+1)|0; [a[i],a[j]] = [a[j],a[i]]; } return a; }
 function pick(a){ return a[Math.random()*a.length|0]; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const SCREENS = ["s-home","s-game","s-end","s-shop","s-awards","s-teacher","s-pin","s-name","s-story"];
+const SCREENS = ["s-home","s-game","s-end","s-shop","s-awards","s-teacher","s-pin","s-name","s-story","s-save"];
 function show(id){ SCREENS.forEach(s => $(s).hidden = s !== id); window.scrollTo(0,0); }
 const COIN_SVG = `<svg class="coin" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="0" width="4" height="8" fill="#f0a000"/><rect x="0" y="2" width="8" height="4" fill="#f0a000"/><rect x="1" y="1" width="6" height="6" fill="#f0a000"/><rect x="2" y="1" width="4" height="6" fill="#ffd84a"/><rect x="1" y="2" width="6" height="4" fill="#ffd84a"/><rect x="3" y="2" width="2" height="4" fill="#f0a000"/></svg>`;
 const coinsHTML = n => `${COIN_SVG}<span>${n}</span>`;
@@ -3196,6 +3213,62 @@ function showStory(){
 }
 $("btn-story").onclick = showStory;
 $("btn-story-go").onclick = () => { renderHome(); show("s-home"); };
+/* ---------- save codes ---------- */
+const b64u = bytes => { let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); };
+const unb64u = str => { str = str.replace(/-/g,"+").replace(/_/g,"/"); while (str.length % 4) str += "="; const bin = atob(str), out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; };
+const pipeBytes = (bytes, stream) => new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer().then(b => new Uint8Array(b));
+async function packSave(){
+  const raw = new TextEncoder().encode(JSON.stringify({v:1, p:P, s:stats}));
+  try{ return "SBZ" + b64u(await pipeBytes(raw, new CompressionStream("deflate-raw"))); }
+  catch(e){ return "SBJ" + b64u(raw); }
+}
+async function unpackSave(code){
+  code = String(code || "").replace(/\s+/g, "");
+  const tag = code.slice(0, 3), body = code.slice(3);
+  if ((tag !== "SBZ" && tag !== "SBJ") || !body) throw new Error("format");
+  let bytes = unb64u(body);
+  if (tag === "SBZ") bytes = await pipeBytes(bytes, new DecompressionStream("deflate-raw"));
+  const d = JSON.parse(new TextDecoder().decode(bytes));
+  if (!d || !d.p || typeof d.p.xp !== "number" || !Array.isArray(d.p.beaten)) throw new Error("data");
+  return d;
+}
+let saveBack = "s-home", loadArm = null;
+async function openSave(back){
+  saveBack = back; loadArm = null;
+  $("save-copy-msg").textContent = ""; $("load-msg").textContent = ""; $("load-msg").className = "msg"; $("load-code").value = "";
+  $("btn-load-code").textContent = "Загрузить";
+  const hasProgress = !!P.name;
+  $("save-code").value = hasProgress ? "..." : ""; $("save-code").hidden = !hasProgress;
+  $("btn-save-copy").parentElement.hidden = !hasProgress;
+  $("btn-save-share").hidden = !navigator.share;
+  show("s-save");
+  if (hasProgress){ try{ $("save-code").value = await packSave(); }catch(e){ $("save-code").value = "Не получилось сделать код"; } }
+}
+$("btn-save").onclick = () => openSave("s-home");
+$("btn-name-load").onclick = () => openSave("s-name");
+$("btn-save-back").onclick = () => { if (saveBack === "s-name" && !P.name) askName(); else { renderHome(); show("s-home"); } };
+$("save-code").onfocus = e => e.target.select();
+$("btn-save-copy").onclick = async () => {
+  const v = $("save-code").value, m = $("save-copy-msg");
+  try{ await navigator.clipboard.writeText(v); m.className = "msg okm"; m.textContent = "Скопировано! Сохрани код где-нибудь, например в Telegram."; }
+  catch(e){ const t = $("save-code"); t.focus(); t.select(); try{ document.execCommand("copy"); m.className = "msg okm"; m.textContent = "Скопировано!"; }catch(err){ m.className = "msg"; m.textContent = "Выдели код и скопируй вручную."; } }
+};
+$("btn-save-share").onclick = () => { navigator.share({title:"Словарная битва: код сохранения", text:$("save-code").value}).catch(() => {}); };
+$("load-code").oninput = () => { loadArm = null; $("btn-load-code").textContent = "Загрузить"; $("load-msg").textContent = ""; };
+$("btn-load-code").onclick = async () => {
+  const m = $("load-msg");
+  let d;
+  try{ d = await unpackSave($("load-code").value); }
+  catch(e){ m.className = "msg err"; m.textContent = "Код не подходит. Проверь, что он скопирован целиком."; loadArm = null; return; }
+  const who = `${d.p.name || "Без имени"}, уровень ${levelOf(d.p.xp)}, боссов ${d.p.beaten.length}, монет ${d.p.coins || 0}`;
+  if (P.name && P.xp > 0 && loadArm !== $("load-code").value){
+    loadArm = $("load-code").value; m.className = "msg"; m.textContent = `В коде: ${who}. Текущий прогресс (${P.name}, уровень ${levelOf(P.xp)}) заменится. Нажми ещё раз, чтобы загрузить.`;
+    $("btn-load-code").textContent = "Да, загрузить"; return;
+  }
+  LS.set("sb2_profile", d.p); if (d.s) LS.set("sb_stats", d.s);
+  m.className = "msg okm"; m.textContent = `Загружено: ${who}. Перезапускаю...`;
+  setTimeout(() => location.reload(), 700);
+};
 function cleanName(v){ return String(v || "").replace(/\s+/g, " ").trim().slice(0, 16); }
 function askName(){
   drawHero($("name-hero"), P.equip);
