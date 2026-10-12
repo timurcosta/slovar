@@ -1844,6 +1844,11 @@ const PET_PAL = {
   stardragon:{G:"#2f55c8",D:"#1b2f7a",Y:"#ffd23f",K:"#ffffff",H:"#fff3a0",B:"#1b2f7a",M:"#a8f0ff",R:"#45d1e6",T:"#1b2f7a",S:"#1b2f7a",W:"#ffffff"}
 };
 
+// where each pet's head is, per animation frame: [left x, band row, width] in sprite pixels
+const PET_CAP = {
+  cat:[[3,2,5],[3,2,5]], robodog:[[10,2,5],[10,2,5]], minidragon:[[13,2,4],[13,1,4]], darkdragon:[[13,2,4],[13,1,4]], stardragon:[[13,2,4],[13,1,4]],
+  drone:[[6,1,5],[6,1,5]], cyberwolf:[[7,2,5],[7,2,5]], phoenixpet:[[9,0,4],[9,0,4]]
+};
 function drawHero(cv, eq, wrap, fr = 0){
   // 1px margin on every side so outlines at the edges (pet, wings, weapons) are never clipped
   const W = 30, H = 27, TOP = 4, PETW = 10, LX = 1 + PETW, CW = W + 2 + PETW, CH = H + 1 + TOP; cv.width = CW; cv.height = CH;  // TOP: room for raised weapons + breathing
@@ -2184,7 +2189,17 @@ function drawHero(cv, eq, wrap, fr = 0){
     const spr = frames[Math.floor(fr / 3) % 2], hop = fr % 10 === 5 ? 1 : 0;
     const rows = spr.trim().split("\n").map(r => r.trim()), pal = PET_PAL[eq.pet];
     const fly = eq.pet === "drone" ? 6 + (Math.floor(fr / 4) % 2) : 0;          // the drone hovers
-    rows.forEach((r,yy) => [...r].forEach((ch,xx) => { if (pal[ch]) P(xx - 10, H - rows.length + yy - hop - fly, pal[ch]); }));
+    const by = H - rows.length - hop - fly;
+    rows.forEach((r,yy) => [...r].forEach((ch,xx) => { if (pal[ch]) P(xx - 10, by + yy, pal[ch]); }));
+    // matching tubeteika for the pet, only while the hero wears one
+    const cap = eq.helmet === "tubeteika" && PET_CAP[eq.pet] && PET_CAP[eq.pet][Math.floor(fr / 3) % 2];
+    if (cap){
+      const [cx0, cy0, w] = cap, X = cx0 - 10, Y = by + cy0;
+      const mid = X + Math.floor((w - 1) / 2);
+      R(X + 1, Y - 1, w - 2, 1, "#1b6b3a"); if (w >= 5) P(mid, Y - 1, "#d62839");   // green velvet top, red flower
+      if (w >= 5) P(mid, Y - 2, "#1b6b3a");                                                                                 // little dome
+      R(X, Y, w, 1, "#ffd23f"); P(X, Y, "#0f4a28"); P(X + w - 1, Y, "#0f4a28");                                           // gold embroidered band
+    }
   }
   // whole-figure outline, classic pixel-art style
   { x.setTransform(1,0,0,1,0,0);
