@@ -297,6 +297,8 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:40}
 @keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
 .overlay .chest{width:50px}
+.overlay .gifts{display:flex;gap:16px;align-items:flex-end;justify-content:center}
+.overlay .gifts canvas{width:56px;height:auto;image-rendering:pixelated}
 .overlay ul{list-style:none;margin:0;padding:0;font-size:13px;font-weight:800;display:flex;flex-direction:column;gap:2px}
 .overlay .reward{font-weight:900}
 .flash{position:fixed;inset:0;background:var(--pen);opacity:0;pointer-events:none;z-index:10}
@@ -1147,6 +1149,15 @@ king:`
 .CCDDDXDDXDDDCC.
 CCCDDXDDDDXDDCCC
 CCC.DD....DD.CCC`,
+lep:`
+....WWWW....
+...WWWWWW...
+..WWWWWWWW..
+.BBCCWWCCBB.
+BBDBBBBBBDBB
+BBBBBDBBBBBB
+.BBBBBBBDBB.
+..BBBBBBBB..`,
 chest:`
 ..BBBBBBBB..
 .BYYYYYYYYB.
@@ -1159,6 +1170,7 @@ BYYYYYYYYYYB
 BBBBBBBBBBBB`
 };
 const PALS = {
+  lep:{B:"#e0a050",D:"#a8642a",W:"#fff7e0",C:"#f0dcb0"},
   angelika:{Y:"#ffd23f",H:"#c98a3a",S:"#f2c7a5",W:"#ffffff",E:"#1b1b1b",R:"#f29aa8",M:"#d6476b",T:"#bcd4ff",O:"#5f7fb8",L:"#eef4ff",G:"#d9a400"},
   olesya:{H:"#241612",S:"#f2c7a5",G:"#3a2a5a",W:"#ffffff",E:"#1b1b1b",R:"#f29aa8",M:"#d6476b",P:"#7a4fd6",T:"#ffffff",B:"#c0283a",D:"#fff7e0",K:"#2a2238",L:"#5a2a3a"},
   krakoz:{F:"#8a5cf0",D:"#5b3aa8",W:"#ffffff",K:"#111111",M:"#2a1440",R:"#ff6b8a"},
@@ -1319,7 +1331,7 @@ const LORE = {
   "Король Ошибок": "Тот, кто разорвал Великий Словарь. Победи его, и все буквы вернутся на свои места!"
 };
 const WIN_LORE = {
-  "Репетитор Ралина": "Ралина: Ты готов, {name}! Найди страницы Словаря. И если встретишь мою подругу Ангелику и сестру Олесю, помоги им, их заколдовал Король.",
+  "Репетитор Ралина": "Ралина: Ты готов, {name}! Держи в дорогу лепёшку с каймаком и тюбетейку, чтобы голову не напекло. Найди страницы Словаря. И если встретишь мою подругу Ангелику и сестру Олесю, помоги им, их заколдовал Король.",
   "Кракозябра": "Кракозябра пискнула и вернула стёртые страницы. Оказалось, она не злая, ей просто было скучно.",
   "Призрак Пропуска": "Над облаками виднеется Облачная библиотека. Там ждёт Ангелика.",
   "Ангел Ангелика": "Чары спали! Ангелика: Спасибо, {name}! Прости за облака. Олесю увезли в Тёмные земли, спаси её!",
@@ -1383,7 +1395,7 @@ function hairMatches(eq){
   const both = base.filter(h => arm.includes(h));
   return both.length ? both : base;
 }
-const LOOK_FULLHELM = ["knight","horns","dragonhelm","spacehelm"];          // cover the top of the head
+const LOOK_FULLHELM = ["knight","horns","dragonhelm","spacehelm","tubeteika"];          // cover the top of the head
 const shadeHex = (hex, f) => "#" + [1,3,5].map(i => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i+2), 16) * f))).toString(16).padStart(2, "0")).join("");
 const heroLook = () => Object.assign({hair:"auto", skin:"auto", eye:"auto", style:"classic"}, (typeof P === "object" && P && P.look) || {});
 
@@ -1423,6 +1435,7 @@ const ITEMS = [
   // helmet
   {id:"nohelmet",slot:"helmet",name:"Без шлема",price:0,lvl:1,perk:"Ничего"},
   {id:"band",slot:"helmet",name:"Боевая повязка",price:80,lvl:1,perk:"Просто круто"},
+  {id:"tubeteika",slot:"helmet",name:"Татарская тюбетейка",price:0,gift:true,lvl:1,xpMul:1.1,perk:"Подарок Ралины: опыт +10%"},
   {id:"knight",slot:"helmet",name:"Шлем с пером",price:550,lvl:4,shield:1,perk:"Щит: блокирует 1 ошибку в бою"},
   {id:"horns",slot:"helmet",name:"Рогатый шлем",price:1700,lvl:8,shield:1,firstCrit:true,perk:"Щит 1, первый удар в бою критический"},
   {id:"visor",slot:"helmet",name:"Кибер-визор",price:2800,lvl:11,shield:2,perk:"Щит: блокирует 2 ошибки в бою"},
@@ -1924,6 +1937,12 @@ function drawHero(cv, eq, wrap, fr = 0){
     P(ox+9,oy+1,"#d62839"); P(ox+10,oy+1,"#ff3b3b"); P(ox+7,oy-2,"#7a4fd6"); P(ox+12,oy-2,"#7a4fd6"); P(ox+9,oy-3,"#ff3b3b");
   }
   });
+  if (eq.helmet === "tubeteika"){   // green velvet cap with gold and red embroidery
+    R(ox+7,oy+1,6,1,"#1b6b3a"); R(ox+6,oy+2,8,1,"#1b6b3a"); R(ox+6,oy+3,8,1,"#0f4a28");
+    P(ox+8,oy+1,"#ffd23f"); P(ox+11,oy+1,"#ffd23f"); P(ox+9,oy+1,"#d62839"); P(ox+10,oy+1,"#d62839");
+    P(ox+7,oy+2,"#ffd23f"); P(ox+9,oy+2,"#ffffff"); P(ox+10,oy+2,"#ffd23f"); P(ox+12,oy+2,"#ffffff");
+    P(ox+7,oy+3,"#ffd23f"); P(ox+9,oy+3,"#d62839"); P(ox+10,oy+3,"#ffd23f"); P(ox+12,oy+3,"#d62839");
+  }
   if (eq.helmet === "band"){ R(ox+6,oy+3,8,1,"#d62839"); P(ox+14,oy+3,"#d62839"); P(ox+15,oy+4,"#d62839"); P(ox+16,oy+5,"#b01f2e"); }
   // weapon (rises and falls a little, like breathing)
   x.translate(0, breathe);
@@ -2030,13 +2049,13 @@ if (settings.musicV !== 2){ settings.track = "calm"; settings.musicV = 2; LS.set
 let customRaw = LS.get("sb_custom", "");
 let stats = LS.get("sb_stats", {});
 function freshProfile(){
-  const owned = {}; ITEMS.filter(i => i.price === 0).forEach(i => owned[i.id] = 1);
+  const owned = {}; ITEMS.filter(i => i.price === 0 && !i.gift).forEach(i => owned[i.id] = 1);
   return {xp:0, coins:0, owned, equip:{...DEFAULT_EQUIP}, up:{str:0,hp:0,time:0,gold:0}, unlocked:0, beaten:[], towerBest:0, rv:2, xpv:2,
     tot:{correct:0, typed:0, bosses:0, flawless:0, bought:0, crits:0}, bestStreak:0, ach:{}, daily:null, days:{last:"", streak:0}, best:0};
 }
 let P = Object.assign(freshProfile(), LS.get("sb2_profile", {}));
 (() => { const old = LS.get("sb_hero", null); if (old && old.xp && !LS.get("sb2_profile", null)){ P.xp = old.xp; P.coins = Math.floor(old.xp / 4); } })();
-ITEMS.filter(i => i.price === 0).forEach(i => P.owned[i.id] = 1);
+ITEMS.filter(i => i.price === 0 && !i.gift).forEach(i => P.owned[i.id] = 1);
 P.equip = Object.assign({...DEFAULT_EQUIP}, P.equip);
 Object.keys(DEFAULT_EQUIP).forEach(sl => { const it = ITEM[P.equip[sl]]; if (!it || it.slot !== sl) P.equip[sl] = DEFAULT_EQUIP[sl]; });
 (() => { // перенос прогресса, когда в кампанию вставляются новые боссы
@@ -2063,6 +2082,7 @@ P.unlocked = Math.min(P.unlocked || 0, BOSSES.length - 1);
 P.tot = Object.assign(freshProfile().tot, P.tot);
 P.up = Object.assign({str:0,hp:0,time:0,gold:0}, P.up);
 const save = () => LS.set("sb2_profile", P);
+(() => { if (!P.lep && (P.beaten || []).includes(0)){ giftRalina(false); P.lepToast = 1; } })();
 save();
 
 /* =========================================================
@@ -2087,7 +2107,7 @@ function gear(eq = P.equip){
   const up = P.up || {};
   return {
     dmg: (w.dmg || 10) + (p.dmgPlus || 0) + (up.str || 0), fx: w.fx, fxCol: w.col,
-    maxH: 5 + (a.hp || 0) + (up.hp || 0) + (settings.words === "a" ? 2 : 0), spikes: a.spikes || 0, coinMul: (a.coinMul || 1) * (1 + 0.1 * (up.gold || 0)),
+    maxH: 5 + (a.hp || 0) + (up.hp || 0) + (settings.words === "a" ? 2 : 0) + (P.lep ? 1 : 0), spikes: a.spikes || 0, coinMul: (a.coinMul || 1) * (1 + 0.1 * (up.gold || 0)),
     shield: h.shield || 0, firstCrit: !!h.firstCrit, xpMul: h.xpMul || 1,
     time: (b.time || 0) + 0.5 * (up.time || 0) + (settings.words === "a" ? 1.5 : 0), revive: !!b.revive, dodge: b.dodge || 0,
     heal8: !!p.heal8, heal6: !!p.heal6, heal5: !!p.heal5, drone: !!p.drone, critMult: p.critMult || 2, critAt: 3
@@ -2465,6 +2485,11 @@ function addXP(n){
   }
   checkAch();
 }
+function giftRalina(wear){
+  P.lep = 1; P.owned.tubeteika = 1;
+  if (wear || P.equip.helmet === "nohelmet" || P.equip.helmet === "band") P.equip.helmet = "tubeteika";
+  save();
+}
 function grantChest(tier, title, noItem){
   const lvl = levelOf(P.xp);
   const coins = addCoins(25 + tier*18 + Math.floor(Math.random()*(25 + tier*18)), false);
@@ -2584,6 +2609,7 @@ function perkChips(g){
   if (g.drone) c.push("Дрон");
   if (g.revive) c.push("Воскрешение");
   if (g.dodge) c.push(`Уклон ${Math.round(g.dodge*100)}%`);
+  if (P.lep) c.push("Лепёшка: +1 сердце");
   return c.map((t,i) => `<span class="chip${i > 1 ? " gold" : ""}">${t}</span>`).join("");
 }
 function questsHTML(){
@@ -2650,11 +2676,12 @@ function renderShop(){
     let act;
     if (on) act = `<button class="btn small" disabled>Надето</button>`;
     else if (own) act = `<button class="btn small" data-eq="${i.id}">Надеть</button>`;
+    else if (i.gift) act = `<button class="btn small" disabled>Подарок за победу над Ралиной</button>`;
     else if (floorLock) act = `<button class="btn small" disabled>Башня: ${i.floor} этаж</button>`;
     else if (lvlLock) act = `<button class="btn small" disabled>С ${i.lvl} уровня</button>`;
     else act = `<button class="btn small ${P.coins >= i.price ? "gold" : ""}" data-buy="${i.id}" ${P.coins >= i.price ? "" : "disabled"}>Купить · ${i.price}</button>`;
     const tier = i.price >= 40000 ? " ultra" : i.price >= 8000 ? " myth" : i.price >= 2000 ? " leg" : "";
-    return `<div class="icard${on ? " on" : ""}${locked ? " lock" : ""}${tier}" data-try="${i.id}" tabindex="0"><canvas id="ic-${i.id}"></canvas>${i.price ? `<span class="rar" style="color:${rc}">${rn}</span>` : ""}<b>${esc(i.name)}</b><small>${esc(i.perk)}</small><div class="act">${act}</div></div>`;
+    return `<div class="icard${on ? " on" : ""}${locked ? " lock" : ""}${tier}" data-try="${i.id}" tabindex="0"><canvas id="ic-${i.id}"></canvas>${i.price ? `<span class="rar" style="color:${rc}">${rn}</span>` : i.gift ? `<span class="rar" style="color:#2a9d8f">ПОДАРОК</span>` : ""}<b>${esc(i.name)}</b><small>${esc(i.perk)}</small><div class="act">${act}</div></div>`;
   }).join("");
   list.forEach(i => drawHero($("ic-"+i.id), {...P.equip, [i.slot]: i.id}));
   $("items").querySelectorAll("[data-try]").forEach(el => el.onclick = e => { if (e.target.closest("button")) return; tryOn = el.dataset.try; renderShop(); });
@@ -2765,7 +2792,7 @@ function startBoss(b){
   ov.innerHTML = `<canvas id="intro-cv"></canvas><h2>${esc(b.name)}</h2>
     ${LORE[b.name] && G.kind !== "tower" ? `<p class="lore">${loreText(LORE[b.name])}</p>` : ""}
     ${b.diff ? `<p class="note"><b>${b.diff === "b" ? "Сложный" : "Средний"} режим:</b> босс злее обычного</p>` : ""}
-    ${b.ab.length ? `<ul>${b.ab.map(a => `<li>${AB[a].n}: ${esc(AB[a].d)}</li>`).join("")}</ul>` : (b.spr === "ralina" ? "<p>Добрая, но строгая. Разминка перед настоящими монстрами!</p>" : "<p>Разминка!</p>")}
+    ${b.ab.length ? `<ul>${b.ab.map(a => `<li>${AB[a].n}: ${esc(AB[a].d)}</li>`).join("")}</ul>` : (b.spr === "ralina" ? "<p>Добрая, но строгая. Разминка перед настоящими монстрами! Победишь, и она тебя чем-то угостит.</p>" : "<p>Разминка!</p>")}
     <p class="note">Жизни ${b.hp} · время ${Math.round((b.time + g.time) * (G.type ? 1.8 : 1))} с · слова: ${DIFF_NAME[settings.words] || "по боссам"}</p>
     <button class="btn primary" id="btn-fight">Бой!</button>`;
   drawBoss($("intro-cv"), b); $("intro-cv").style.filter = b.filter || "";
@@ -3160,6 +3187,7 @@ function bossDown(){
   let unlockedNew = false;
   if (G.kind === "campaign"){
     if (!P.beaten.includes(b.idx)) P.beaten.push(b.idx);
+    if (b.spr === "ralina" && !P.lep){ giftRalina(true); G.hearts++; G.gotGift = true; }
     if (b.idx + 1 < BOSSES.length && P.unlocked < b.idx + 1){ P.unlocked = b.idx + 1; unlockedNew = true; }
   } else {
     const prev = P.towerBest;
@@ -3194,11 +3222,14 @@ function bossDown(){
       later(() => endGame(true), 2200); return;
     }
     const nb = G.kind === "tower" ? null : BOSSES[b.idx + 1];
-    ov.innerHTML = `${cheer}<p>${esc(b.name)} ${defeatedWord(b)}!</p>${G.kind !== "tower" && WIN_LORE[b.name] ? `<p class="lore">${loreText(WIN_LORE[b.name])}</p>` : ""}<canvas class="chest" id="chest-cv"></canvas>${reward}
+    const gift = G.gotGift; G.gotGift = false;
+    ov.innerHTML = `${cheer}<p>${esc(b.name)} ${defeatedWord(b)}!</p>${G.kind !== "tower" && WIN_LORE[b.name] ? `<p class="lore">${loreText(WIN_LORE[b.name])}</p>` : ""}
+      ${gift ? `<div class="gifts"><canvas id="gift-lep"></canvas><canvas id="gift-hat"></canvas></div><p class="reward">Подарки от Ралины: лепёшка с каймаком (+1 сердце навсегда) и татарская тюбетейка, уже на тебе!</p>` : `<canvas class="chest" id="chest-cv"></canvas>`}${reward}
       ${chest.item ? `<button class="link" id="btn-equip-new">Надеть ${esc(chest.item.name)}</button>` : ""}
       <p>${G.kind === "tower" ? `Следующий этаж: ${b.floor + 1}` : `${unlockedNew ? "Открыт новый босс" : "Следующий босс"}: <b>${esc(nb.name)}</b>`}</p>
       <button class="btn primary" id="btn-next">Дальше</button>`;
-    drawSprite($("chest-cv"), SPR.chest, PALS.chest);
+    if (gift){ drawSprite($("gift-lep"), SPR.lep, PALS.lep); drawHero($("gift-hat"), {...P.equip, weapon:"none", back:"noback", pet:"nopet", aura:"noaura"}); sfx.level(); renderHUD(); drawHero(heroCv, P.equip, $("hero-aura")); }
+    else drawSprite($("chest-cv"), SPR.chest, PALS.chest);
     if (chest.item) $("btn-equip-new").onclick = () => { P.equip[chest.item.slot] = chest.item.id; save(); drawHero(heroCv, P.equip, $("hero-aura")); $("btn-equip-new").textContent = "Надето!"; $("btn-equip-new").disabled = true; renderHUD(); };
     $("btn-next").onclick = () => {
       if (G.kind === "tower"){ G.floor++; startBoss(towerBoss(G.floor)); }
@@ -3472,5 +3503,6 @@ $("btn-rename").onclick = () => {
 };
 
 if (P.name){ renderHome(); if (!P.storySeen) showStory(); } else askName();
+if (P.lepToast){ delete P.lepToast; save(); setTimeout(() => toast("Ралина передала тебе подарки за победу: лепёшку с каймаком (+1 сердце) и татарскую тюбетейку!", "ach"), 1500); }
 })();
 </script>
