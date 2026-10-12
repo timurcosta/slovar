@@ -322,6 +322,19 @@ body.hurt .sheet{animation:shake .35s}
 
 /* Shop */
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
+.lookpanel{display:flex;flex-direction:column;gap:10px}
+.lookpanel h3{margin:6px 0 0;font-size:15px}
+.lookstyles{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+.headcrop{display:block;width:84px;height:78px;overflow:hidden;position:relative;margin:0 auto}
+.icard .headcrop canvas{position:absolute;width:192px!important;height:192px!important;max-width:none!important;left:-57px;top:-28px;margin:0!important;image-rendering:pixelated}
+.lookstyles .icard{align-items:center;text-align:center}
+.looksw{display:flex;flex-wrap:wrap;gap:6px}
+.swatch{font:inherit;font-size:13px;font-weight:800;color:var(--ink);background:var(--card);border:2px solid var(--ink);padding:5px 8px 5px 5px;display:flex;align-items:center;gap:6px;cursor:pointer;border-radius:0}
+.swatch i{width:20px;height:20px;border:2px solid var(--ink);display:block;flex:none}
+.swatch i.auto{background-image:linear-gradient(135deg,transparent 45%,var(--ink) 45% 55%,transparent 55%)!important}
+.swatch.on{background:var(--ink);color:var(--card)}
+.swatch.on i{border-color:var(--card)}
+.lookwarn{border:2px dashed var(--ink);padding:8px}
 .tab{font:inherit;font-weight:900;font-size:13px;color:var(--ink);background:var(--card);border:2px solid var(--ink);padding:6px 10px;cursor:pointer;border-radius:0}
 .tab[aria-selected="true"]{background:var(--ink);color:var(--card)}
 .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -569,12 +582,12 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
     </div>
     <details class="econ">
       <summary><b>Сколько копить?</b></summary>
-      <p class="note">За 15 минут игры в день набирается примерно 150–250 монет: верные ответы, боссы, сундуки, задания дня и бонус за вход. В режиме «Пишу сам» монет вдвое больше.</p>
+      <p class="note">За 15 минут игры набирается примерно 600–1000 монет: верные ответы, боссы, сундуки, задания дня и бонус за вход. В режиме «Пишу сам» и на высокой сложности монет больше.</p>
       <div class="row">
-        <span class="rar" style="color:#5d6f93">ОБЫЧНЫЙ</span><span class="note">до 400, за день</span>
-        <span class="rar" style="color:#2f55c8">РЕДКИЙ</span><span class="note">400–1500, за 2–6 дней</span>
-        <span class="rar" style="color:#7a4fd6">ЭПИК</span><span class="note">1500–5000, за 1–3 недели</span>
-        <span class="rar" style="color:#c98500">ЛЕГЕНДА</span><span class="note">5000–15000, за месяц и дольше</span>
+        <span class="rar" style="color:#5d6f93">ОБЫЧНЫЙ</span><span class="note">до 400, за один заход</span>
+        <span class="rar" style="color:#2f55c8">РЕДКИЙ</span><span class="note">400–1500, за 1–2 дня</span>
+        <span class="rar" style="color:#7a4fd6">ЭПИК</span><span class="note">1500–5000, за 2–7 дней</span>
+        <span class="rar" style="color:#c98500">ЛЕГЕНДА</span><span class="note">5000–15000, за 1–3 недели</span>
         <span class="rar" style="color:#d62839">МИФ</span><span class="note">от 15000, только для покорителей Башни</span>
       </div>
     </details>
@@ -1349,6 +1362,29 @@ const COSTUMES = {
   shadow:{skin:"#6a6a8a",hair:"#15121f",eye:"#ff3b3b",mouth:"#15121f",shirt:"#2a2238",pants:"#1a1428",shoe:"#0d0a14"},
   gold:{skin:"#f2c09a",hair:"#ffd84a",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#f0a000",pants:"#b07800",shoe:"#7a5200"}
 };
+/* appearance: free to change, applied on top of the costume */
+const LOOK_HAIR = {auto:["Как у костюма",null], brown:["Каштановые","#5a3a22"], black:["Чёрные","#1e1e28"], light:["Русые","#9a6a3a"], blond:["Светлые","#e8c35a"],
+  ginger:["Рыжие","#c8541e"], red:["Красные","#c0283a"], silver:["Серебряные","#c9d3e3"], blue:["Синие","#3a6fd8"], mint:["Мятные","#3fbf9a"], purple:["Фиолетовые","#7a4fd6"]};
+const LOOK_SKIN = {auto:["Как у костюма",null], s1:["Светлая","#f8dcc4"], s2:["Обычная","#f2c09a"], s3:["Смуглая","#d9a27a"], s4:["Тёмная","#a8714f"], s5:["Очень тёмная","#7a4a33"]};
+const LOOK_EYE = {auto:["Как у костюма",null], blue:["Синие","#1d2f5c"], brown:["Карие","#5a3a22"], green:["Зелёные","#2b7a3a"], grey:["Серые","#4a5670"]};
+const LOOK_STYLE = {classic:"Классика", spiky:"Ёжик", bangs:"Чёлка", long:"Длинные", mohawk:"Ирокез"};
+const LOOK_MASKED = ["robot","alien","skeleton","spaceknight","shadow"];   // face fully covered by the costume
+const LOOK_NOSKIN = ["ice"];                                               // stylised skin stays
+// which hair colours suit which outfit: costume first, armor narrows it down
+const HAIR_FOR = {school:["brown","black","light","blond","ginger"], ninja:["black","red","silver"], space:["blond","brown","ginger","light"], fire:["ginger","red","black"],
+  ice:["silver","blond","blue"], gold:["blond","brown","ginger"], cyberninja:["black","blue","mint"], dragonknight:["brown","ginger","black"], galaxy:["purple","silver","blue"],
+  cyborg:["black","silver","red"], wordlord:["blond","purple","silver"]};
+const HAIR_ARMOR = {pads:["brown","black","ginger","light"], steel:["black","brown","silver","blond"], spikearmor:["black","red","silver"], cyber:["black","blue","mint"], goldarmor:["blond","brown","ginger"],
+  dragonarmor:["ginger","brown","black"], mech:["ginger","black","silver"], titan:["black","red","silver"], stararmor:["purple","silver","blue"], supernova:["blond","ginger","silver"]};
+function hairMatches(eq){
+  const base = HAIR_FOR[COSTUME_KEY[eq.costume] || "school"] || [];
+  const arm = HAIR_ARMOR[eq.armor];
+  if (!arm) return base;
+  const both = base.filter(h => arm.includes(h));
+  return both.length ? both : base;
+}
+const heroLook = () => Object.assign({hair:"auto", skin:"auto", eye:"auto", style:"classic"}, (typeof P === "object" && P && P.look) || {});
+
 const SLOTS = [
   ["weapon","Оружие"],["armor","Броня"],["helmet","Шлем"],["back","Спина"],["pet","Питомец"],["aura","Аура"],["costume","Костюм"]
 ];
@@ -1658,8 +1694,14 @@ function drawHero(cv, eq, wrap, fr = 0){
   };
   const P = (a,b,c) => R(a,b,1,1,c);
   const M = (a,b,w,h,c) => { R(a,b,w,h,c); R(2*(ox+10)-(a+w),b,w,h,c); };  // mirrored pair
-  const C = COSTUMES[COSTUME_KEY[eq.costume] || "school"];
   const ck = COSTUME_KEY[eq.costume];
+  const C = {...COSTUMES[ck || "school"]};
+  const look = eq.look || heroLook(), masked = LOOK_MASKED.includes(ck);
+  if (!masked){
+    if (LOOK_HAIR[look.hair] && LOOK_HAIR[look.hair][1]) C.hair = LOOK_HAIR[look.hair][1];
+    if (LOOK_SKIN[look.skin] && LOOK_SKIN[look.skin][1] && !LOOK_NOSKIN.includes(ck)) C.skin = LOOK_SKIN[look.skin][1];
+    if (LOOK_EYE[look.eye] && LOOK_EYE[look.eye][1]) C.eye = LOOK_EYE[look.eye][1];
+  }
 
   const flap = fr && (Math.floor(fr / 2) % 2) ? -1 : 0, breathe = fr && (Math.floor(fr / 4) % 2) ? -1 : 0, blink = fr && fr % 17 === 0;
   // back (wings flap up and down)
@@ -1694,9 +1736,15 @@ function drawHero(cv, eq, wrap, fr = 0){
   x.translate(0, -flap);
   // head + body
   R(ox+7,oy+2,6,1,C.hair); R(ox+6,oy+3,8,1,C.hair); P(ox+6,oy+4,C.hair); P(ox+13,oy+4,C.hair);
+  if (!masked){
+    if (look.style === "long"){ M(ox+5,oy+3,1,6,C.hair); M(ox+6,oy+8,1,1,C.hair); }
+    if (look.style === "spiky"){ P(ox+7,oy+1,C.hair); P(ox+9,oy+1,C.hair); P(ox+11,oy+1,C.hair); P(ox+12,oy+1,C.hair); P(ox+10,oy,C.hair); P(ox+5,oy+3,C.hair); P(ox+14,oy+3,C.hair); }
+    if (look.style === "mohawk"){ R(ox+9,oy,2,2,C.hair); P(ox+9,oy-1,C.hair); }
+  }
   R(ox+7,oy+4,6,1,C.skin); R(ox+6,oy+5,8,2,C.skin); R(ox+7,oy+7,6,1,C.skin);
   P(ox+8,oy+5,blink ? C.skin : C.eye); P(ox+11,oy+5,blink ? C.skin : C.eye); R(ox+9,oy+7,2,1,C.mouth);
   R(ox+8,oy+8,4,1,C.skin);
+  if (!masked && look.style === "bangs"){ R(ox+7,oy+4,4,1,C.hair); P(ox+6,oy+5,C.hair); }
   R(ox+5,oy+9,10,1,C.shirt); R(ox+4,oy+10,12,1,C.shirt); R(ox+6,oy+11,8,3,C.shirt); R(ox+7,oy+14,6,1,C.shirt);
   R(ox+4,oy+11,2,2,C.shirt); R(ox+14,oy+11,2,2,C.shirt);
   R(ox+7,oy+15,6,1,C.pants); R(ox+7,oy+16,2,3,C.pants); R(ox+11,oy+16,2,3,C.pants);
@@ -2472,13 +2520,14 @@ function renderHome(){
 let shopTab = "weapon", tryOn = null;
 function renderShop(){
   refreshCoins();
-  $("tabs").innerHTML = SLOTS.concat([["forge","Кузница"]]).map(([s,n]) => `<button class="tab" role="tab" aria-selected="${s === shopTab}" data-s="${s}">${n}</button>`).join("");
+  $("tabs").innerHTML = SLOTS.concat([["look","Внешность"],["forge","Кузница"]]).map(([s,n]) => `<button class="tab" role="tab" aria-selected="${s === shopTab}" data-s="${s}">${n}</button>`).join("");
   $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => { shopTab = b.dataset.s; tryOn = null; renderShop(); });
   const eq = tryOn ? {...P.equip, [ITEM[tryOn].slot]: tryOn} : P.equip;
   drawHero($("shop-hero"), eq, $("shop-aura"));
   $("shop-perks").innerHTML = perkChips(gear(eq));
   $("shop-pv-name").textContent = tryOn ? `Примерка: ${ITEM[tryOn].name}` : "Твой боец";
   const lvl = levelOf(P.xp);
+  if (shopTab === "look"){ renderLook(); return; }
   if (shopTab === "forge"){
     $("items").className = "forge";
     $("items").innerHTML = UPGRADES.map(u => {
@@ -2518,6 +2567,33 @@ function renderShop(){
     P.coins -= it.price; P.owned[it.id] = 1; P.equip[it.slot] = it.id; P.tot.bought++; save();
     sfx.coin(); toast(`Куплено: ${it.name}!`, "quest"); tryOn = null; checkAch(); renderShop();
   });
+}
+function renderLook(){
+  const L = heroLook(), eq = P.equip, ck = COSTUME_KEY[eq.costume] || "school", masked = LOOK_MASKED.includes(ck);
+  const good = hairMatches(eq), costumeName = ITEM[eq.costume].name;
+  const sw = (group, dict, cur, starred) => `<div class="looksw">${Object.entries(dict).map(([k,[n,c]]) =>
+    `<button class="swatch${k === cur ? " on" : ""}" data-g="${group}" data-v="${k}" aria-pressed="${k === cur}" title="${esc(n)}">
+      <i style="background:${c || COSTUMES[ck][group === "eye" ? "eye" : group]}"${c ? "" : ' class="auto"'}></i><span>${esc(n)}${starred && starred.includes(k) ? " ★" : ""}</span></button>`).join("")}</div>`;
+  $("items").className = "lookpanel";
+  $("items").innerHTML = `
+    ${masked ? `<p class="note lookwarn">Костюм «${esc(costumeName)}» закрывает лицо, поэтому внешности сейчас не видно. Она появится с другими костюмами.</p>` : ""}
+    <div class="fcard"><b>Подобрать к образу</b>
+      <small class="note">К костюму «${esc(costumeName)}»${ITEM[eq.armor].price ? ` и броне «${esc(ITEM[eq.armor].name)}»` : ""} лучше всего идут: ${good.map(h => LOOK_HAIR[h][0].toLowerCase()).join(", ")} волосы. Такие цвета отмечены ★</small>
+      <div class="row"><button class="btn small gold" id="look-match">Подобрать</button><button class="btn small" id="look-reset">Как у костюма</button></div></div>
+    <h3>Причёска</h3>
+    <div class="items lookstyles">${Object.entries(LOOK_STYLE).map(([k,n]) => `<button class="icard${k === L.style ? " on" : ""}" data-g="style" data-v="${k}"><span class="headcrop"><canvas id="ls-${k}"></canvas></span><b>${n}</b></button>`).join("")}</div>
+    <h3>Волосы</h3>${sw("hair", LOOK_HAIR, L.hair, good)}
+    <h3>Кожа</h3>${LOOK_NOSKIN.includes(ck) ? `<p class="note">У ледяного костюма своя кожа, она не меняется.</p>` : ""}${sw("skin", LOOK_SKIN, L.skin)}
+    <h3>Глаза</h3>${sw("eye", LOOK_EYE, L.eye)}
+    <p class="note">Внешность бесплатная, меняй сколько хочешь.</p>`;
+  Object.keys(LOOK_STYLE).forEach(k => drawHero($("ls-"+k), {...eq, helmet:"nohelmet", look:{...L, style:k}}));
+  const setLook = (g, v) => { P.look = {...heroLook(), [g]: v}; save(); sfx.block(); renderShop(); };
+  $("items").querySelectorAll("[data-g]").forEach(b => b.onclick = () => setLook(b.dataset.g, b.dataset.v));
+  $("look-match").onclick = () => {
+    const opts = good.filter(h => h !== L.hair); const h = opts.length ? pick(opts) : good[0];
+    P.look = {...heroLook(), hair: h}; save(); sfx.coin(); toast(`${LOOK_HAIR[h][0]} волосы отлично подходят к образу!`, "quest"); renderShop();
+  };
+  $("look-reset").onclick = () => { P.look = {hair:"auto", skin:"auto", eye:"auto", style:L.style}; save(); sfx.block(); renderShop(); };
 }
 function renderAwards(){
   refreshCoins();
