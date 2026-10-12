@@ -479,7 +479,7 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
     <h2>Сложность слов</h2>
     <div class="modes" id="diff-modes" role="radiogroup" aria-label="Сложность слов">
       <label class="mode"><input type="radio" name="diff" value="auto"><span><b>По боссам</b><small>Как в кампании: боссы и слова постепенно сложнее</small></span></label>
-      <label class="mode"><input type="radio" name="diff" value="a"><span><b>Лёгкая</b><small>Слова 1–2 класса, боссы обычные</small></span></label>
+      <label class="mode"><input type="radio" name="diff" value="a"><span><b>Лёгкая</b><small>Слова 1–2 класса, +2 сердца и больше времени</small></span></label>
       <label class="mode"><input type="radio" name="diff" value="ab"><span><b>Средняя</b><small>Все слова. Боссы злее: больше жизней, меньше времени, +1 подлянка. Награды x1.5</small></span></label>
       <label class="mode"><input type="radio" name="diff" value="b"><span><b>Сложная</b><small>Слова 3–4 класса. Боссы x1.7 жизней, мало времени, +2 подлянки. Награды x2</small></span></label>
     </div>
@@ -1248,7 +1248,7 @@ const CAMPAIGN = [
   ["Репетитор Ралина","ralina","ralina",true,[],"a"],
   ["Клякса","blot","blot",true,[],"a"],
   ["Слизняк Опечатка","slime","slime",false,["regen"],"a"],
-  ["Двойка","two","two",true,["double"],"a"],
+  ["Двойка","two","two",true,["shake"],"a"],
   ["Мышь Путаница","bat","bat",true,["swap"],"a"],
   ["Кактус Колючка","cactus","cactus",false,["armor"],"a"],
   ["Кракозябра","krakoz","krakoz",true,["glitch"],"a"],
@@ -1279,7 +1279,7 @@ const LORE = {
   "Репетитор Ралина": "Хранительница последней уцелевшей страницы Словаря. Прежде чем отпустить тебя в поход, она проверит, готов ли ты. Не поддавайся, она тоже не будет!",
   "Клякса": "Первый монстр из разорванного Словаря. Сидит в тетрадях и пачкает всё, до чего дотянется.",
   "Слизняк Опечатка": "Ползёт за Кляксой и оставляет опечатки. Пока ты думаешь, он залечивает раны.",
-  "Двойка": "Злая оценка, сбежавшая из дневника. Обожает, когда ошибаются дважды.",
+  "Двойка": "Злая оценка, сбежавшая из дневника. Трясёт буквы, чтобы ты ошибся и получил её.",
   "Мышь Путаница": "Живёт в пенале и меняет всё местами. Следи за кнопками!",
   "Кактус Колючка": "Сторожит выход из школы. За ним начинается большой мир и Башня испытаний.",
   "Кракозябра": "Пушистая вредина из сломанного компьютера. Это она стёрла половину страниц Словаря, превратив буквы в закорючки.",
@@ -1327,7 +1327,7 @@ function towerBoss(floor){
   const pool = shuffle(["regen","armor","haste","double","swap","fog","flip","ink","shake","freeze","steal","tiny","mirror","dark","web","rush","vampire","glitch","cloud","lens"]);
   const ab = [pool[0]]; if (floor >= 6) ab.push(pool[1]); if (floor >= 15) ab.push(pool[2]); if (floor >= 3) ab.push("enrage");
   return {name: `${TOWER_PREFIX[k]} ${base.name.split(" ")[0]}`, spr:base.spr, pal:base.pal, f:false, ab, pool:"tower", filter:TOWER_FILTER[k],
-    hp: Math.round(110 + floor*22 + floor*floor*0.6), time: Math.max(4.5, 12 - floor*0.3), taunts: base.taunts, floor};
+    hp: Math.round(110 + floor*22 + floor*floor*0.35), time: Math.max(4.5, 12 - floor*0.3), taunts: base.taunts, floor};
 }
 const drawBoss = (cv, b, sil, blink, angry) => {
   let pal = PALS[b.pal];
@@ -1404,10 +1404,10 @@ const ITEMS = [
   {id:"nopet",slot:"pet",name:"Без питомца",price:0,lvl:1,perk:"Ничего"},
   {id:"cat",slot:"pet",name:"Котик",price:500,lvl:4,heal8:true,perk:"Каждый 8-й верный ответ лечит сердце"},
   {id:"robodog",slot:"pet",name:"Робопёс",price:1800,lvl:9,dmgPlus:3,perk:"+3 к урону"},
-  {id:"minidragon",slot:"pet",name:"Мини-дракон",price:4200,lvl:12,critMult:3,perk:"Крит наносит x3 вместо x2"},
-  {id:"drone",slot:"pet",name:"Лазерный дрон",price:6500,lvl:16,drone:true,perk:"Каждый 5-й верный ответ: выстрел на 25"},
+  {id:"minidragon",slot:"pet",name:"Мини-дракон",price:4200,lvl:12,critMult:2.5,perk:"Крит наносит x2.5 вместо x2"},
+  {id:"drone",slot:"pet",name:"Лазерный дрон",price:6500,lvl:16,drone:true,perk:"Каждый 4-й верный ответ: выстрел на двойной урон"},
   {id:"cyberwolf",slot:"pet",name:"Кибер-волк",price:10000,lvl:20,floor:15,dmgPlus:4,heal6:true,perk:"+4 урона, лечит каждый 6-й ответ"},
-  {id:"darkdragon",slot:"pet",name:"Дракончик Тьмы",price:20000,lvl:25,floor:35,critMult:4,perk:"Крит x4"},
+  {id:"darkdragon",slot:"pet",name:"Дракончик Тьмы",price:20000,lvl:25,floor:35,critMult:3,perk:"Крит x3"},
   // aura (cosmetic)
   {id:"noaura",slot:"aura",name:"Без ауры",price:0,lvl:1,perk:"Ничего"},
   {id:"sparks",slot:"aura",name:"Искры",price:300,lvl:3,perk:"Для красоты"},
@@ -1438,8 +1438,8 @@ const ITEMS = [
   {id:"supernova",slot:"armor",name:"Броня Сверхновой",price:70000,lvl:36,floor:75,hp:8,spikes:20,coinMul:1.6,perk:"+8 сердец, шипы 20, монеты +60%"},
   {id:"galaxycrown",slot:"helmet",name:"Корона Галактики",price:60000,lvl:34,floor:65,shield:5,xpMul:1.75,perk:"Щит 5, опыт +75%"},
   {id:"lightwings",slot:"back",name:"Крылья Света",price:80000,lvl:38,floor:80,time:6,revive:true,dodge:0.3,perk:"+6 секунд, воскрешение, 30% уклон"},
-  {id:"phoenixpet",slot:"pet",name:"Феникс",price:45000,lvl:32,floor:60,dmgPlus:5,heal5:true,perk:"+5 урона, лечит каждый 5-й ответ"},
-  {id:"stardragon",slot:"pet",name:"Звёздный дракон",price:75000,lvl:37,floor:85,critMult:5,perk:"Крит x5"},
+  {id:"phoenixpet",slot:"pet",name:"Феникс",price:45000,lvl:32,floor:60,dmgPlus:10,heal5:true,perk:"+10 урона, лечит каждый 5-й ответ"},
+  {id:"stardragon",slot:"pet",name:"Звёздный дракон",price:75000,lvl:37,floor:85,critMult:3.5,perk:"Крит x3.5"},
   {id:"supernovaaura",slot:"aura",name:"Аура Сверхновой",price:50000,lvl:33,floor:60,perk:"Сияние звезды"},
   {id:"spaceknight",slot:"costume",name:"Космический рыцарь",price:55000,lvl:34,floor:65,perk:"Ультра-скин"},
   {id:"wordlord",slot:"costume",name:"Владыка Слова",price:100000,lvl:42,floor:100,perk:"Самый легендарный скин в игре"}
@@ -1885,7 +1885,7 @@ let customRaw = LS.get("sb_custom", "");
 let stats = LS.get("sb_stats", {});
 function freshProfile(){
   const owned = {}; ITEMS.filter(i => i.price === 0).forEach(i => owned[i.id] = 1);
-  return {xp:0, coins:0, owned, equip:{...DEFAULT_EQUIP}, up:{str:0,hp:0,time:0,gold:0}, unlocked:0, beaten:[], towerBest:0, rv:2,
+  return {xp:0, coins:0, owned, equip:{...DEFAULT_EQUIP}, up:{str:0,hp:0,time:0,gold:0}, unlocked:0, beaten:[], towerBest:0, rv:2, xpv:2,
     tot:{correct:0, typed:0, bosses:0, flawless:0, bought:0, crits:0}, bestStreak:0, ach:{}, daily:null, days:{last:"", streak:0}, best:0};
 }
 let P = Object.assign(freshProfile(), LS.get("sb2_profile", {}));
@@ -1905,6 +1905,14 @@ Object.keys(DEFAULT_EQUIP).forEach(sl => { const it = ITEM[P.equip[sl]]; if (!it
   P.unlocked = u >= 0 ? u : (P.unlocked || 0);
   P.rv = 2;
 })();
+(() => { // v2 economy: slower late levels, so lift xp to keep the level the player already had
+  const st = LS.get("sb2_profile", {});
+  if (!Object.keys(st).length || st.xpv >= 2){ P.xpv = 2; return; }
+  const oldLvl = xp => { let l = 1; while (l < 50 && xp >= 50 * (l + 1) * l) l++; return l; };
+  const l = oldLvl(P.xp || 0), need = 50 * l * (l - 1) + l * l * l;
+  if ((P.xp || 0) < need) P.xp = need;
+  P.xpv = 2;
+})();
 P.unlocked = Math.min(P.unlocked || 0, BOSSES.length - 1);
 P.tot = Object.assign(freshProfile().tot, P.tot);
 P.up = Object.assign({str:0,hp:0,time:0,gold:0}, P.up);
@@ -1915,7 +1923,7 @@ save();
    LEVELS + DERIVED STATS
    ========================================================= */
 const MAXL = 50;
-const lvlXP = n => 50 * n * (n - 1);          // xp needed to reach level n
+const lvlXP = n => 50 * n * (n - 1) + n * n * n;   // xp needed to reach level n (v2: late levels slower)
 const levelOf = xp => { let l = 1; while (l < MAXL && xp >= lvlXP(l + 1)) l++; return l; };
 const TITLES = ["Новичок","Ученик","Знаток","Отличник","Рыцарь пера","Страж словаря","Мастер грамоты","Охотник на ошибки","Чемпион","Легенда класса",
   "Гроза двоек","Повелитель букв","Магистр словаря","Титан грамоты","Звезда школы","Супергерой","Мега-герой","Ультра-герой","Бессмертный","Король грамоты",
@@ -1933,9 +1941,9 @@ function gear(eq = P.equip){
   const up = P.up || {};
   return {
     dmg: (w.dmg || 10) + (p.dmgPlus || 0) + (up.str || 0), fx: w.fx, fxCol: w.col,
-    maxH: 5 + (a.hp || 0) + (up.hp || 0), spikes: a.spikes || 0, coinMul: (a.coinMul || 1) * (1 + 0.1 * (up.gold || 0)),
+    maxH: 5 + (a.hp || 0) + (up.hp || 0) + (settings.words === "a" ? 2 : 0), spikes: a.spikes || 0, coinMul: (a.coinMul || 1) * (1 + 0.1 * (up.gold || 0)),
     shield: h.shield || 0, firstCrit: !!h.firstCrit, xpMul: h.xpMul || 1,
-    time: (b.time || 0) + 0.5 * (up.time || 0), revive: !!b.revive, dodge: b.dodge || 0,
+    time: (b.time || 0) + 0.5 * (up.time || 0) + (settings.words === "a" ? 1.5 : 0), revive: !!b.revive, dodge: b.dodge || 0,
     heal8: !!p.heal8, heal6: !!p.heal6, heal5: !!p.heal5, drone: !!p.drone, critMult: p.critMult || 2, critAt: 3
   };
 }
@@ -2295,7 +2303,7 @@ function addXP(n){
   P.xp += n; if (G) G.xpGot += n; save();
   const after = levelOf(P.xp);
   for (let l = before + 1; l <= after; l++){
-    const bonus = addCoins(20 * l, false);
+    const bonus = addCoins(60 * l, false);
     const chest = grantChest(1, null, true);
     const msg = `Уровень ${l}: ${TITLES[l-1]}! +${bonus + chest.coins} монет${chest.item ? `, ${chest.item.name}` : ""}`;
     if (G && !$("s-game").hidden){
@@ -2313,7 +2321,7 @@ function addXP(n){
 }
 function grantChest(tier, title, noItem){
   const lvl = levelOf(P.xp);
-  const coins = addCoins(8 + tier*6 + Math.floor(Math.random()*(8 + tier*6)), false);
+  const coins = addCoins(25 + tier*18 + Math.floor(Math.random()*(25 + tier*18)), false);
   let item = null;
   if (!noItem && Math.random() < 0.08 + 0.04*tier){
     const cand = ITEMS.filter(i => !P.owned[i.id] && i.price > 0 && i.price < 1500 && !i.floor && i.lvl <= lvl);
@@ -2340,7 +2348,7 @@ function ensureDaily(){
   const pool = Object.keys(QUESTS).filter(t => !QUESTS[t].needTower || towerOpen());
   const picked = [];
   while (picked.length < 3 && pool.length) picked.push(pool.splice(r()*pool.length|0, 1)[0]);
-  P.daily = {date:d, bonus:false, q:picked.map(t => { const ni = r()*QUESTS[t].ns.length|0; return {t, n:QUESTS[t].ns[ni], p:0, done:false, reward:30 + ni*15}; })};
+  P.daily = {date:d, bonus:false, q:picked.map(t => { const ni = r()*QUESTS[t].ns.length|0; return {t, n:QUESTS[t].ns[ni], p:0, done:false, reward:90 + ni*45}; })};
   save();
 }
 function quest(t, v = 1){
@@ -2358,7 +2366,7 @@ function touchDay(){
   if (P.days.last === d) return;
   P.days.streak = P.days.last === yesterday() ? P.days.streak + 1 : 1;
   P.days.last = d; save();
-  const bonus = addCoins(10 * Math.min(P.days.streak, 7), false);
+  const bonus = addCoins(30 * Math.min(P.days.streak, 7), false);
   toast(P.days.streak > 1 ? `${P.days.streak} дня подряд! Бонус +${bonus} монет` : `Бонус за вход сегодня: +${bonus} монет`, "quest");
   checkAch();
 }
@@ -2423,7 +2431,7 @@ function perkChips(g){
   const c = [`Сердца ${g.maxH}`, `Урон ${g.dmg}`];
   if (g.shield) c.push(`Щит ${g.shield}`);
   if (g.time) c.push(`+${g.time} с`);
-  if (g.critMult > 2) c.push("Крит x3");
+  if (g.critMult > 2) c.push(`Крит x${g.critMult}`);
   if (g.heal8) c.push("Лечение");
   if (g.spikes) c.push("Шипы");
   if (g.heal6) c.push("Волк");
@@ -2912,10 +2920,10 @@ function resolve(ok, timeout){
     if (g.heal6){ G.heal6 = (G.heal6 || 0) + 1; if (G.heal6 % 6 === 0 && G.hearts < g.maxH){ G.hearts++; later(() => { pop("Волк лечит!", "heal", "22%"); sfx.heal(); }, 600); } }
     if (g.drone && !blocked && G.hp > 0){
       G.droneN = (G.droneN || 0) + 1;
-      if (G.droneN % 5 === 0){ const dd = 25; G.hp = Math.max(0, G.hp - dd); G.score += dd; later(() => { fx("beam", "#ff3b3b"); later(() => { pop(`Дрон -${dd}`, "crit", "60%"); replay(bossCv, "hit"); }, 180); }, delay + 260); }
+      if (G.droneN % 4 === 0){ const dd = base * 2; G.hp = Math.max(0, G.hp - dd); G.score += dd; later(() => { fx("beam", "#ff3b3b"); later(() => { pop(`Дрон -${dd}`, "crit", "60%"); replay(bossCv, "hit"); }, 180); }, delay + 260); }
     }
     const mult = (G.type ? 2 : 1) * diffMul();
-    addCoins((crit ? 2 : 1) * mult);
+    addCoins((crit ? 6 : 3) * mult);
     addXP((crit ? 15 : 10) * mult);
     quest("correct"); quest("streak", G.streak); if (G.type) quest("typed");
     renderHUD(); checkAch();
@@ -2985,13 +2993,13 @@ function bossDown(){
       const un = ITEMS.filter(i => i.floor && i.floor > prev && i.floor <= P.towerBest).map(i => i.name);
       if (un.length) setTimeout(() => toast(`Башня открыла в гардеробе: ${un.join(", ")}`, "ach"), 1200);
     }
-    if (b.floor % 10 === 0){ const bonus = addCoins(100 + b.floor * 10, false); setTimeout(() => toast(`Этаж ${b.floor} покорён! Бонус +${bonus} монет`, "ach"), 600); }
+    if (b.floor % 10 === 0){ const bonus = addCoins(300 + b.floor * 20, false); setTimeout(() => toast(`Этаж ${b.floor} покорён! Бонус +${bonus} монет`, "ach"), 600); }
   }
   save();
   $("boss-wrap").classList.remove("angry"); bossCv.className = "dead"; sfx.fanfare(G.kind === "campaign" && b.idx === BOSSES.length - 1);
   duckMusic(2600);
   G.score += 50;
-  const bossCoins = addCoins(Math.round((G.kind === "tower" ? 10 + b.floor*3 : 10 + b.idx*3) * diffMul()));
+  const bossCoins = addCoins(Math.round((G.kind === "tower" ? 30 + b.floor*9 : 30 + b.idx*9) * diffMul()));
   addXP(Math.round((G.kind === "tower" ? 30 + b.floor*4 : 30 + b.idx*5) * diffMul()));
   const chest = grantChest(G.kind === "tower" ? (b.floor % 5 === 0 ? 3 : 1) : (unlockedNew ? 2 : 1), null);
   quest("bosses"); if (flawless) quest("flawless");
