@@ -195,6 +195,19 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .dash{animation:dash .4s ease-in-out}
 #hero-aura{position:relative}
 .wpn{position:absolute;image-rendering:pixelated;pointer-events:none;transform-origin:80% 59%;z-index:2}
+.petov{position:absolute;image-rendering:pixelated;pointer-events:none;z-index:2}
+.pa-pounce{animation:paPounce .62s ease-in-out}
+.pa-bite{animation:paBite .6s ease-in-out}
+.pa-breath{animation:paBreath .6s ease-in-out}
+.pa-laser{animation:paLaser .5s ease-in-out}
+.pa-shell{animation:paShell .5s ease-out}
+.pa-swoop{animation:paSwoop .64s ease-in-out}
+@keyframes paPounce{0%{transform:none}15%{transform:translate(-4px,4px) scaleY(.85)}42%{transform:translate(calc(var(--dx) * .6),-34px)}58%{transform:translate(var(--dx),-6px)}100%{transform:none}}
+@keyframes paBite{0%{transform:none}38%{transform:translateX(var(--dx))}52%{transform:translateX(var(--dx)) rotate(-8deg)}64%{transform:translateX(var(--dx))}100%{transform:none}}
+@keyframes paBreath{0%{transform:none}20%{transform:translateX(-4px) rotate(-6deg)}45%{transform:translateX(5px) rotate(4deg)}100%{transform:none}}
+@keyframes paLaser{0%,100%{transform:none}30%{transform:translate(3px,-3px)}}
+@keyframes paShell{0%{transform:none}12%{transform:translateX(-7px)}40%{transform:translateX(-2px)}100%{transform:none}}
+@keyframes paSwoop{0%{transform:none}45%{transform:translate(calc(var(--dx) * .9),-40px) rotate(-10deg)}60%{transform:translate(var(--dx),-10px) rotate(10deg)}100%{transform:none}}
 .wpn.sw-slash{animation:swSlash .66s cubic-bezier(.4,0,.2,1) forwards}
 .wpn.sw-smash{animation:swSmash .68s cubic-bezier(.4,0,.2,1) forwards}
 .wpn.sw-sweep{animation:swSweep .66s cubic-bezier(.4,0,.2,1) forwards}
@@ -367,6 +380,23 @@ body.hurt .sheet{animation:shake .35s}
 .preview canvas{width:144px;height:auto}
 
 /* Awards */
+.limgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}
+.limgrid label{display:flex;flex-direction:column;gap:4px;font-weight:800;font-size:13px}
+.limgrid input{font:inherit;font-size:16px;border:2px solid var(--ink);padding:6px 8px;background:var(--paper);color:var(--ink);border-radius:0;width:100%}
+.todaybar{border:2px dashed var(--ink);background:var(--card);padding:8px 10px;margin:10px 0;display:flex;flex-direction:column;gap:2px;font-size:14px}
+.todaybar.hit{border-style:solid;border-color:var(--pen);background:color-mix(in srgb, var(--pen) 10%, var(--card))}
+.btn.dim{opacity:.55}
+.badges{display:flex;flex-wrap:wrap;gap:4px;min-height:0}
+.badges .ticon{width:26px;height:auto}
+.ticon{image-rendering:pixelated;width:42px;height:auto}
+.ticon.off{opacity:.5}
+.trophies{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tcard{background:var(--card);border:2px solid var(--ink);padding:10px;display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0}
+.tcard.off{border-style:dashed}
+.tcard b{font-size:14px}
+.tcard small{font-size:12px;font-weight:800;color:var(--ink-soft)}
+.tcard em{font-style:normal;font-family:var(--font-pixel);font-size:9px;color:var(--ok)}
+.tcard .xp{width:100%}
 .achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .ach{background:var(--card);border:2px solid var(--ink);padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
 .ach.off{background:var(--paper);border-style:dashed;color:var(--ink-soft)}
@@ -430,7 +460,7 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
 @keyframes boltA{0%,100%{opacity:0}10%,30%,55%{opacity:1}20%,45%{opacity:.2}}
 @keyframes burst{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(1.4)}}
 @media (prefers-reduced-motion: reduce){
-  .wpn,.hb-slash,.hb-smash,.bob,.atk,.sucked,.quake,.ring,.dash,.dashSmash,.steam,.vortex,.nova,.word.dark,.opts.runaway .opt,#boss-wrap.angry,.ouch,.hit,.smashed,.lunge,.glow,.wiggle,.rainbow,.pulse,#boss-wrap,body.hurt .sheet,.pop,.fx,.word.shakeW,.blot{animation:none!important}
+  .petov,.wpn,.hb-slash,.hb-smash,.bob,.atk,.sucked,.quake,.ring,.dash,.dashSmash,.steam,.vortex,.nova,.word.dark,.opts.runaway .opt,#boss-wrap.angry,.ouch,.hit,.smashed,.lunge,.glow,.wiggle,.rainbow,.pulse,#boss-wrap,body.hurt .sheet,.pop,.fx,.word.shakeW,.blot{animation:none!important}
   .fx{display:none}
   .dead{animation:none;opacity:.15}
   .pop{opacity:1;transform:translate(-50%,-20px)}
@@ -492,13 +522,21 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
         <div class="xp" aria-hidden="true"><i id="home-xp"></i></div>
         <div class="next" id="home-next"></div>
         <div class="perks" id="home-perks"></div>
+        <div class="badges" id="home-badges"></div>
       </div>
     </div>
     <div class="menu">
       <button class="btn primary wide" id="btn-campaign">В бой!<small id="campaign-sub"></small></button>
       <button class="btn" id="btn-tower">Башня<small id="tower-sub"></small></button>
       <button class="btn gold" id="btn-shop">Гардероб<small>оружие, броня, скины</small></button>
-      <button class="btn wide" id="btn-awards">Задания и достижения<small id="awards-sub"></small></button>
+      <button class="btn" id="btn-awards">Достижения<small id="awards-sub"></small></button>
+      <button class="btn gold" id="btn-trophy">Трофеи<small id="trophy-sub"></small></button>
+    </div>
+    <div id="today-home"></div>
+    <h2>Тренировка</h2>
+    <div class="menu">
+      <button class="btn" id="btn-train-err">Работа над ошибками<small id="train-err-sub"></small></button>
+      <button class="btn" id="btn-train-new">Новые слова<small id="train-new-sub"></small></button>
     </div>
     <div class="quests" id="home-quests"></div>
     <h2>Режим</h2>
@@ -624,6 +662,13 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
     <div class="row"><button class="btn primary" id="btn-aw-back">Назад</button></div>
   </section>
 
+  <section class="screen" id="s-trophy" hidden>
+    <div class="topbar"><h1>Трофеи</h1><span class="coins" id="tr-coins"></span></div>
+    <p class="note" id="tr-count"></p>
+    <div class="trophies" id="trophies"></div>
+    <div class="row"><button class="btn primary" id="btn-tr-back">Назад</button></div>
+  </section>
+
   <!-- PIN -->
   <section class="screen" id="s-pin" hidden>
     <h1>Для учителя</h1>
@@ -640,27 +685,22 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
   <section class="screen" id="s-teacher" hidden>
     <h1>Для учителя</h1>
     <p class="note">Всё, что здесь, хранится только в этом браузере на этом устройстве.</p>
-    <details class="panel guide" open>
-      <summary><h2>Как встроить игру в занятия</h2></summary>
-      <p>Игра заменяет зубрёжку списка дома. Вместо «выучи 30 слов ко вторнику» ученик получает «побей свой рекорд, 10 минут в день».</p>
-      <ol>
-        <li><b>Одно устройство.</b> Прогресс, монеты и статистика ошибок хранятся в браузере того телефона, где играет ученик. Выберите один телефон (его или родителей) и открывайте ссылку только на нём. На другом устройстве боец начнётся с нуля.</li>
-        <li><b>Настройка на первом уроке.</b> Откройте этот раздел на телефоне ученика и впишите в «Мои слова» слова текущей темы и те, где он ошибается. Если ученик нервничает из-за времени, выключите таймер.</li>
-        <li><b>Сначала выбор буквы, потом «Пишу сам».</b> В выборе из двух вариантов можно угадать наугад, а слово целиком так не угадаешь. Когда ученик освоится, переключите режим на главном экране.</li>
-        <li><b>Домашнее задание.</b> 10 минут в день или одно задание дня. В конце игры ученик делает скриншот экрана со списком ошибок и отправляет вам или родителю. Родителю проще проверить картинку, чем спрашивать слова.</li>
-        <li><b>Монеты за реальные дела.</b> Выучил слова, написал диктант без ошибок, сделал домашку: выдайте монеты ниже. Тогда игра становится наградой за учёбу, а не её заменой.</li>
-        <li><b>На уроке.</b> Игра не вместо урока, а 5 минут в конце за хорошую работу или один босс как разминка в начале.</li>
-        <li><b>Статистика.</b> Внизу видно, в каких словах ученик ошибается чаще всего. Их и разбирайте на следующем уроке. Сравнение «было ошибок / стало» через месяц показывает результат занятий.</li>
-      </ol>
-      <p class="note"><b>Важно:</b> поставьте PIN-код ниже, чтобы ученик не мог зайти сюда и выдать монеты себе сам. PIN хранится только на этом устройстве. Если забудете его, сбросить можно только очисткой данных сайта в браузере, а вместе с ними сотрётся и прогресс.</p>
-    </details>
-    <div class="panel">
-      <h2>PIN-код</h2>
-      <p class="note" id="pin-note"></p>
-      <div class="pinrow"><input id="pin-new" type="password" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="Новый PIN-код" placeholder="4 цифры"><button class="btn small" id="btn-pin-set">Поставить PIN</button><button class="btn small" id="btn-pin-off">Убрать PIN</button></div>
-      <span class="msg" id="pin-set-msg"></span>
+    <div class="tabs" role="tablist" id="ttabs">
+      <button class="tab" data-tt="pupil">Ученик</button><button class="tab" data-tt="words">Слова</button><button class="tab" data-tt="limits">Лимиты</button>
+      <button class="tab" data-tt="stats">Статистика</button><button class="tab" data-tt="pin">Защита</button><button class="tab" data-tt="guide">Инструкция</button>
     </div>
-    <div class="panel">
+    <div class="panel" data-tp="pupil">
+      <h2>Прогресс бойца</h2>
+      <div class="pinrow"><input id="rename-in" type="text" maxlength="16" autocomplete="off" aria-label="Имя ученика" placeholder="Имя ученика"><button class="btn small" id="btn-rename">Сохранить имя</button><span class="msg" id="rename-msg"></span></div>
+      <p class="note" id="prog-note"></p>
+      <div class="row"><button class="btn small" id="btn-reset-hero">Начать бойца заново</button></div>
+    </div>
+    <div class="panel" data-tp="pupil">
+      <h2>Наградить монетами</h2>
+      <p class="note">Например, за выученные слова или сделанную домашку. Ученик увидит сообщение от учителя.</p>
+      <div class="row"><input type="number" id="gift-n" min="1" max="1000000" value="50" aria-label="Сколько монет"><button class="btn small" id="btn-gift">Выдать</button><span class="msg" id="gift-msg"></span></div>
+    </div>
+    <div class="panel" data-tp="words">
       <h2>Какие слова</h2>
       <label><input type="radio" name="words" value="auto"> Как в кампании: сначала 1–2 класс, потом 3–4</label>
       <label><input type="radio" name="words" value="a"> Только 1–2 класс</label>
@@ -669,27 +709,55 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
       <label><input type="radio" name="words" value="custom"> Только мои слова</label>
       <label><input type="checkbox" id="opt-timer"> Ярость босса (таймер)</label>
     </div>
-    <div class="panel">
-      <h2>Наградить монетами</h2>
-      <p class="note">Например, за выученные слова или сделанную домашку. Ученик увидит сообщение от учителя.</p>
-      <div class="row"><input type="number" id="gift-n" min="1" max="1000000" value="50" aria-label="Сколько монет"><button class="btn small" id="btn-gift">Выдать</button><span class="msg" id="gift-msg"></span></div>
-    </div>
-    <div class="panel">
+    <div class="panel" data-tp="words">
       <h2>Мои слова</h2>
       <p class="note">Одно слово в строке. Трудную букву возьмите в скобки: <b>м(о)локо</b>. Неправильный вариант можно указать через косую черту: <b>м(о/а)локо</b>. Можно несколько скобок: <b>т(е)тра(дь)</b>. Двойные согласные: <b>кла(сс)</b>.</p>
       <textarea id="custom" placeholder="м(о)локо&#10;с(о)бака&#10;кла(сс)"></textarea>
       <div class="row"><button class="btn small" id="btn-save">Сохранить</button><span class="msg" id="save-msg"></span></div>
     </div>
-    <div class="panel">
+    <div class="panel" data-tp="limits">
+      <h2>Сколько играть в день</h2>
+      <p class="note">Поставьте один или несколько лимитов. Когда любой из них достигнут, бой спокойно заканчивается («На сегодня всё!»), монеты и опыт сохраняются, а новые бои откроются завтра. 0 значит без лимита.</p>
+      <div class="limgrid">
+        <label>Минут игры<input type="number" min="0" max="600" id="lim-min"></label>
+        <label>Новых слов<input type="number" min="0" max="500" id="lim-fresh"></label>
+        <label>Верных ответов<input type="number" min="0" max="2000" id="lim-correct"></label>
+        <label>Боёв<input type="number" min="0" max="200" id="lim-battles"></label>
+        <label>Ошибок (стоп, если устал)<input type="number" min="0" max="500" id="lim-mistakes"></label>
+      </div>
+      <div class="row"><button class="btn small" id="btn-lim-save">Сохранить лимиты</button><button class="btn small" id="btn-lim-reset">Обнулить счётчики за сегодня</button><span class="msg" id="lim-msg"></span></div>
+      <h3>Сегодня</h3>
+      <div class="stats" id="today-stats"></div>
+      <p class="note">Новое слово: слово, на которое ученик впервые ответил правильно. Время считается только в бою.</p>
+    </div>
+    <div class="panel" data-tp="stats">
+      <h2>Выучено слов</h2>
+      <p class="note" id="learned-note"></p>
+    </div>
+    <div class="panel" data-tp="stats">
       <h2>Ошибки ученика</h2>
       <div class="tbl-wrap" id="stats-wrap"></div>
       <div class="row"><button class="btn small" id="btn-reset">Стереть статистику</button></div>
     </div>
-    <div class="panel">
-      <h2>Прогресс бойца</h2>
-      <div class="pinrow"><input id="rename-in" type="text" maxlength="16" autocomplete="off" aria-label="Имя ученика" placeholder="Имя ученика"><button class="btn small" id="btn-rename">Сохранить имя</button><span class="msg" id="rename-msg"></span></div>
-      <p class="note" id="prog-note"></p>
-      <div class="row"><button class="btn small" id="btn-reset-hero">Начать бойца заново</button></div>
+    <div class="panel" data-tp="pin">
+      <h2>PIN-код</h2>
+      <p class="note" id="pin-note"></p>
+      <div class="pinrow"><input id="pin-new" type="password" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="Новый PIN-код" placeholder="4 цифры"><button class="btn small" id="btn-pin-set">Поставить PIN</button><button class="btn small" id="btn-pin-off">Убрать PIN</button></div>
+      <span class="msg" id="pin-set-msg"></span>
+      <p class="note">Поставьте PIN, чтобы ученик не мог зайти сюда, выдать себе монеты или снять лимиты. Если забудете PIN, сбросить его можно только очисткой данных сайта, а вместе с ними сотрётся и прогресс (сначала сохраните код прогресса на главной).</p>
+    </div>
+    <div class="panel guide" data-tp="guide">
+      <h2>Как встроить игру в занятия</h2>
+      <p>Игра заменяет зубрёжку списка. Вместо «выучи 30 слов ко вторнику» ученик получает «побей босса, 10 минут в день».</p>
+      <ol>
+        <li><b>Прогресс живёт в браузере.</b> Чтобы перенести бойца на другой телефон, нажмите на главной «Сохранить прогресс», скопируйте код и загрузите его на новом устройстве.</li>
+        <li><b>Настройка на первом уроке.</b> Во вкладке «Слова» впишите слова текущей темы и те, где он ошибается. Если ученик нервничает из-за времени, выключите таймер.</li>
+        <li><b>Лимиты.</b> Во вкладке «Лимиты» задайте, сколько играть в день: например, 15 минут или 20 новых слов. Так игра не съест весь вечер.</li>
+        <li><b>Тренировки.</b> На главной есть «Работа над ошибками» (слова, где он чаще ошибался) и «Новые слова» (ещё не встречавшиеся). Хорошо давать как домашку.</li>
+        <li><b>Сначала выбор буквы, потом «Пишу сам».</b> В выборе из двух вариантов можно угадать, а слово целиком так не угадаешь.</li>
+        <li><b>Монеты за реальные дела.</b> Выучил слова, написал диктант без ошибок: выдайте монеты во вкладке «Ученик».</li>
+        <li><b>Статистика.</b> Во вкладке «Статистика» видно, сколько слов выучено и где ошибки. Их и разбирайте на следующем уроке.</li>
+      </ol>
     </div>
     <div class="row"><button class="btn primary" id="btn-back">Назад</button></div>
   </section>
@@ -1473,7 +1541,7 @@ const ITEMS = [
   {id:"robodog",slot:"pet",name:"Робопёс",price:1800,lvl:9,dmgPlus:3,perk:"+3 к урону"},
   {id:"minidragon",slot:"pet",name:"Мини-дракон",price:4200,lvl:12,critMult:2.5,perk:"Крит наносит x2.5 вместо x2"},
   {id:"drone",slot:"pet",name:"Лазерный дрон",price:6500,lvl:16,drone:true,perk:"Каждый 4-й верный ответ: выстрел на двойной урон"},
-  {id:"cyberwolf",slot:"pet",name:"Кибер-волк",price:10000,lvl:20,floor:15,dmgPlus:4,heal6:true,perk:"+4 урона, лечит каждый 6-й ответ"},
+  {id:"cyberwolf",slot:"pet",name:"Мини-танк",price:10000,lvl:20,floor:15,dmgPlus:4,heal6:true,perk:"+4 урона, стреляет из пушки, чинит сердце каждый 6-й ответ"},
   {id:"darkdragon",slot:"pet",name:"Дракончик Тьмы",price:20000,lvl:25,floor:35,critMult:3,perk:"Крит x3"},
   // aura (cosmetic)
   {id:"noaura",slot:"aura",name:"Без ауры",price:0,lvl:1,perk:"Ничего"},
@@ -1601,18 +1669,17 @@ drone:`
 .....D....D.....
 ....DD....DD....`,
 cyberwolf:`
-.............W..W.
-............WWDWW.
-.......D...WWWCWW.
-..DDDDDDDDWWWWWWNN
-.WWWWWWWWWWWWWLL..
-WWWWCCWWWWWWWLL...
-WWDWWWWWWWWWLLL...
-.WWLWWWWWWWWLL....
-..LWWD.....WWD....
-...WW.......WW....
-..W.W......W.W....
-.NN.N.....NN.N....`,
+.........A........
+..........A.......
+.......DDDDD......
+......DGGGGGDBBBBB
+......DGCGGGDBBBBR
+..DDDDDDDDDDDDD...
+.DGGGGGGGGGGGGGD..
+.DGYGGGGGGGGGYGD..
+..TTTTTTTTTTTTT...
+.TTWTTWTTWTTWTTW..
+..TTTTTTTTTTTTT...`,
 darkdragon:`
 .............H..H.
 ..............HH..
@@ -1711,18 +1778,17 @@ drone:`
 .....D....D.....
 ....DD....DD....`,
 cyberwolf:`
-.............W..W.
-............WWDWW.
-.......D...WWWCWW.
-..DDDDDDDDWWWWWWNN
-.WWWWWWWWWWWWWLL..
-WWWWCCWWWWWWWLL...
-WWDWWWWWWWWWLLL...
-WW.LWWWWWWWWLL....
-.L..WWD...WWD.....
-....WW....WW......
-....W.W...W.W.....
-...NN.N..NN.N.....`,
+..........A.......
+..........A.......
+.......DDDDD......
+......DGGGGGDBBBBB
+......DGCGGGDBBBBR
+..DDDDDDDDDDDDD...
+.DGGGGGGGGGGGGGD..
+.DGYGGGGGGGGGYGD..
+..TTTTTTTTTTTTT...
+.TWTTWTTWTTWTTWT..
+..TTTTTTTTTTTTT...`,
 darkdragon:`
 ..B...............
 ..BB.........H..H.
@@ -1772,7 +1838,7 @@ const PET_PAL = {
   robodog:{M:"#4a5670",D:"#2a2f4a",R:"#ff3b3b",C:"#45d1e6",L:"#9aa7bd",A:"#ff3b3b",T:"#4a5670"},
   minidragon:{G:"#2b9348",D:"#1b5e30",Y:"#d9c36a",K:"#ffd23f",H:"#f2e6c9",B:"#1b5e30",M:"#7fc8a9",R:"#ff7a1a",T:"#1b5e30",S:"#1b5e30",W:"#ffffff"},
   drone:{C:"#45d1e6",M:"#6f7d93",D:"#2a2f4a",R:"#ff3b3b",Y:"#c9d3e3",L:"#4a5670"},
-  cyberwolf:{W:"#7f8aa3",L:"#c9d1df",D:"#4a5670",N:"#2a2f4a",C:"#45d1e6"},
+  cyberwolf:{G:"#6b7a5a",D:"#3a4630",B:"#4a5670",R:"#ff7a1a",C:"#45d1e6",Y:"#ffd23f",T:"#2a2f2a",W:"#9aa7bd",A:"#9aa7bd"},
   darkdragon:{G:"#3d2a6b",D:"#1b1446",Y:"#ff4fd8",K:"#ff3b3b",H:"#c9c3d3",B:"#1b1446",M:"#7a4fd6",R:"#ff4fd8",T:"#1b1446",S:"#1b1446",W:"#ffffff"},
   phoenixpet:{R:"#f0501a",Y:"#ffd23f",K:"#5a2a10"},
   stardragon:{G:"#2f55c8",D:"#1b2f7a",Y:"#ffd23f",K:"#ffffff",H:"#fff3a0",B:"#1b2f7a",M:"#a8f0ff",R:"#45d1e6",T:"#1b2f7a",S:"#1b2f7a",W:"#ffffff"}
@@ -2556,7 +2622,7 @@ const TOUCH = !!(window.matchMedia && matchMedia("(hover: none) and (pointer: co
 function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.random()*(i+1)|0; [a[i],a[j]] = [a[j],a[i]]; } return a; }
 function pick(a){ return a[Math.random()*a.length|0]; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const SCREENS = ["s-home","s-game","s-end","s-shop","s-awards","s-teacher","s-pin","s-name","s-story","s-save"];
+const SCREENS = ["s-trophy","s-home","s-game","s-end","s-shop","s-awards","s-teacher","s-pin","s-name","s-story","s-save"];
 function show(id){ SCREENS.forEach(s => $(s).hidden = s !== id); window.scrollTo(0,0); }
 const COIN_SVG = `<svg class="coin" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="0" width="4" height="8" fill="#f0a000"/><rect x="0" y="2" width="8" height="4" fill="#f0a000"/><rect x="1" y="1" width="6" height="6" fill="#f0a000"/><rect x="2" y="1" width="4" height="6" fill="#ffd84a"/><rect x="1" y="2" width="6" height="4" fill="#ffd84a"/><rect x="3" y="2" width="2" height="4" fill="#f0a000"/></svg>`;
 const coinsHTML = n => `${COIN_SVG}<span>${n}</span>`;
@@ -2586,7 +2652,7 @@ function addCoins(n, useMul = true){
   P.coins += n; if (G) G.coinsGot += n; save(); refreshCoins();
   return n;
 }
-function refreshCoins(){ ["home-coins","hud-coins","shop-coins","aw-coins"].forEach(id => { if ($(id)) $(id).innerHTML = coinsHTML(P.coins); }); }
+function refreshCoins(){ ["home-coins","hud-coins","shop-coins","aw-coins","tr-coins"].forEach(id => { if ($(id)) $(id).innerHTML = coinsHTML(P.coins); }); }
 function addXP(n){
   n = Math.round(n * gear().xpMul);
   const before = levelOf(P.xp);
@@ -2661,6 +2727,7 @@ function touchDay(){
   const d = today();
   if (P.days.last === d) return;
   P.days.streak = P.days.last === yesterday() ? P.days.streak + 1 : 1;
+  P.days.best = Math.max(P.days.best || 0, P.days.streak);
   P.days.last = d; save();
   const bonus = addCoins(30 * Math.min(P.days.streak, 7), false);
   toast(P.days.streak > 1 ? `${P.days.streak} дня подряд! Бонус +${bonus} монет` : `Бонус за вход сегодня: +${bonus} монет`, "quest");
@@ -2698,9 +2765,114 @@ const ACH = [
   {id:"ultra1", n:"Ультра", d:"Получи ультра-предмет", c:() => ITEMS.some(i => i.price >= 40000 && P.owned[i.id]), r:3000},
   {id:"forge10", n:"Кузнец", d:"Прокачай Силу до 10", c:() => (P.up.str || 0) >= 10, r:300},
   {id:"d3", n:"Три дня подряд", d:"Играй 3 дня подряд", c:() => P.days.streak >= 3, r:60},
-  {id:"d7", n:"Неделя подряд", d:"Играй 7 дней подряд", c:() => P.days.streak >= 7, r:200}
+  {id:"d7", n:"Неделя подряд", d:"Играй 7 дней подряд", c:() => P.days.streak >= 7, r:200},
+  {id:"ralina", n:"Ралина довольна", d:"Победи Репетитора Ралину", c:() => P.beaten.includes(0), r:150},
+  {id:"angel", n:"Друг ангела", d:"Расколдуй Ангелику", c:() => P.beaten.includes(15), r:600},
+  {id:"sister", n:"Сестра спасена", d:"Расколдуй Олесю", c:() => P.beaten.includes(20), r:1000},
+  {id:"king", n:"Король повержен", d:"Победи Короля Ошибок", c:() => P.beaten.includes(BOSSES.length - 1), r:2500},
+  {id:"err1", n:"Работа над ошибками", d:"Пройди тренировку по ошибкам", c:() => (P.tot.errRuns || 0) >= 1, r:200},
+  {id:"err10", n:"Ошибкоборец", d:"10 тренировок по ошибкам", c:() => (P.tot.errRuns || 0) >= 10, r:1200},
+  {id:"new1", n:"Первооткрыватель", d:"Пройди тренировку новых слов", c:() => (P.tot.newRuns || 0) >= 1, r:200},
+  {id:"new10", n:"Исследователь", d:"10 тренировок новых слов", c:() => (P.tot.newRuns || 0) >= 10, r:1200},
+  {id:"hard1", n:"Смельчак", d:"Победи босса на сложной сложности", c:() => (P.tot.hardWins || 0) >= 1, r:300},
+  {id:"hard25", n:"Железный характер", d:"25 побед на сложной сложности", c:() => (P.tot.hardWins || 0) >= 25, r:2500},
+  {id:"clutch", n:"На волоске", d:"Победи босса, когда осталось 1 сердце", c:() => (P.tot.clutch || 0) >= 1, r:250},
+  {id:"crit100", n:"Критовик", d:"Нанеси 100 критов", c:() => P.tot.crits >= 100, r:300},
+  {id:"crit1000", n:"Мастер комбо", d:"Нанеси 1000 критов", c:() => P.tot.crits >= 1000, r:2000},
+  {id:"pets4", n:"Зоопарк", d:"Собери 4 питомца", c:() => ITEMS.filter(i => i.slot === "pet" && i.price > 0 && P.owned[i.id]).length >= 4, r:800},
+  {id:"skins5", n:"Модный приговор", d:"Собери 5 костюмов", c:() => ITEMS.filter(i => i.slot === "costume" && i.id !== "school" && P.owned[i.id]).length >= 5, r:800},
+  {id:"fullset", n:"При полном параде", d:"Надень оружие, броню, шлем, спину, питомца и ауру сразу", c:() => ["armor","helmet","back","pet","aura"].every(s => !ITEM[P.equip[s]].id.startsWith("no")) && P.equip.weapon !== "pencil", r:500},
+  {id:"rich10k", n:"Копилка", d:"Накопи 10 000 монет", c:() => P.coins >= 10000, r:500},
+  {id:"d30", n:"Месяц без пропусков", d:"Играй 30 дней подряд", c:() => P.days.streak >= 30, r:2000},
+  {id:"words100", n:"Знаток словаря", d:"Выучи 100 слов", c:() => learnedCount() >= 100, r:1500}
 ];
+const LEARN_N = 3;   // a word is "learned" after this many correct answers
+const learnedCount = () => Object.values(stats).filter(s => s.right >= LEARN_N).length;
+const TROPHY_SPR = {
+medal:`
+.RR.BB.
+.RR.BB.
+..RBB..
+..MMM..
+.MMLMM.
+.MLMMM.
+.MMMMM.
+..MMM..`,
+cup:`
+MMMMMMM
+MMLMMMM
+M.MLM.M
+.MMMMM.
+..MMM..
+...M...
+..MMM..
+.DDDDD.`,
+star:`
+...M...
+..MMM..
+MMMLMMM
+.MMMMM.
+.MM.MM.
+.M...M.`,
+flame:`
+...M...
+..MM...
+..MLM..
+.MMLMM.
+.MLLLM.
+MMLLLMM
+.MMMMM.`
+};
+const TIER = {bronze:{M:"#c87a3a",L:"#f0b07a"}, silver:{M:"#9aa7bd",L:"#ffffff"}, gold:{M:"#f0a000",L:"#fff3a0"}, diamond:{M:"#45d1e6",L:"#ffffff"}};
+const TROPHIES = [
+  {id:"m10", spr:"medal", tier:"bronze", n:10, m:"learned", name:"Бронзовая медаль", d:"Выучи 10 слов", r:300},
+  {id:"m25", spr:"medal", tier:"silver", n:25, m:"learned", name:"Серебряная медаль", d:"Выучи 25 слов", r:700},
+  {id:"m50", spr:"medal", tier:"gold", n:50, m:"learned", name:"Золотая медаль", d:"Выучи 50 слов", r:1500},
+  {id:"c100", spr:"cup", tier:"bronze", n:100, m:"learned", name:"Бронзовый кубок", d:"Выучи 100 слов", r:3000},
+  {id:"c150", spr:"cup", tier:"silver", n:150, m:"learned", name:"Серебряный кубок", d:"Выучи 150 слов", r:5000},
+  {id:"call", spr:"cup", tier:"gold", n:0, m:"learned", all:true, name:"Золотой кубок Словаря", d:"Выучи все словарные слова", r:12000},
+  {id:"s300", spr:"star", tier:"bronze", n:300, m:"correct", name:"Звезда грамотея", d:"300 верных ответов", r:400},
+  {id:"s1500", spr:"star", tier:"silver", n:1500, m:"correct", name:"Звезда отличника", d:"1500 верных ответов", r:1500},
+  {id:"s5000", spr:"star", tier:"gold", n:5000, m:"correct", name:"Звезда чемпиона", d:"5000 верных ответов", r:5000},
+  {id:"s10000", spr:"star", tier:"diamond", n:10000, m:"correct", name:"Алмазная звезда", d:"10000 верных ответов", r:10000},
+  {id:"f7", spr:"flame", tier:"bronze", n:7, m:"days", name:"Огонёк недели", d:"Играй 7 дней подряд", r:500},
+  {id:"f14", spr:"flame", tier:"silver", n:14, m:"days", name:"Пламя двух недель", d:"Играй 14 дней подряд", r:1200},
+  {id:"f30", spr:"flame", tier:"gold", n:30, m:"days", name:"Вечный огонь", d:"Играй 30 дней подряд", r:3000}
+];
+const trophyGoal = t => t.all ? PAB.length : t.n;
+const trophyVal = t => t.m === "learned" ? learnedCount() : t.m === "correct" ? P.tot.correct : Math.max(P.days.best || 0, P.days.streak || 0);
+function checkTrophies(){
+  P.troph = P.troph || {};
+  for (const t of TROPHIES){
+    if (P.troph[t.id] || trophyVal(t) < trophyGoal(t)) continue;
+    P.troph[t.id] = 1; save(); addCoins(t.r, false);
+    toast(`Новый трофей: ${t.name}! +${t.r} монет`, "ach"); sfx.level();
+  }
+}
+const trophyIcon = (t, cls = "") => `<canvas class="ticon ${cls}" data-tspr="${t.spr}" data-tier="${t.tier}"></canvas>`;
+function paintTrophies(root){ root.querySelectorAll("canvas[data-tspr]").forEach(c => drawSprite(c, TROPHY_SPR[c.dataset.tspr], TIER[c.dataset.tier] && {...TIER[c.dataset.tier], R:"#d62839", B:"#2f55c8", D:"#6b4e31"}, c.classList.contains("off"))); }
+// best earned trophy of each kind, shown under the hero like ribbons on a uniform
+function badgesHTML(){
+  P.troph = P.troph || {};
+  const best = {};
+  for (const t of TROPHIES) if (P.troph[t.id]) best[t.spr + t.m] = t;
+  const list = Object.values(best);
+  return list.length ? list.map(t => trophyIcon(t)).join("") : "";
+}
+function renderTrophies(){
+  refreshCoins();
+  P.troph = P.troph || {};
+  const got = TROPHIES.filter(t => P.troph[t.id]).length;
+  $("tr-count").textContent = `Получено ${got} из ${TROPHIES.length}. Выучено слов: ${learnedCount()} из ${PAB.length}. Слово считается выученным после ${LEARN_N} верных ответов.`;
+  $("trophies").innerHTML = TROPHIES.map(t => {
+    const v = Math.min(trophyVal(t), trophyGoal(t)), on = !!P.troph[t.id];
+    return `<div class="tcard${on ? "" : " off"}">${trophyIcon(t, on ? "" : "off")}<b>${esc(t.name)}</b><small>${esc(t.d)}</small>
+      <div class="xp"><i style="transform:scaleX(${v / trophyGoal(t)})"></i></div><em>${on ? "ПОЛУЧЕН" : `${v} / ${trophyGoal(t)} · +${t.r}`}</em></div>`;
+  }).join("");
+  paintTrophies($("trophies"));
+}
 function checkAch(){
+  checkTrophies();
   for (const a of ACH){
     if (P.ach[a.id] || !a.c()) continue;
     P.ach[a.id] = 1; save();
@@ -2749,6 +2921,13 @@ function renderHome(){
   refreshCoins();
   heroCard("home");
   $("home-perks").innerHTML = perkChips(gear());
+  $("home-badges").innerHTML = badgesHTML(); paintTrophies($("home-badges"));
+  $("trophy-sub").textContent = `${TROPHIES.filter(t => (P.troph || {})[t.id]).length} из ${TROPHIES.length} · выучено ${learnedCount()} слов`;
+  $("today-home").innerHTML = todayHTML();
+  const lim = !!limitReason();
+  ["btn-campaign","btn-tower","btn-train-err","btn-train-new"].forEach(id => $(id).classList.toggle("dim", lim));
+  $("train-err-sub").textContent = errWords().length ? `слов с ошибками: ${errWords().length}` : "ошибок пока нет";
+  $("train-new-sub").textContent = newWords().length ? `ещё не встречались: ${newWords().length}` : "все слова уже встречались";
   const f = frontier();
   $("campaign-sub").textContent = P.beaten.length >= BOSSES.length ? "Кампания пройдена! Выбери босса или иди в Башню" : `Босс ${f+1}: ${BOSSES[f].name}`;
   $("btn-tower").disabled = !towerOpen();
@@ -2761,7 +2940,7 @@ function renderHome(){
       <canvas id="mp${i}"></canvas><span>${open ? esc(b.name) : "???"}</span><small>${i+1}</small>${done ? '<em class="done">✓</em>' : ""}</button>`;
   }).join("");
   BOSSES.forEach((b,i) => drawBoss($("mp"+i), b, i > P.unlocked));
-  $("map").querySelectorAll(".bcard:not(.locked)").forEach(el => el.onclick = () => startCampaign(+el.dataset.i));
+  $("map").querySelectorAll(".bcard:not(.locked)").forEach(el => el.onclick = () => { if (!blockedToday()) startCampaign(+el.dataset.i); });
   document.querySelectorAll('input[name="play"]').forEach(r => r.checked = r.value === settings.play);
   syncDiff();
 }
@@ -2861,6 +3040,7 @@ let G = null;
 const bossCv = $("boss-cv"), heroCv = $("hero-cv");
 const customPool = () => customRaw.split(/\n|,/).map(parseEntry).filter(Boolean);
 function poolFor(b){
+  if (b.pool === "train" && G && G.trainPool) return G.trainPool;
   if (settings.words === "custom"){ const c = customPool(); if (c.length) return c; }
   if (settings.words === "a") return PA;
   if (settings.words === "b") return PB;
@@ -2871,7 +3051,7 @@ const DIFF_MUL = {ab:1.5, b:2};
 const DIFF_BOSS = {ab:{hp:1.3, time:0.8, extra:1}, b:{hp:1.7, time:0.62, extra:2}};
 const EXTRA_AB = ["haste","swap","shake","ink","tiny","freeze","fog","rush","flip","mirror","web","dark","double","armor","regen","glitch","cloud","lens"];
 function applyDiff(b){
-  const d = DIFF_BOSS[settings.words]; if (!d) return b;
+  const d = DIFF_BOSS[settings.words]; if (!d || b.training) return b;
   const ab = b.ab.filter(a => a !== "enrage");
   shuffle(EXTRA_AB.filter(a => !ab.includes(a))).slice(0, d.extra).forEach(a => ab.push(a));
   ab.push("enrage");
@@ -2894,6 +3074,29 @@ function newRun(kind){
   drawHero(heroCv, P.equip, $("hero-aura"));
   show("s-game");
 }
+// words the pupil got wrong most (weighted: mistakes count more than later correct answers)
+function errWords(){
+  const all = PAB.concat(settings.words === "custom" ? customPool() : []);
+  const byWord = new Map(all.map(e => [e.word, e]));
+  return Object.entries(stats).filter(([w, s]) => s.wrong > 0 && byWord.has(w) && s.wrong * 2 > s.right)
+    .sort((a, b) => (b[1].wrong * 2 - b[1].right) - (a[1].wrong * 2 - a[1].right)).slice(0, 25).map(([w]) => byWord.get(w));
+}
+function newWords(){
+  const base = settings.words === "custom" && customPool().length ? customPool() : settings.words === "a" ? PA : settings.words === "b" ? PB : PAB;
+  return base.filter(e => !stats[e.word]);
+}
+function startTraining(kind){
+  const pool = kind === "err" ? errWords() : newWords().slice(0, 20);
+  if (!pool.length){ toast(kind === "err" ? "Слов с ошибками нет. Отлично!" : "Новых слов не осталось: все уже встречались!", "quest"); return; }
+  newRun("training"); G.trainKind = kind; G.trainPool = pool;
+  const g = gear(), lvlIdx = Math.min(P.beaten.length, BOSSES.length - 1);
+  const b = kind === "err"
+    ? {name:"Тень Ошибок", spr:"ghost", pal:"ghost", f:true, ab:[], pool:"train", idx:lvlIdx, filter:"brightness(.6) saturate(1.6) hue-rotate(200deg)", taunts:["Я помню все твои ошибки!","Опять эта буква?","Ну-ка, вспомни правило!"]}
+    : {name:"Книга Знаний", spr:"book", pal:"book", f:true, ab:[], pool:"train", idx:lvlIdx, filter:"hue-rotate(160deg) saturate(1.3)", taunts:["Новое слово! Запоминай!","Читай внимательно!","Это слово ты ещё не встречал!"]};
+  b.hp = Math.round(Math.max(6, Math.min(20, pool.length)) * (g.dmg * 1.6));
+  b.time = 12; b.training = kind;
+  startBoss(b);
+}
 function startCampaign(idx){ newRun("campaign"); G.bossIdx = idx; startBoss(BOSSES[idx]); }
 function startTower(){ newRun("tower"); G.floor = 1; startBoss(towerBoss(1)); }
 function startBoss(b){
@@ -2907,7 +3110,7 @@ function startBoss(b){
   drawBoss(bossCv, b);
   heroCv.className = ""; drawHero(heroCv, P.equip, $("hero-aura"));
   $("boss-name").textContent = b.name;
-  $("boss-num").textContent = G.kind === "tower" ? `ЭТАЖ ${b.floor}` : `${b.idx+1}/${BOSSES.length}`;
+  $("boss-num").textContent = G.kind === "tower" ? `ЭТАЖ ${b.floor}` : G.kind === "training" ? "ТРЕНИРОВКА" : `${b.idx+1}/${BOSSES.length}`;
   $("boss-abil").innerHTML = b.ab.map(a => `<span class="chip${a === "enrage" ? " red" : ""}" title="${esc(AB[a].d)}">${AB[a].n}</span>`).join("");
   $("word").innerHTML = ""; $("feedback").textContent = "";
   [0,1].forEach(i => { $("opt"+i).disabled = true; $("opt"+i).querySelector("span").textContent = ""; });
@@ -2916,13 +3119,16 @@ function startBoss(b){
   const ov = $("boss-over"); ov.hidden = false;
   ov.innerHTML = `<canvas id="intro-cv"></canvas><h2>${esc(b.name)}</h2>
     ${LORE[b.name] && G.kind !== "tower" ? `<p class="lore">${loreText(LORE[b.name])}</p>` : ""}
+    ${b.training ? `<p class="lore">${b.training === "err" ? `Тренировка: ${G.trainPool.length} ${plural(G.trainPool.length, ["слово","слова","слов"])}, в которых ты ошибался. Каждый верный ответ стирает ошибку из памяти Тени.` : `Тренировка: ${G.trainPool.length} ${plural(G.trainPool.length, ["слово","слова","слов"])}, которые ты ещё не встречал. Запоминай!`}</p>` : ""}
     ${b.diff ? `<p class="note"><b>${b.diff === "b" ? "Сложный" : "Средний"} режим:</b> босс злее обычного</p>` : ""}
-    ${b.ab.length ? `<ul>${b.ab.map(a => `<li>${AB[a].n}: ${esc(AB[a].d)}</li>`).join("")}</ul>` : (b.spr === "ralina" ? "<p>Добрая, но строгая. Разминка перед настоящими монстрами! Победишь, и она тебя чем-то угостит.</p>" : "<p>Разминка!</p>")}
+    ${b.ab.length ? `<ul>${b.ab.map(a => `<li>${AB[a].n}: ${esc(AB[a].d)}</li>`).join("")}</ul>` : (b.training ? "" : b.spr === "ralina" ? "<p>Добрая, но строгая. Разминка перед настоящими монстрами! Победишь, и она тебя чем-то угостит.</p>" : "<p>Разминка!</p>")}
     <p class="note">Жизни ${b.hp} · время ${Math.round((b.time + g.time) * (G.type ? 1.8 : 1))} с · слова: ${DIFF_NAME[settings.words] || "по боссам"}</p>
     <button class="btn primary" id="btn-fight">Бой!</button>`;
   drawBoss($("intro-cv"), b); $("intro-cv").style.filter = b.filter || "";
   $("opts").hidden = true; $("typer").hidden = true;
   $("btn-fight").onclick = () => {
+    const lr = limitReason(); if (lr){ limitStop(lr); return; }
+    ensureDay().battles++; save();
     ov.hidden = true; $("opts").hidden = G.type; $("typer").hidden = !G.type; nextQ();
     if (G.type && TOUCH && !G.scrolled){ G.scrolled = true; setTimeout(() => { try{ $("typer").scrollIntoView({block:"end"}); }catch(e){} }, 400); }
   };
@@ -2949,6 +3155,7 @@ function clearRound(){
 }
 function later(fn, ms){ G.timers.push(setTimeout(fn, ms)); }
 function nextQ(){
+  { const lr = limitReason(); if (lr){ limitStop(lr); return; } }
   startMusic();
   if (!G.queue.length) G.queue = shuffle(poolFor(G.boss));
   const e = G.queue.shift();
@@ -3106,7 +3313,11 @@ function say(text){
   const b = $("bubble"); b.textContent = text; b.classList.add("show");
   clearTimeout(say.t); say.t = setTimeout(() => b.classList.remove("show"), 1700);
 }
-function stat(word, key){ const s = stats[word] || (stats[word] = {wrong:0, right:0}); s[key]++; LS.set("sb_stats", stats); }
+function stat(word, key){
+  const s = stats[word] || (stats[word] = {wrong:0, right:0}), d = ensureDay();
+  if (key === "right"){ if (!s.right) d.fresh++; d.correct++; } else d.mistakes++;
+  s[key]++; LS.set("sb_stats", stats); save();
+}
 
 function rel(el){ const a = $("arena").getBoundingClientRect(), r = el.getBoundingClientRect(); return {x:r.left - a.left, y:r.top - a.top, w:r.width, h:r.height}; }
 // cut the weapon pixels out of the hero sprite, so the weapon itself can be swung around the hand
@@ -3127,9 +3338,46 @@ function swing(style, dash, glow){
   Object.assign(w.style, {left: heroCv.offsetLeft + "px", top: heroCv.offsetTop + "px", width: heroCv.offsetWidth + "px", height: heroCv.offsetHeight + "px"});
   if (glow) w.style.filter = `drop-shadow(0 0 3px ${glow}) drop-shadow(0 0 6px ${glow})`;
   wrap.appendChild(w);
-  G.swinging = true; drawHero(heroCv, {...P.equip, weapon:"none"}, wrap, heroFrame);
+  G.swinging = true; drawHero(heroCv, {...P.equip, weapon:"none", ...(G.petBusy ? {pet:"nopet"} : {})}, wrap, heroFrame);
   wrap.style.setProperty("--dash", dash + "px"); replay(wrap, "hb-" + (style === "smash" ? "smash" : "slash"));
-  setTimeout(() => { w.remove(); if (G) G.swinging = false; drawHero(heroCv, P.equip, wrap, heroFrame); }, style === "double" ? 760 : 680);
+  setTimeout(() => { w.remove(); if (G) G.swinging = false; drawHero(heroCv, G && G.petBusy ? {...P.equip, pet:"nopet"} : P.equip, wrap, heroFrame); }, style === "double" ? 760 : 680);
+}
+// cut the pet pixels out of the hero sprite, so the pet can jump / fly / recoil on its own
+function petLayer(){
+  const a = document.createElement("canvas"), b = document.createElement("canvas");
+  drawHero(a, {...P.equip, weapon:"none"}, null, 0); drawHero(b, {...P.equip, weapon:"none", pet:"nopet"}, null, 0);
+  const ca = a.getContext("2d"), da = ca.getImageData(0, 0, a.width, a.height), db = b.getContext("2d").getImageData(0, 0, b.width, b.height).data;
+  for (let i = 0; i < da.data.length; i += 4){
+    if (da.data[i] === db[i] && da.data[i+1] === db[i+1] && da.data[i+2] === db[i+2] && da.data[i+3] === db[i+3]) da.data[i+3] = 0;
+  }
+  ca.putImageData(da, 0, 0); return a;
+}
+const PET_ATK = {cat:"pounce", robodog:"bite", minidragon:"breath", darkdragon:"breath", stardragon:"breath", drone:"laser", cyberwolf:"shell", phoenixpet:"swoop"};
+const BREATH = {minidragon:["#ffd23f","#ff7a1a"], darkdragon:["#ffb0f0","#ff4fd8"], stardragon:["#ffffff","#45d1e6"]};
+function petAttack(){
+  const pet = P.equip.pet, kind = PET_ATK[pet];
+  if (!kind || !G || G.petBusy) return;
+  const wrap = $("hero-aura"), h = rel(heroCv), b = rel(bossCv);
+  const px = h.x + h.w * 0.4, py = h.y + h.h * (pet === "drone" ? 0.55 : 0.72), tx = b.x + b.w * 0.45, ty = b.y + b.h * 0.6;
+  const add = (cls, style) => { const el = document.createElement("div"); el.className = "fx " + cls; Object.entries(style).forEach(([k,v]) => k.startsWith("--") ? el.style.setProperty(k, v) : (el.style[k] = v)); $("arena").appendChild(el); setTimeout(() => el.remove(), 700); return el; };
+  const ov = petLayer(); ov.className = "petov pa-" + kind;
+  Object.assign(ov.style, {left: heroCv.offsetLeft + "px", top: heroCv.offsetTop + "px", width: heroCv.offsetWidth + "px", height: heroCv.offsetHeight + "px"});
+  ov.style.setProperty("--dx", Math.max(30, tx - px - 10) + "px");
+  wrap.querySelectorAll(".petov").forEach(e => e.remove()); wrap.appendChild(ov);
+  G.petBusy = true; drawHero(heroCv, {...P.equip, pet:"nopet", ...(G.swinging ? {weapon:"none"} : {})}, wrap, heroFrame);
+  const hitAt = {pounce:260, bite:240, breath:330, laser:120, shell:300, swoop:300}[kind];
+  if (kind === "breath"){ const [c1, c2] = BREATH[pet]; setTimeout(() => { const f = add("ball", {left:(px+10)+"px", top:(py-9)+"px", "--dx":(tx - px - 10)+"px", "--dy":(ty - py)+"px"}); f.style.background = `radial-gradient(circle,#fff 15%,${c1} 40%,${c2} 70%)`; f.style.boxShadow = `0 0 12px ${c2}`; }, 120); tone(220,.25,"sawtooth",.03,90,.1); }
+  if (kind === "laser"){ add("beam", {left:px+"px", top:(py-2)+"px", width:Math.max(10, tx - px)+"px", color:"#ff3b3b", height:"3px"}); tone(1500,.1,"square",.025,2600); }
+  if (kind === "shell"){ add("burst", {left:(px+14)+"px", top:(py-26)+"px", color:"#ff7a1a", width:"24px", height:"24px"}); setTimeout(() => add("bullet", {left:(px+20)+"px", top:(py-16)+"px", color:"#2a2f2a", "--dx":(tx - px - 20)+"px", "--dy":(ty - py + 16)+"px"}), 60); tone(90,.25,"sawtooth",.06,40); }
+  if (kind === "pounce" || kind === "bite" || kind === "swoop") tone(kind === "pounce" ? 900 : 500, .12, "triangle", .03, kind === "pounce" ? 1400 : 300);
+  setTimeout(() => {
+    if (!G) return;
+    const c = {pounce:"#ffffff", bite:"#ff3b3b", breath:(BREATH[pet] || [])[1], laser:"#ff3b3b", shell:"#ff7a1a", swoop:"#ffd23f"}[kind];
+    if (kind === "pounce"){ add("slash", {left:(tx-24)+"px", top:(ty-30)+"px", color:c, width:"44px", height:"44px"}); add("slash x2", {left:(tx-24)+"px", top:(ty-30)+"px", color:c, width:"44px", height:"44px"}); }
+    else add("burst", {left:(tx-22)+"px", top:(ty-22)+"px", color:c, width:"44px", height:"44px"});
+    replay(bossCv, "hit");
+  }, hitAt);
+  setTimeout(() => { ov.remove(); if (G) G.petBusy = false; drawHero(heroCv, G && G.swinging ? {...P.equip, weapon:"none"} : P.equip, wrap, heroFrame); }, 640);
 }
 function fx(kind, col){
   const h = rel(heroCv), b = rel(bossCv);
@@ -3253,6 +3501,7 @@ function resolve(ok, timeout){
     if (G.armorLeft > 0){ G.armorLeft--; dmg = 0; blocked = true; }
     stat(e.word, "right");
     const delay = fx(g.fx, g.fxCol);
+    if (!blocked) later(petAttack, delay + 140);
     later(() => {
       if (blocked){ pop("БЛОК", "block"); sfx.block(); say("Мой панцирь крепче!"); }
       else {
@@ -3269,7 +3518,7 @@ function resolve(ok, timeout){
     if (G.streak % 5 === 0 && G.hearts < g.maxH){ G.hearts++; later(() => { pop("+1 сердце", "heal", "22%"); sfx.heal(); }, 350); fb.textContent = "Зелье! Плюс сердце"; }
     if (g.heal8){ G.healCount++; if (G.healCount % 8 === 0 && G.hearts < g.maxH){ G.hearts++; later(() => { pop("Оскар мурлычет! +1", "heal", "22%"); sfx.heal(); }, 600); } }
     if (g.heal5){ G.heal5 = (G.heal5 || 0) + 1; if (G.heal5 % 5 === 0 && G.hearts < g.maxH){ G.hearts++; later(() => { pop("Феникс лечит!", "heal", "22%"); sfx.heal(); }, 600); } }
-    if (g.heal6){ G.heal6 = (G.heal6 || 0) + 1; if (G.heal6 % 6 === 0 && G.hearts < g.maxH){ G.hearts++; later(() => { pop("Волк лечит!", "heal", "22%"); sfx.heal(); }, 600); } }
+    if (g.heal6){ G.heal6 = (G.heal6 || 0) + 1; if (G.heal6 % 6 === 0 && G.hearts < g.maxH){ G.hearts++; later(() => { pop("Танк чинит! +1", "heal", "22%"); sfx.heal(); }, 600); } }
     if (g.drone && !blocked && G.hp > 0){
       G.droneN = (G.droneN || 0) + 1;
       if (G.droneN % 4 === 0){ const dd = base * 2; G.hp = Math.max(0, G.hp - dd); G.score += dd; later(() => { fx("beam", "#ff3b3b"); later(() => { pop(`Дрон -${dd}`, "crit", "60%"); replay(bossCv, "hit"); }, 180); }, delay + 260); }
@@ -3334,7 +3583,11 @@ function bossDown(){
   const flawless = G.bossMistakes === 0;
   if (flawless) P.tot.flawless++;
   let unlockedNew = false;
-  if (G.kind === "campaign"){
+  if (settings.words === "b" && G.kind !== "training") P.tot.hardWins = (P.tot.hardWins || 0) + 1;
+  if (G.hearts === 1) P.tot.clutch = (P.tot.clutch || 0) + 1;
+  if (G.kind === "training"){
+    if (b.training === "err") P.tot.errRuns = (P.tot.errRuns || 0) + 1; else P.tot.newRuns = (P.tot.newRuns || 0) + 1;
+  } else if (G.kind === "campaign"){
     if (!P.beaten.includes(b.idx)) P.beaten.push(b.idx);
     if (b.spr === "ralina" && !P.lep){ giftRalina(true); G.hearts++; G.gotGift = true; }
     if (b.idx + 1 < BOSSES.length && P.unlocked < b.idx + 1){ P.unlocked = b.idx + 1; unlockedNew = true; }
@@ -3359,6 +3612,20 @@ function bossDown(){
   if (G.hearts < g.maxH) G.hearts++;
   checkAch(); renderHUD();
   const lastCampaign = G.kind === "campaign" && b.idx === BOSSES.length - 1;
+  if (G.kind === "training"){
+    later(() => {
+      const ov = $("boss-over"); ov.hidden = false; $("opts").hidden = true; $("typer").hidden = true; $("word").innerHTML = ""; $("feedback").textContent = "";
+      confetti(120, 2200);
+      const left = b.training === "err" ? errWords().length : newWords().length;
+      ov.innerHTML = `<div class="victory"><b>ТРЕНИРОВКА ПРОЙДЕНА!</b><span>${P.name ? esc(P.name) + ", " : ""}так держать!</span></div>
+        <p class="reward">+${bossCoins + chest.coins} монет${flawless ? " · без ошибок!" : ""}</p>
+        <p>${b.training === "err" ? (left ? `Осталось слов с ошибками: <b>${left}</b>` : "Все ошибки исправлены!") : (left ? `Ещё не встречалось: <b>${left}</b>` : "Ты встретил все слова!")}</p>
+        <div class="row" style="justify-content:center">${left ? `<button class="btn primary" id="btn-train-more">Ещё тренировка</button>` : ""}<button class="btn" id="btn-train-home">На главную</button></div>`;
+      if (left) $("btn-train-more").onclick = () => { const k = b.training; stopGame(); if (!blockedToday()) startTraining(k); };
+      $("btn-train-home").onclick = home;
+    }, 1100);
+    return;
+  }
   later(() => {
     const ov = $("boss-over"); ov.hidden = false; $("opts").hidden = true; $("typer").hidden = true; $("word").innerHTML = ""; $("feedback").textContent = "";
     const reward = `<p class="reward">+${bossCoins + chest.coins} монет${flawless ? " · без ошибок!" : ""}</p>${chest.item ? `<p class="reward">В сундуке: ${esc(chest.item.name)}!</p>` : ""}`;
@@ -3422,7 +3689,17 @@ function home(){ stopGame(); renderHome(); show("s-home"); }
    TEACHER
    ========================================================= */
 let resetArm = false, resetT = 0, heroArm = false, heroT = 0;
+let teacherTab = "pupil";
+function showTeacherTab(t){
+  teacherTab = t;
+  document.querySelectorAll("#ttabs .tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tt === t));
+  document.querySelectorAll("#s-teacher [data-tp]").forEach(p => p.hidden = p.dataset.tp !== t);
+}
+document.querySelectorAll("#ttabs .tab").forEach(b => b.onclick = () => showTeacherTab(b.dataset.tt));
 function renderTeacher(){
+  showTeacherTab(teacherTab); renderLimits();
+  const ln = learnedCount();
+  $("learned-note").innerHTML = `Выучено <b>${ln}</b> из ${PAB.length} словарных слов (слово считается выученным после ${LEARN_N} верных ответов). Встречалось: ${Object.keys(stats).length}. Сегодня новых слов: ${(ensureDay(), P.day.fresh)}.`;
   $("rename-in").value = P.name || ""; $("rename-msg").textContent = "";
   $("pin-note").textContent = getPin() ? "PIN-код стоит. Ученик не сможет открыть этот раздел." : "PIN-код не поставлен: раздел может открыть кто угодно.";
   $("pin-set-msg").textContent = ""; $("btn-pin-off").disabled = !getPin();
@@ -3440,17 +3717,68 @@ function renderTeacher(){
   heroArm = false; $("btn-reset-hero").textContent = "Начать бойца заново";
 }
 const saveSettings = () => LS.set("sb_settings", settings);
+const plural = (n, f) => { const a = Math.abs(n) % 100, b = a % 10; return f[a > 10 && a < 20 ? 2 : b === 1 ? 0 : b >= 2 && b <= 4 ? 1 : 2]; };
+const LIM_KEYS = [["min",["минута игры","минуты игры","минут игры"]],["fresh",["новое слово","новых слова","новых слов"]],["correct",["верный ответ","верных ответа","верных ответов"]],["battles",["бой","боя","боёв"]],["mistakes",["ошибка","ошибки","ошибок"]]];
+function ensureDay(){
+  const d = today();
+  if (!P.day || P.day.date !== d){ P.day = {date:d, sec:0, fresh:0, correct:0, battles:0, mistakes:0}; save(); }
+  return P.day;
+}
+const lims = () => Object.assign({min:0, fresh:0, correct:0, battles:0, mistakes:0}, settings.lim || {});
+const dayVal = k => { const d = ensureDay(); return k === "min" ? Math.floor(d.sec / 60) : d[k]; };
+function limitReason(){
+  const L = lims();
+  for (const [k, n] of LIM_KEYS) if (L[k] > 0 && (k === "min" ? ensureDay().sec >= L.min * 60 : dayVal(k) >= L[k])) return `${L[k]} ${plural(L[k], n)}`;
+  return null;
+}
+function todayHTML(){
+  const L = lims(), act = LIM_KEYS.filter(([k]) => L[k] > 0);
+  if (!act.length) return "";
+  const parts = act.map(([k, n]) => `${Math.min(dayVal(k), L[k])} / ${L[k]} ${plural(L[k], n)}`);
+  const hit = limitReason();
+  return `<div class="todaybar${hit ? " hit" : ""}"><b>${hit ? "На сегодня всё! Возвращайся завтра" : "Сегодня"}</b><span>${parts.join(" · ")}</span></div>`;
+}
+function renderLimits(){
+  const L = lims(); LIM_KEYS.forEach(([k]) => $("lim-" + k).value = L[k] || 0);
+  const d = ensureDay();
+  $("today-stats").innerHTML = [["Минут", Math.floor(d.sec / 60)], ["Новых слов", d.fresh], ["Верных", d.correct], ["Боёв", d.battles], ["Ошибок", d.mistakes]].map(([k,v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("");
+}
+$("btn-lim-save").onclick = () => {
+  settings.lim = {}; LIM_KEYS.forEach(([k]) => settings.lim[k] = Math.max(0, Math.min(2000, parseInt($("lim-" + k).value, 10) || 0)));
+  saveSettings(); renderLimits(); $("lim-msg").className = "msg okm"; $("lim-msg").textContent = "Лимиты сохранены.";
+};
+$("btn-lim-reset").onclick = () => { P.day = null; ensureDay(); renderLimits(); $("lim-msg").className = "msg okm"; $("lim-msg").textContent = "Счётчики обнулены, можно играть дальше."; };
+function blockedToday(){
+  const r = limitReason(); if (!r) return false;
+  toast(`На сегодня всё: лимит ${r}. Монеты и опыт сохранились, возвращайся завтра!`, "quest"); renderHome(); return true;
+}
+function limitStop(r){
+  stopGame(false);
+  const ov = $("boss-over"); ov.hidden = false; $("opts").hidden = true; $("typer").hidden = true;
+  ov.innerHTML = `<div class="victory"><b>НА СЕГОДНЯ ВСЁ!</b><span>${P.name ? esc(P.name) + ", ты" : "Ты"} отлично поработал</span></div>
+    <p>Лимит на сегодня: <b>${esc(r)}</b>. Монеты, опыт и вещи сохранились.</p><p class="note">Завтра бои снова откроются. Отдыхай, герой!</p>
+    <button class="btn primary" id="btn-lim-home">На главную</button>`;
+  $("btn-lim-home").onclick = home; sfx.level();
+}
+setInterval(() => {   // play time: only while actually fighting
+  if (!G || $("s-game").hidden || document.hidden || !$("boss-over").hidden) return;
+  const d = ensureDay(); d.sec++; if (d.sec % 10 === 0) save();
+}, 1000);
 
 /* =========================================================
    WIRING
    ========================================================= */
-$("btn-campaign").onclick = () => startCampaign(frontier());
-$("btn-tower").onclick = () => { if (towerOpen()) startTower(); };
+$("btn-campaign").onclick = () => { if (!blockedToday()) startCampaign(frontier()); };
+$("btn-tower").onclick = () => { if (towerOpen() && !blockedToday()) startTower(); };
 $("btn-shop").onclick = $("btn-end-shop").onclick = () => { tryOn = null; renderShop(); show("s-shop"); };
 $("btn-shop-back").onclick = home;
 $("btn-awards").onclick = () => { renderAwards(); show("s-awards"); };
 $("btn-aw-back").onclick = home;
-$("btn-again").onclick = () => { const k = G && G.kind; stopGame(); k === "tower" ? startTower() : startCampaign(frontier()); };
+$("btn-trophy").onclick = () => { renderTrophies(); show("s-trophy"); };
+$("btn-tr-back").onclick = home;
+$("btn-train-err").onclick = () => { if (!blockedToday()) startTraining("err"); };
+$("btn-train-new").onclick = () => { if (!blockedToday()) startTraining("new"); };
+$("btn-again").onclick = () => { const k = G && G.kind, t = G && G.trainKind; stopGame(); if (blockedToday()) return; k === "tower" ? startTower() : k === "training" ? startTraining(t) : startCampaign(frontier()); };
 $("btn-home").onclick = home;
 $("btn-quit").onclick = home;
 $("btn-back").onclick = home;
@@ -3538,7 +3866,7 @@ document.addEventListener("keydown", e => {
 // live hero animation (aura + pet) for the big hero views
 const HERO_ANIM = [
   {cv: $("home-hero"), wrap: $("home-aura"), eq: () => P.equip},
-  {cv: heroCv, wrap: $("hero-aura"), eq: () => G && G.swinging ? {...P.equip, weapon:"none"} : P.equip},
+  {cv: heroCv, wrap: $("hero-aura"), eq: () => G ? {...P.equip, ...(G.swinging ? {weapon:"none"} : {}), ...(G.petBusy ? {pet:"nopet"} : {})} : P.equip},
   {cv: $("end-hero"), wrap: $("end-aura"), eq: () => P.equip},
   {cv: $("shop-hero"), wrap: $("shop-aura"), eq: () => tryOn ? {...P.equip, [ITEM[tryOn].slot]: tryOn} : P.equip}
 ];
@@ -3651,7 +3979,7 @@ $("btn-rename").onclick = () => {
   P.name = v; save(); $("rename-msg").className = "msg okm"; $("rename-msg").textContent = "Имя сохранено.";
 };
 
-if (P.name){ renderHome(); if (!P.storySeen) showStory(); } else askName();
+if (P.name){ renderHome(); if (!P.storySeen) showStory(); setTimeout(() => { checkAch(); renderHome(); }, 1200); } else askName();
 if (P.lepToast){ delete P.lepToast; save(); setTimeout(() => toast("Ралина передала тебе подарки за победу: лепёшку с каймаком (+1 сердце) и татарский национальный костюм с тюбетейкой! Смотри в гардеробе.", "ach"), 1500); }
 })();
 </script>
