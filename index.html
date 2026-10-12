@@ -1358,14 +1358,14 @@ const COSTUMES = {
   space:{skin:"#f2c09a",hair:"#5a3a22",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#eef2f8",pants:"#c9d3e3",shoe:"#6f7d93"},
   robot:{skin:"#9aa7bd",hair:"#6f7d93",eye:"#ff3b3b",mouth:"#4a5670",shirt:"#6f7d93",pants:"#4a5670",shoe:"#2b2b3a"},
   fire:{skin:"#f2c09a",hair:"#ff7a1a",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#e8501a",pants:"#8e1d2b",shoe:"#3b2a20"},
-  ice:{skin:"#d9f2ff",hair:"#e6f7ff",eye:"#1d4f8c",mouth:"#5a8fc0",shirt:"#7fd3ff",pants:"#3a6fd8",shoe:"#1d4f8c"},
+  ice:{skin:"#d9f2ff",hair:"#9fd0f0",eye:"#1d4f8c",mouth:"#5a8fc0",shirt:"#7fd3ff",pants:"#3a6fd8",shoe:"#1d4f8c"},
   shadow:{skin:"#6a6a8a",hair:"#15121f",eye:"#ff3b3b",mouth:"#15121f",shirt:"#2a2238",pants:"#1a1428",shoe:"#0d0a14"},
   gold:{skin:"#f2c09a",hair:"#ffd84a",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#f0a000",pants:"#b07800",shoe:"#7a5200"}
 };
 /* appearance: free to change, applied on top of the costume */
 const LOOK_HAIR = {auto:["Как у костюма",null], brown:["Каштановые","#5a3a22"], black:["Чёрные","#1e1e28"], light:["Русые","#9a6a3a"], blond:["Светлые","#e8c35a"],
   ginger:["Рыжие","#c8541e"], red:["Красные","#c0283a"], silver:["Серебряные","#c9d3e3"], blue:["Синие","#3a6fd8"], mint:["Мятные","#3fbf9a"], purple:["Фиолетовые","#7a4fd6"]};
-const LOOK_SKIN = {auto:["Как у костюма",null], s1:["Светлая","#f8dcc4"], s2:["Обычная","#f2c09a"], s3:["Смуглая","#d9a27a"], s4:["Тёмная","#a8714f"], s5:["Очень тёмная","#7a4a33"]};
+const LOOK_SKIN = {auto:["Как у костюма",null], s1:["Светлая","#f8dcc4"], s2:["Обычная","#f2c09a"], s3:["Смуглая","#d9a27a"], s4:["Тёмная","#a8714f"], s5:["Очень тёмная","#85563a"]};
 const LOOK_EYE = {auto:["Как у костюма",null], blue:["Синие","#1d2f5c"], brown:["Карие","#5a3a22"], green:["Зелёные","#2b7a3a"], grey:["Серые","#4a5670"]};
 const LOOK_STYLE = {classic:"Классика", spiky:"Ёжик", bangs:"Чёлка", long:"Длинные", mohawk:"Ирокез"};
 const LOOK_MASKED = ["robot","alien","skeleton","spaceknight","shadow"];   // face fully covered by the costume
@@ -1383,6 +1383,8 @@ function hairMatches(eq){
   const both = base.filter(h => arm.includes(h));
   return both.length ? both : base;
 }
+const LOOK_FULLHELM = ["knight","horns","dragonhelm","spacehelm"];          // cover the top of the head
+const shadeHex = (hex, f) => "#" + [1,3,5].map(i => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i+2), 16) * f))).toString(16).padStart(2, "0")).join("");
 const heroLook = () => Object.assign({hair:"auto", skin:"auto", eye:"auto", style:"classic"}, (typeof P === "object" && P && P.look) || {});
 
 const SLOTS = [
@@ -1701,6 +1703,11 @@ function drawHero(cv, eq, wrap, fr = 0){
     if (LOOK_HAIR[look.hair] && LOOK_HAIR[look.hair][1]) C.hair = LOOK_HAIR[look.hair][1];
     if (LOOK_SKIN[look.skin] && LOOK_SKIN[look.skin][1] && !LOOK_NOSKIN.includes(ck)) C.skin = LOOK_SKIN[look.skin][1];
     if (LOOK_EYE[look.eye] && LOOK_EYE[look.eye][1]) C.eye = LOOK_EYE[look.eye][1];
+    // dark skin: default eyes and mouth must stay readable
+    if ((look.skin === "s4" || look.skin === "s5") && !LOOK_NOSKIN.includes(ck)){
+      if (!LOOK_EYE[look.eye] || !LOOK_EYE[look.eye][1]) C.eye = "#0f0a08";
+      C.mouth = shadeHex(C.skin, 0.55);
+    }
   }
 
   const flap = fr && (Math.floor(fr / 2) % 2) ? -1 : 0, breathe = fr && (Math.floor(fr / 4) % 2) ? -1 : 0, blink = fr && fr % 17 === 0;
@@ -1735,16 +1742,18 @@ function drawHero(cv, eq, wrap, fr = 0){
   }
   x.translate(0, -flap);
   // head + body
-  R(ox+7,oy+2,6,1,C.hair); R(ox+6,oy+3,8,1,C.hair); P(ox+6,oy+4,C.hair); P(ox+13,oy+4,C.hair);
-  if (!masked){
-    if (look.style === "long"){ M(ox+5,oy+3,1,6,C.hair); M(ox+6,oy+8,1,1,C.hair); }
-    if (look.style === "spiky"){ P(ox+7,oy+1,C.hair); P(ox+9,oy+1,C.hair); P(ox+11,oy+1,C.hair); P(ox+12,oy+1,C.hair); P(ox+10,oy,C.hair); P(ox+5,oy+3,C.hair); P(ox+14,oy+3,C.hair); }
-    if (look.style === "mohawk"){ R(ox+9,oy,2,2,C.hair); P(ox+9,oy-1,C.hair); }
-  }
+  // hair: light top row, darker lower row so it never melts into the face, whatever the colours
+  const hairD = shadeHex(C.hair, 0.68);
+  const style = masked ? "classic" : (look.style || "classic");
+  const topHidden = LOOK_FULLHELM.includes(eq.helmet) || ck === "space";   // helmet or glass dome over the head
+  R(ox+7,oy+2,6,1,C.hair); R(ox+6,oy+3,8,1,hairD); P(ox+6,oy+4,hairD); P(ox+13,oy+4,hairD);
+  if (style === "long"){ M(ox+5,oy+3,1,6,hairD); M(ox+6,oy+8,1,1,hairD); M(ox+5,oy+3,1,1,C.hair); }
+  if (style === "spiky" && !topHidden){ P(ox+7,oy+1,C.hair); P(ox+9,oy+1,C.hair); P(ox+11,oy+1,C.hair); P(ox+12,oy+1,C.hair); P(ox+10,oy,C.hair); P(ox+8,oy,C.hair); }
+  if (style === "mohawk" && !topHidden){ R(ox+9,oy,2,2,C.hair); R(ox+9,oy-1,2,1,C.hair); R(ox+9,oy+2,2,1,hairD); }
   R(ox+7,oy+4,6,1,C.skin); R(ox+6,oy+5,8,2,C.skin); R(ox+7,oy+7,6,1,C.skin);
   P(ox+8,oy+5,blink ? C.skin : C.eye); P(ox+11,oy+5,blink ? C.skin : C.eye); R(ox+9,oy+7,2,1,C.mouth);
   R(ox+8,oy+8,4,1,C.skin);
-  if (!masked && look.style === "bangs"){ R(ox+7,oy+4,4,1,C.hair); P(ox+6,oy+5,C.hair); }
+  if (style === "bangs"){ R(ox+7,oy+4,4,1,hairD); P(ox+6,oy+5,hairD); }
   R(ox+5,oy+9,10,1,C.shirt); R(ox+4,oy+10,12,1,C.shirt); R(ox+6,oy+11,8,3,C.shirt); R(ox+7,oy+14,6,1,C.shirt);
   R(ox+4,oy+11,2,2,C.shirt); R(ox+14,oy+11,2,2,C.shirt);
   R(ox+7,oy+15,6,1,C.pants); R(ox+7,oy+16,2,3,C.pants); R(ox+11,oy+16,2,3,C.pants);
@@ -1753,8 +1762,8 @@ function drawHero(cv, eq, wrap, fr = 0){
   if (ck === "ninja"){ R(ox+6,oy+6,8,1,"#1e1e28"); R(ox+7,oy+7,6,1,"#1e1e28"); R(ox+6,oy+4,8,1,"#d62839"); P(ox+14,oy+4,"#d62839"); P(ox+15,oy+5,"#d62839"); R(ox+7,oy+14,6,1,"#d62839"); }
   if (ck === "space"){ R(ox+6,oy+12,8,1,"#ff7a1a"); R(ox+6,oy+1,8,1,"#8fd3ff"); M(ox+5,oy+2,1,6,"#8fd3ff"); R(ox+8,oy+10,2,1,"#d62839"); }
   if (ck === "robot"){ M(ox+5,oy+5,1,1,"#ffd23f"); R(ox+10,oy+1,1,1,"#6f7d93"); P(ox+10,oy,"#ff3b3b"); R(ox+8,oy+11,4,2,"#45d1e6"); }
-  if (ck === "fire"){ P(ox+7,oy+1,"#ffd23f"); P(ox+9,oy,"#ff7a1a"); P(ox+9,oy+1,"#ffd23f"); P(ox+12,oy+1,"#ff7a1a"); P(ox+11,oy,"#ffd23f"); }
-  if (ck === "ice"){ P(ox+7,oy+1,"#9fdcff"); P(ox+10,oy,"#9fdcff"); P(ox+10,oy+1,"#e6f7ff"); P(ox+12,oy+1,"#9fdcff"); }
+  if (ck === "fire" && style === "classic"){ P(ox+7,oy+1,"#ffd23f"); P(ox+9,oy,"#ff7a1a"); P(ox+9,oy+1,"#ffd23f"); P(ox+12,oy+1,"#ff7a1a"); P(ox+11,oy,"#ffd23f"); }
+  if (ck === "ice" && style === "classic"){ P(ox+7,oy+1,"#9fdcff"); P(ox+10,oy,"#9fdcff"); P(ox+10,oy+1,"#e6f7ff"); P(ox+12,oy+1,"#9fdcff"); }
   if (ck === "gold"){ P(ox+12,oy+10,"#ffffff"); P(ox+7,oy+12,"#ffd84a"); }
   if (ck === "cyberninja"){ R(ox+6,oy+6,8,1,"#1e1e28"); R(ox+7,oy+7,6,1,"#1e1e28"); R(ox+6,oy+4,8,1,"#45d1e6"); P(ox+14,oy+4,"#45d1e6"); P(ox+15,oy+5,"#ff4fd8"); R(ox+7,oy+14,6,1,"#45d1e6"); R(ox+9,oy+10,1,4,"#ff4fd8"); M(ox+4,oy+11,1,1,"#45d1e6"); }
   if (ck === "dragonknight"){ [[7,10],[9,11],[11,10],[8,12],[12,12],[10,13]].forEach(([a,b]) => P(ox+a,oy+b,"#1b5e30")); R(ox+7,oy+14,6,1,"#ffd23f"); }
@@ -1869,6 +1878,7 @@ function drawHero(cv, eq, wrap, fr = 0){
     case "hammer": R(wx,oy+3,2,10,"#6b4e31"); R(wx-2,oy-1,6,4,"#9aa7bd"); R(wx-2,oy+2,6,1,"#6f7d93"); P(wx,oy,"#ffd23f"); P(wx+1,oy+1,"#ffd23f"); P(wx+1,oy-1,"#ffd23f"); break;
     case "goldsword": R(wx,oy-2,2,12,"#ffd84a"); R(wx+1,oy-2,1,12,"#f0a000"); P(wx,oy-3,"#ffd84a"); R(wx-1,oy+10,4,1,"#f0a000"); R(wx,oy+11,2,2,"#6b4e31"); P(wx-1,oy+10,"#d62839"); break;
     case "cannon": R(wx-2,oy+9,9,4,"#e3e8f0"); R(wx-2,oy+10,9,1,"#7a4fd6"); R(wx+7,oy+9,1,4,"#ff4fd8"); R(wx-1,oy+13,2,2,"#4a5670"); P(wx+2,oy+11,"#ff4fd8"); break;
+    case "none": break;
     default: P(wx,oy+2,"#333333"); R(wx,oy+3,2,1,"#e8b07a"); R(wx,oy+4,2,8,"#ffcf3a"); R(wx+1,oy+4,1,8,"#e0a800"); R(wx,oy+12,2,1,"#f28aa0");
   }
   R(ox+14,oy+13,4,1,C.skin); R(ox+4,oy+13,2,1,C.skin);
@@ -2581,12 +2591,14 @@ function renderLook(){
       <small class="note">К костюму «${esc(costumeName)}»${ITEM[eq.armor].price ? ` и броне «${esc(ITEM[eq.armor].name)}»` : ""} лучше всего идут: ${good.map(h => LOOK_HAIR[h][0].toLowerCase()).join(", ")} волосы. Такие цвета отмечены ★</small>
       <div class="row"><button class="btn small gold" id="look-match">Подобрать</button><button class="btn small" id="look-reset">Как у костюма</button></div></div>
     <h3>Причёска</h3>
+    ${!masked && (LOOK_FULLHELM.includes(eq.helmet) || ck === "space") ? `<p class="note lookwarn">${ck === "space" ? "Космонавт в шлеме" : `${esc(ITEM[eq.helmet].name)}`} закрывает макушку, поэтому Ёжик и Ирокез сейчас не видно. Длинные волосы и чёлка видны. Сними шлем, чтобы показать причёску целиком.</p>` : ""}
     <div class="items lookstyles">${Object.entries(LOOK_STYLE).map(([k,n]) => `<button class="icard${k === L.style ? " on" : ""}" data-g="style" data-v="${k}"><span class="headcrop"><canvas id="ls-${k}"></canvas></span><b>${n}</b></button>`).join("")}</div>
     <h3>Волосы</h3>${sw("hair", LOOK_HAIR, L.hair, good)}
     <h3>Кожа</h3>${LOOK_NOSKIN.includes(ck) ? `<p class="note">У ледяного костюма своя кожа, она не меняется.</p>` : ""}${sw("skin", LOOK_SKIN, L.skin)}
     <h3>Глаза</h3>${sw("eye", LOOK_EYE, L.eye)}
     <p class="note">Внешность бесплатная, меняй сколько хочешь.</p>`;
-  Object.keys(LOOK_STYLE).forEach(k => drawHero($("ls-"+k), {...eq, helmet:"nohelmet", look:{...L, style:k}}));
+  const bare = {...eq, helmet:"nohelmet", weapon:"none", armor:"noarmor", back:"noback", pet:"nopet", aura:"noaura"};
+  Object.keys(LOOK_STYLE).forEach(k => drawHero($("ls-"+k), {...bare, look:{...L, style:k}}));
   const setLook = (g, v) => { P.look = {...heroLook(), [g]: v}; save(); sfx.block(); renderShop(); };
   $("items").querySelectorAll("[data-g]").forEach(b => b.onclick = () => setLook(b.dataset.g, b.dataset.v));
   $("look-match").onclick = () => {
