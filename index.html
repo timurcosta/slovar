@@ -1640,21 +1640,21 @@ const PET_PAL = {
 
 function drawHero(cv, eq, wrap, fr = 0){
   // 1px margin on every side so outlines at the edges (pet, wings, weapons) are never clipped
-  const W = 30, H = 27, CW = W + 2, CH = H + 2; cv.width = CW; cv.height = CH;
-  const x = cv.getContext("2d"); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,CW,CH); x.setTransform(1,0,0,1,1,1);
+  const W = 30, H = 27, TOP = 4, CW = W + 2, CH = H + 1 + TOP; cv.width = CW; cv.height = CH;  // TOP: room for raised weapons + breathing
+  const x = cv.getContext("2d"); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,CW,CH); x.setTransform(1,0,0,1,1,TOP);
   const ox = 6, oy = 4;
   let cx = x;
   const R = (a,b,w,h,c) => { cx.fillStyle = c; cx.fillRect(a,b,w,h); };
   // draws a group of pixels on its own layer, then rings it with a dark 1px outline so it reads on any costume
   const outlined = (fn, col = "#141a33") => {
-    const oc = document.createElement("canvas"); oc.width = CW; oc.height = CH; cx = oc.getContext("2d"); cx.setTransform(1,0,0,1,1,1);
+    const oc = document.createElement("canvas"); oc.width = CW; oc.height = CH; cx = oc.getContext("2d"); cx.setTransform(1,0,0,1,1,TOP);
     fn(); cx = x;
     const d = oc.getContext("2d").getImageData(0, 0, CW, CH).data, has = (i,j) => i >= 0 && j >= 0 && i < CW && j < CH && d[(j*CW + i)*4 + 3] > 0;
     x.setTransform(1,0,0,1,0,0);
     x.fillStyle = col;
     for (let j = 0; j < CH; j++) for (let i = 0; i < CW; i++) if (!has(i,j) && (has(i-1,j) || has(i+1,j) || has(i,j-1) || has(i,j+1))) x.fillRect(i, j, 1, 1);
     x.drawImage(oc, 0, 0);
-    x.setTransform(1,0,0,1,1,1);
+    x.setTransform(1,0,0,1,1,TOP);
   };
   const P = (a,b,c) => R(a,b,1,1,c);
   const M = (a,b,w,h,c) => { R(a,b,w,h,c); R(2*(ox+10)-(a+w),b,w,h,c); };  // mirrored pair
@@ -1837,7 +1837,7 @@ function drawHero(cv, eq, wrap, fr = 0){
     const d = x.getImageData(0, 0, CW, CH).data, has = (i,j) => i >= 0 && j >= 0 && i < CW && j < CH && d[(j*CW + i)*4 + 3] > 0;
     x.fillStyle = "rgba(20,26,51,.85)";
     for (let j = 0; j < CH; j++) for (let i = 0; i < CW; i++) if (!has(i,j) && (has(i-1,j) || has(i+1,j) || has(i,j-1) || has(i,j+1))) x.fillRect(i, j, 1, 1);
-    x.setTransform(1,0,0,1,1,1); }
+    x.setTransform(1,0,0,1,1,TOP); }
   // aura: animated per type (fr = animation frame)
   if (AURA_COL[eq.aura]){
     const cols = AURA_COL[eq.aura], A = eq.aura;
