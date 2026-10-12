@@ -1979,34 +1979,58 @@ function drawHero(cv, eq, wrap, fr = 0){
       break; }
   }
   outlined(() => {
-  // armor
-  if (eq.armor === "pads"){ M(ox+3,oy+9,3,2,"#6f7d93"); M(ox+3,oy+8,1,1,"#e3e8f0"); M(ox+5,oy+8,1,1,"#e3e8f0"); M(ox+2,oy+9,1,1,"#e3e8f0"); }
-  if (eq.armor === "steel"){ R(ox+6,oy+10,8,4,"#d7dee9"); R(ox+6,oy+10,8,1,"#9aa7bd"); R(ox+9,oy+11,2,2,"#9aa7bd"); M(ox+4,oy+9,2,2,"#b9c4d6"); }
-  if (eq.armor === "spikearmor"){
-    R(ox+6,oy+10,8,4,"#4a5670"); P(ox+7,oy+11,"#e3e8f0"); P(ox+9,oy+12,"#e3e8f0"); P(ox+11,oy+11,"#e3e8f0"); P(ox+12,oy+13,"#e3e8f0"); P(ox+8,oy+13,"#e3e8f0");
-    M(ox+3,oy+9,3,2,"#2b2b3a"); M(ox+2,oy+8,1,1,"#e3e8f0"); M(ox+3,oy+7,1,1,"#e3e8f0"); M(ox+4,oy+8,1,1,"#e3e8f0"); M(ox+5,oy+7,1,1,"#e3e8f0"); M(ox+1,oy+9,1,1,"#e3e8f0");
-  }
-  if (eq.armor === "cyber"){ R(ox+6,oy+10,8,4,"#1f2440"); R(ox+7,oy+10,1,4,"#45d1e6"); R(ox+12,oy+10,1,4,"#45d1e6"); R(ox+9,oy+11,2,2,"#ff4fd8"); M(ox+4,oy+9,2,2,"#1f2440"); M(ox+4,oy+9,1,1,"#45d1e6"); }
-  if (eq.armor === "goldarmor"){ R(ox+6,oy+10,8,4,"#f0a000"); R(ox+7,oy+10,6,1,"#ffd84a"); R(ox+9,oy+11,2,2,"#d62839"); M(ox+3,oy+9,3,2,"#ffd84a"); M(ox+3,oy+8,1,1,"#f0a000"); }
-  if (eq.armor === "dragonarmor"){
-    R(ox+6,oy+10,8,4,"#2b9348"); [[7,10],[9,11],[11,10],[8,12],[12,12],[10,13],[13,11]].forEach(([a,b]) => P(ox+a,oy+b,"#1b5e30"));
-    M(ox+3,oy+9,3,2,"#1b5e30"); M(ox+3,oy+8,1,1,"#ffd23f"); M(ox+4,oy+7,1,1,"#ffd23f"); M(ox+5,oy+8,1,1,"#ffd23f"); R(ox+9,oy+11,2,1,"#ffd23f");
-  }
-  if (eq.armor === "mech"){
-    R(ox+5,oy+9,10,5,"#4a5670"); R(ox+6,oy+10,8,1,"#9aa7bd"); R(ox+9,oy+11,2,2,"#45d1e6"); P(ox+8,oy+12,"#9aa7bd"); P(ox+11,oy+12,"#9aa7bd");
-    M(ox+2,oy+8,4,3,"#6f7d93"); M(ox+2,oy+8,4,1,"#ff7a1a"); M(ox+2,oy+11,1,2,"#4a5670");
-  }
-  if (eq.armor === "titan"){
-    R(ox+6,oy+10,8,4,"#2a2238"); R(ox+9,oy+11,2,2,"#d62839"); P(ox+7,oy+12,"#d62839"); P(ox+12,oy+12,"#d62839"); R(ox+6,oy+13,8,1,"#3d3550");
-    M(ox+2,oy+8,4,3,"#3d3550"); M(ox+1,oy+7,1,1,"#e3e8f0"); M(ox+3,oy+6,1,1,"#e3e8f0"); M(ox+5,oy+7,1,1,"#e3e8f0"); M(ox+1,oy+10,1,1,"#e3e8f0"); M(ox+0,oy+8,1,1,"#e3e8f0"); M(ox+3,oy+5,1,1,"#d62839");
-  }
-  if (eq.armor === "supernova"){
-    R(ox+5,oy+9,10,5,"#fff3a0"); R(ox+9,oy+10,2,3,"#ffffff"); R(ox+7,oy+11,6,1,"#ffd23f"); P(ox+6,oy+10,"#ff7a1a"); P(ox+13,oy+10,"#ff7a1a"); P(ox+6,oy+13,"#ff4fd8"); P(ox+13,oy+13,"#ff4fd8");
-    M(ox+2,oy+7,4,4,"#f0a000"); M(ox+2,oy+7,4,1,"#ffffff"); M(ox+1,oy+6,1,1,"#ffffff"); M(ox+3,oy+5,1,1,"#fff3a0"); M(ox+1,oy+9,1,1,"#ffffff");
-  }
-  if (eq.armor === "stararmor"){
-    R(ox+6,oy+10,8,4,"#1b1446"); [[7,10],[12,11],[9,12],[10,10],[8,13],[13,13]].forEach(([a,b],i) => P(ox+a,oy+b,["#ffffff","#ffd23f","#c77dff"][i%3]));
-    M(ox+3,oy+9,3,2,"#c77dff"); M(ox+4,oy+8,1,1,"#ffffff"); R(ox+9,oy+11,2,1,"#ffd23f");
+  // armor: a real armour set worn OVER the outfit, so it never melts into the costume:
+  // narrower breastplate (shirt shows at the sides), pauldrons sticking out past the shoulders,
+  // belt with tassets, bracers and greaves; every plate gets a light top edge and a dark bottom edge
+  const plate = (a, b, w, h, c) => { R(a,b,w,h,c); R(a,b,w,1,shadeHex(c,1.3)); if (h > 1) R(a,b+h-1,w,1,shadeHex(c,0.7)); };
+  const mplate = (a, b, w, h, c) => { plate(a,b,w,h,c); plate(2*(ox+10)-(a+w),b,w,h,c); };
+  const set = (o) => {
+    if (o.chest) plate(ox+7,oy+10,6,4,o.chest);
+    if (o.pad) mplate(ox+o.padX,oy+8,o.padW,3,o.pad);
+    if (o.belt) R(ox+7,oy+14,6,1,o.belt);
+    if (o.tasset) M(ox+7,oy+15,2,1,o.tasset);
+    if (o.bracer) M(ox+4,oy+12,2,1,o.bracer);
+    if (o.greave) mplate(ox+7,oy+17,2,2,o.greave);
+  };
+  switch (eq.armor){
+    case "pads":   // leather pads with steel studs, chest strap
+      mplate(ox+3,oy+9,3,2,"#8a5a2b"); M(ox+3,oy+8,1,1,"#e3e8f0"); M(ox+5,oy+8,1,1,"#e3e8f0");
+      for (let k = 0; k < 4; k++) P(ox+7+k*2, oy+10+k, "#5a3a1a"), P(ox+8+k*2, oy+10+k, "#5a3a1a");
+      P(ox+9,oy+11,"#e3e8f0"); break;
+    case "steel":
+      set({chest:"#c9d3e3", pad:"#9aa7bd", padX:3, padW:3, belt:"#4a3a2a", tasset:"#9aa7bd", bracer:"#9aa7bd", greave:"#9aa7bd"});
+      R(ox+9,oy+11,2,2,"#6f7d93"); P(ox+9,oy+10,"#ffffff"); break;
+    case "spikearmor":
+      set({chest:"#4a5670", pad:"#2b2b3a", padX:3, padW:3, belt:"#2b2b3a", bracer:"#2b2b3a", greave:"#4a5670"});
+      M(ox+2,oy+8,1,1,"#e3e8f0"); M(ox+3,oy+7,1,1,"#e3e8f0"); M(ox+5,oy+7,1,1,"#e3e8f0"); M(ox+1,oy+9,1,1,"#e3e8f0");
+      P(ox+8,oy+11,"#e3e8f0"); P(ox+11,oy+11,"#e3e8f0"); P(ox+9,oy+12,"#e3e8f0"); P(ox+10,oy+12,"#e3e8f0"); break;
+    case "cyber":
+      set({chest:"#1f2440", pad:"#1f2440", padX:3, padW:3, belt:"#45d1e6", bracer:"#45d1e6", greave:"#1f2440"});
+      R(ox+7,oy+10,1,4,"#45d1e6"); R(ox+12,oy+10,1,4,"#45d1e6"); R(ox+9,oy+11,2,2,(fr || 0) % 6 < 3 ? "#ff4fd8" : "#ffffff");
+      M(ox+3,oy+8,3,1,"#45d1e6"); M(ox+7,oy+17,2,1,"#45d1e6"); break;
+    case "goldarmor":
+      set({chest:"#f0a000", pad:"#ffd84a", padX:2, padW:4, belt:"#7a5200", tasset:"#f0a000", bracer:"#ffd84a", greave:"#f0a000"});
+      R(ox+9,oy+11,2,2,"#d62839"); P(ox+9,oy+11,"#ff8a8a"); M(ox+2,oy+8,1,1,"#ffffff"); P(ox+8,oy+10,"#ffffff"); break;
+    case "dragonarmor":
+      set({chest:"#2b9348", pad:"#1b5e30", padX:2, padW:4, belt:"#7a4a26", tasset:"#1b5e30", bracer:"#ffd23f", greave:"#1b5e30"});
+      [[8,11],[10,11],[9,12],[11,12]].forEach(([a,b]) => P(ox+a,oy+b,"#1b5e30"));
+      M(ox+2,oy+7,1,1,"#ffd23f"); M(ox+3,oy+6,1,1,"#ffd23f"); M(ox+5,oy+7,1,1,"#ffd23f"); R(ox+9,oy+10,2,1,"#ffd23f"); break;
+    case "mech":   // heavy powered suit: big blocks, hazard stripes, glowing core
+      set({chest:"#6f7d93", pad:"#4a5670", padX:1, padW:5, belt:"#2a2f4a", tasset:"#4a5670", bracer:"#ff7a1a", greave:"#4a5670"});
+      M(ox+1,oy+8,5,1,"#ff7a1a"); M(ox+2,oy+10,1,1,"#ffd23f"); R(ox+9,oy+11,2,2,"#45d1e6"); P(ox+9,oy+11,"#ffffff");
+      R(ox+7,oy+13,6,1,"#ffd23f"); P(ox+8,oy+13,"#2a2f4a"); P(ox+10,oy+13,"#2a2f4a"); P(ox+12,oy+13,"#2a2f4a"); M(ox+7,oy+18,2,1,"#ff7a1a"); break;
+    case "titan":
+      set({chest:"#2a2238", pad:"#3d3550", padX:1, padW:5, belt:"#d62839", tasset:"#3d3550", bracer:"#d62839", greave:"#2a2238"});
+      R(ox+9,oy+11,2,2,"#d62839"); P(ox+8,oy+12,"#d62839"); P(ox+11,oy+12,"#d62839");
+      M(ox+1,oy+7,1,1,"#e3e8f0"); M(ox+3,oy+6,1,1,"#e3e8f0"); M(ox+5,oy+7,1,1,"#e3e8f0"); M(ox+0,oy+9,1,1,"#e3e8f0"); M(ox+3,oy+5,1,1,"#d62839"); break;
+    case "stararmor":
+      set({chest:"#1b1446", pad:"#3d2a6b", padX:2, padW:4, belt:"#c77dff", tasset:"#3d2a6b", bracer:"#c77dff", greave:"#1b1446"});
+      [[7,10],[12,11],[9,12],[10,10],[8,13],[11,13]].forEach(([a,b],i) => P(ox+a,oy+b,["#ffffff","#ffd23f","#c77dff"][(i + ((fr || 0) % 6 < 3 ? 0 : 1)) % 3]));
+      M(ox+3,oy+8,1,1,"#ffffff"); R(ox+9,oy+11,2,1,"#ffd23f"); break;
+    case "supernova":
+      set({chest:"#fff3a0", pad:"#f0a000", padX:1, padW:5, belt:"#ff7a1a", tasset:"#f0a000", bracer:"#ffffff", greave:"#f0a000"});
+      R(ox+9,oy+10,2,3,"#ffffff"); R(ox+8,oy+11,4,1,"#ffd23f"); P(ox+7,oy+10,"#ff7a1a"); P(ox+12,oy+10,"#ff7a1a"); P(ox+7,oy+13,"#ff4fd8"); P(ox+12,oy+13,"#ff4fd8");
+      M(ox+1,oy+8,5,1,"#ffffff"); M(ox+0,oy+7,1,1,(fr || 0) % 6 < 3 ? "#ffffff" : "#fff3a0"); M(ox+3,oy+6,1,1,"#fff3a0"); break;
   }
   // helmet
 
