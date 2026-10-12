@@ -193,6 +193,20 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 @keyframes slash2{0%{opacity:1;transform:scaleX(-1) rotate(-80deg) scale(.6)}100%{opacity:0;transform:scaleX(-1) rotate(40deg) scale(1.1)}}
 .stage .fighter:first-child{position:relative;z-index:2}
 .dash{animation:dash .4s ease-in-out}
+#hero-aura{position:relative}
+.wpn{position:absolute;image-rendering:pixelated;pointer-events:none;transform-origin:73% 59%;z-index:2}
+.wpn.sw-slash{animation:swSlash .66s cubic-bezier(.4,0,.2,1) forwards}
+.wpn.sw-smash{animation:swSmash .68s cubic-bezier(.4,0,.2,1) forwards}
+.wpn.sw-sweep{animation:swSweep .66s cubic-bezier(.4,0,.2,1) forwards}
+.wpn.sw-double{animation:swDouble .74s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes swSlash{0%{transform:rotate(0)}30%{transform:rotate(-70deg)}36%{transform:rotate(-78deg)}50%{transform:rotate(108deg)}72%{transform:rotate(96deg)}100%{transform:rotate(0)}}
+@keyframes swSmash{0%{transform:rotate(0)}32%{transform:rotate(-125deg)}38%{transform:rotate(-132deg)}50%{transform:rotate(80deg)}74%{transform:rotate(70deg)}100%{transform:rotate(0)}}
+@keyframes swSweep{0%{transform:rotate(0)}30%{transform:rotate(-40deg) scaleX(-1)}36%{transform:rotate(-48deg) scaleX(-1)}50%{transform:rotate(150deg)}72%{transform:rotate(140deg)}100%{transform:rotate(0)}}
+@keyframes swDouble{0%{transform:rotate(0)}24%{transform:rotate(-70deg)}40%{transform:rotate(105deg)}52%{transform:rotate(-35deg)}64%{transform:rotate(110deg)}82%{transform:rotate(100deg)}100%{transform:rotate(0)}}
+.hb-slash{animation:hbSlash .66s ease-in-out}
+.hb-smash{animation:hbSmash .68s ease-in-out}
+@keyframes hbSlash{0%{transform:none}30%{transform:translateX(-6px) rotate(-6deg)}46%{transform:translateX(var(--dash)) rotate(5deg)}72%{transform:translateX(var(--dash)) rotate(2deg)}100%{transform:none}}
+@keyframes hbSmash{0%{transform:none}32%{transform:translate(-4px,-18px) rotate(-8deg)}48%{transform:translate(var(--dash),3px) rotate(9deg)}74%{transform:translate(var(--dash),0) rotate(3deg)}100%{transform:none}}
 .dashSmash{animation:dashSmash .45s ease-in-out}
 @keyframes dash{0%{transform:translateX(0)}35%{transform:translateX(var(--dash)) rotate(4deg)}55%{transform:translateX(var(--dash)) rotate(-10deg)}100%{transform:translateX(0)}}
 @keyframes dashSmash{0%{transform:translateX(0)}30%{transform:translateX(var(--dash)) translateY(-14px) rotate(-12deg)}50%{transform:translateX(var(--dash)) translateY(4px) rotate(14deg)}100%{transform:translateX(0)}}
@@ -415,7 +429,7 @@ body.kb .arena{gap:6px;padding:8px 10px 10px}
 @keyframes boltA{0%,100%{opacity:0}10%,30%,55%{opacity:1}20%,45%{opacity:.2}}
 @keyframes burst{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(1.4)}}
 @media (prefers-reduced-motion: reduce){
-  .bob,.atk,.sucked,.quake,.ring,.dash,.dashSmash,.steam,.vortex,.nova,.word.dark,.opts.runaway .opt,#boss-wrap.angry,.ouch,.hit,.smashed,.lunge,.glow,.wiggle,.rainbow,.pulse,#boss-wrap,body.hurt .sheet,.pop,.fx,.word.shakeW,.blot{animation:none!important}
+  .wpn,.hb-slash,.hb-smash,.bob,.atk,.sucked,.quake,.ring,.dash,.dashSmash,.steam,.vortex,.nova,.word.dark,.opts.runaway .opt,#boss-wrap.angry,.ouch,.hit,.smashed,.lunge,.glow,.wiggle,.rainbow,.pulse,#boss-wrap,body.hurt .sheet,.pop,.fx,.word.shakeW,.blot{animation:none!important}
   .fx{display:none}
   .dead{animation:none;opacity:.15}
   .pop{opacity:1;transform:translate(-50%,-20px)}
@@ -1331,7 +1345,7 @@ const LORE = {
   "Король Ошибок": "Тот, кто разорвал Великий Словарь. Победи его, и все буквы вернутся на свои места!"
 };
 const WIN_LORE = {
-  "Репетитор Ралина": "Ралина: Ты готов, {name}! Держи в дорогу лепёшку с каймаком и тюбетейку, чтобы голову не напекло. Найди страницы Словаря. И если встретишь мою подругу Ангелику и сестру Олесю, помоги им, их заколдовал Король.",
+  "Репетитор Ралина": "Ралина: Ты готов, {name}! Держи в дорогу лепёшку с каймаком и наш татарский костюм с тюбетейкой, чтобы голову не напекло. Найди страницы Словаря. И если встретишь мою подругу Ангелику и сестру Олесю, помоги им, их заколдовал Король.",
   "Кракозябра": "Кракозябра пискнула и вернула стёртые страницы. Оказалось, она не злая, ей просто было скучно.",
   "Призрак Пропуска": "Над облаками виднеется Облачная библиотека. Там ждёт Ангелика.",
   "Ангел Ангелика": "Чары спали! Ангелика: Спасибо, {name}! Прости за облака. Олесю увезли в Тёмные земли, спаси её!",
@@ -1372,6 +1386,7 @@ const COSTUMES = {
   fire:{skin:"#f2c09a",hair:"#ff7a1a",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#e8501a",pants:"#8e1d2b",shoe:"#3b2a20"},
   ice:{skin:"#d9f2ff",hair:"#9fd0f0",eye:"#1d4f8c",mouth:"#5a8fc0",shirt:"#7fd3ff",pants:"#3a6fd8",shoe:"#1d4f8c"},
   shadow:{skin:"#6a6a8a",hair:"#15121f",eye:"#ff3b3b",mouth:"#15121f",shirt:"#2a2238",pants:"#1a1428",shoe:"#0d0a14"},
+  tatar:{skin:"#f2c09a",hair:"#3b2418",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#ffffff",pants:"#3a3a5a",shoe:"#2b9348"},
   gold:{skin:"#f2c09a",hair:"#ffd84a",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#f0a000",pants:"#b07800",shoe:"#7a5200"}
 };
 /* appearance: free to change, applied on top of the costume */
@@ -1385,7 +1400,7 @@ const LOOK_NOSKIN = ["ice"];                                               // st
 // which hair colours suit which outfit: costume first, armor narrows it down
 const HAIR_FOR = {school:["brown","black","light","blond","ginger"], ninja:["black","red","silver"], space:["blond","brown","ginger","light"], fire:["ginger","red","black"],
   ice:["silver","blond","blue"], gold:["blond","brown","ginger"], cyberninja:["black","blue","mint"], dragonknight:["brown","ginger","black"], galaxy:["purple","silver","blue"],
-  cyborg:["black","silver","red"], wordlord:["blond","purple","silver"]};
+  cyborg:["black","silver","red"], tatar:["black","brown","light"], wordlord:["blond","purple","silver"]};
 const HAIR_ARMOR = {pads:["brown","black","ginger","light"], steel:["black","brown","silver","blond"], spikearmor:["black","red","silver"], cyber:["black","blue","mint"], goldarmor:["blond","brown","ginger"],
   dragonarmor:["ginger","brown","black"], mech:["ginger","black","silver"], titan:["black","red","silver"], stararmor:["purple","silver","blue"], supernova:["blond","ginger","silver"]};
 function hairMatches(eq){
@@ -1493,12 +1508,13 @@ const ITEMS = [
   {id:"stardragon",slot:"pet",name:"Звёздный дракон",price:75000,lvl:37,floor:85,critMult:3.5,perk:"Крит x3.5"},
   {id:"supernovaaura",slot:"aura",name:"Аура Сверхновой",price:50000,lvl:33,floor:60,perk:"Сияние звезды"},
   {id:"spaceknight",slot:"costume",name:"Космический рыцарь",price:55000,lvl:34,floor:65,perk:"Ультра-скин"},
-  {id:"wordlord",slot:"costume",name:"Владыка Слова",price:100000,lvl:42,floor:100,perk:"Самый легендарный скин в игре"}
+  {id:"wordlord",slot:"costume",name:"Владыка Слова",price:100000,lvl:42,floor:100,perk:"Самый легендарный скин в игре"},
+  {id:"tatarc",slot:"costume",name:"Татарский костюм",price:0,gift:true,lvl:1,perk:"Подарок Ралины: вышитая рубаха, бархатный камзол и ичиги"}
 ];
 const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
 const RARITY = p => p >= 40000 ? ["УЛЬТРА","#ff4fd8"] : p >= 15000 ? ["МИФ","#d62839"] : p >= 5000 ? ["ЛЕГЕНДА","#c98500"] : p >= 1500 ? ["ЭПИК","#7a4fd6"] : p >= 400 ? ["РЕДКИЙ","#2f55c8"] : ["ОБЫЧНЫЙ","#5d6f93"];
 const COSTUME_KEY = {school:"school",ninja:"ninja",space:"space",robotc:"robot",firec:"fire",icec:"ice",shadowc:"shadow",goldc:"gold",
-  cyberninja:"cyberninja",dragonknight:"dragonknight",alienc:"alien",skeletonc:"skeleton",galaxyc:"galaxy",cyborg:"cyborg",spaceknight:"spaceknight",wordlord:"wordlord"};
+  cyberninja:"cyberninja",dragonknight:"dragonknight",alienc:"alien",skeletonc:"skeleton",galaxyc:"galaxy",cyborg:"cyborg",spaceknight:"spaceknight",wordlord:"wordlord",tatarc:"tatar"};
 Object.assign(COSTUMES, {
   cyberninja:{skin:"#f2c09a",hair:"#1e1e28",eye:"#45d1e6",mouth:"#1e1e28",shirt:"#1f2440",pants:"#1e1e28",shoe:"#111111"},
   dragonknight:{skin:"#f2c09a",hair:"#7a4a26",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#2b9348",pants:"#1b5e30",shoe:"#3b2a20"},
@@ -1868,6 +1884,15 @@ function drawHero(cv, eq, wrap, fr = 0){
       M(ox+3,oy+9,3,2,"#4a5670"); M(ox+3,oy+9,3,1,"#45d1e6");                                               // pauldrons
       R(ox+9,oy+11,2,2,"#45d1e6"); P(ox+9,oy+11,"#ffffff"); R(ox+7,oy+14,6,1,"#45d1e6"); M(ox+7,oy+17,2,1,"#4a5670"); M(ox+6,oy+19,3,1,"#45d1e6");
       break;
+    case "tatar":
+      R(ox+6,oy+10,8,4,"#7a1f2b"); R(ox+9,oy+9,2,3,"#ffffff");                      // velvet kamzol over a white shirt
+      R(ox+8,oy+10,1,4,"#f0a000"); R(ox+11,oy+10,1,4,"#f0a000"); P(ox+9,oy+12,"#d62839"); P(ox+10,oy+12,"#d62839");   // gold trim, embroidered collar
+      P(ox+7,oy+11,"#ffd84a"); P(ox+12,oy+11,"#ffd84a"); P(ox+7,oy+13,"#f0a000"); P(ox+12,oy+13,"#f0a000");          // ornament
+      M(ox+4,oy+12,2,1,"#d62839"); M(ox+5,oy+9,1,1,"#e6e6e6");                     // embroidered cuffs
+      R(ox+6,oy+14,8,1,"#2b9348"); P(ox+12,oy+15,"#2b9348"); P(ox+12,oy+16,"#ffd23f");   // sash with tassel
+      M(ox+7,oy+17,2,2,"#2b9348"); M(ox+7,oy+18,1,1,"#d62839"); M(ox+8,oy+17,1,1,"#ffd23f");   // ichigi boots with tulip pattern
+      M(ox+6,oy+19,3,1,"#1b6b3a"); M(ox+6,oy+19,1,1,"#ffd23f");
+      break;
     case "wordlord": {
       R(ox+7,oy+1,6,1,"#f0a000"); P(ox+7,oy,"#f0a000"); P(ox+9,oy,"#f0a000"); P(ox+10,oy,"#f0a000"); P(ox+12,oy,"#f0a000");   // crown
       P(ox+9,oy-1,"#ffd84a"); P(ox+10,oy-1,"#ffd84a"); P(ox+9,oy+1,"#45d1e6"); P(ox+10,oy+1,"#d62839");
@@ -2082,7 +2107,7 @@ P.unlocked = Math.min(P.unlocked || 0, BOSSES.length - 1);
 P.tot = Object.assign(freshProfile().tot, P.tot);
 P.up = Object.assign({str:0,hp:0,time:0,gold:0}, P.up);
 const save = () => LS.set("sb2_profile", P);
-(() => { if (!P.lep && (P.beaten || []).includes(0)){ giftRalina(false); P.lepToast = 1; } })();
+(() => { if ((!P.lep || !P.owned.tatarc) && (P.beaten || []).includes(0)){ giftRalina(false); P.lepToast = 1; } })();
 save();
 
 /* =========================================================
@@ -2486,8 +2511,9 @@ function addXP(n){
   checkAch();
 }
 function giftRalina(wear){
-  P.lep = 1; P.owned.tubeteika = 1;
+  P.lep = 1; P.owned.tubeteika = 1; P.owned.tatarc = 1;
   if (wear || P.equip.helmet === "nohelmet" || P.equip.helmet === "band") P.equip.helmet = "tubeteika";
+  if (wear || P.equip.costume === "school") P.equip.costume = "tatarc";
   save();
 }
 function grantChest(tier, title, noItem){
@@ -2984,6 +3010,28 @@ function say(text){
 function stat(word, key){ const s = stats[word] || (stats[word] = {wrong:0, right:0}); s[key]++; LS.set("sb_stats", stats); }
 
 function rel(el){ const a = $("arena").getBoundingClientRect(), r = el.getBoundingClientRect(); return {x:r.left - a.left, y:r.top - a.top, w:r.width, h:r.height}; }
+// cut the weapon pixels out of the hero sprite, so the weapon itself can be swung around the hand
+function weaponLayer(){
+  const a = document.createElement("canvas"), b = document.createElement("canvas");
+  drawHero(a, {...P.equip}, null, 0); drawHero(b, {...P.equip, weapon:"none"}, null, 0);
+  const ca = a.getContext("2d"), da = ca.getImageData(0, 0, a.width, a.height), db = b.getContext("2d").getImageData(0, 0, b.width, b.height).data;
+  for (let i = 0; i < da.data.length; i += 4){
+    if (da.data[i] === db[i] && da.data[i+1] === db[i+1] && da.data[i+2] === db[i+2] && da.data[i+3] === db[i+3]) da.data[i+3] = 0;
+  }
+  ca.putImageData(da, 0, 0); return a;
+}
+function swing(style, dash, glow){
+  const wrap = $("hero-aura"); if (!G) return;
+  wrap.querySelectorAll(".wpn").forEach(e => e.remove());
+  const w = weaponLayer();
+  w.className = "wpn sw-" + style;
+  Object.assign(w.style, {left: heroCv.offsetLeft + "px", top: heroCv.offsetTop + "px", width: heroCv.offsetWidth + "px", height: heroCv.offsetHeight + "px"});
+  if (glow) w.style.filter = `drop-shadow(0 0 3px ${glow}) drop-shadow(0 0 6px ${glow})`;
+  wrap.appendChild(w);
+  G.swinging = true; drawHero(heroCv, {...P.equip, weapon:"none"}, wrap, heroFrame);
+  wrap.style.setProperty("--dash", dash + "px"); replay(wrap, "hb-" + (style === "smash" ? "smash" : "slash"));
+  setTimeout(() => { w.remove(); if (G) G.swinging = false; drawHero(heroCv, P.equip, wrap, heroFrame); }, style === "double" ? 760 : 680);
+}
 function fx(kind, col){
   const h = rel(heroCv), b = rel(bossCv);
   const sx = h.x + h.w*0.85, sy = h.y + h.h*0.45, tx = b.x + b.w*0.5, ty = b.y + b.h*0.5;
@@ -3028,9 +3076,9 @@ function fx(kind, col){
   }
   if (kind === "nova"){
     const dash = Math.max(40, (b.x - h.x) - h.w * 0.3);
-    heroCv.style.setProperty("--dash", dash + "px"); replay(heroCv, "dash"); sfx.saber();
-    setTimeout(() => { add("nova", {left:(tx-80)+"px", top:(ty-80)+"px"}); add("slash saber", {left:(tx-34)+"px", top:(ty-34)+"px", color:"#fff3a0"}); sfx.bolt(); sfx.crit(); }, 160);
-    return 200;
+    swing("smash", dash, "#fff3a0"); tone(140, .18, "triangle", .04, 260); setTimeout(() => sfx.saber(), 190);
+    setTimeout(() => { add("nova", {left:(tx-80)+"px", top:(ty-80)+"px"}); add("slash saber", {left:(tx-34)+"px", top:(ty-34)+"px", color:"#fff3a0"}); sfx.bolt(); sfx.crit(); }, 320);
+    return 340;
   }
   if (kind === "rocket"){
     add("rocketfx", {left:sx+"px", top:(sy-3)+"px", "--dx":(tx - sx)+"px", "--dy":(ty - sy)+"px"});
@@ -3041,11 +3089,12 @@ function fx(kind, col){
     add("boltfx", {left:(tx-22)+"px", top:(b.y - 30)+"px"}, `<svg width="44" height="${Math.round(b.h + 40)}" viewBox="0 0 44 100" preserveAspectRatio="none"><polyline points="26,0 12,38 28,42 10,100" fill="none" stroke="#ffd23f" stroke-width="6"/><polyline points="26,0 12,38 28,42 10,100" fill="none" stroke="#ffffff" stroke-width="2"/></svg>`);
     sfx.bolt(); return 120;
   }
-  // melee: run up to the boss and strike
+  // melee: wind up, run in and swing the actual weapon
   const dash = Math.max(40, (b.x - h.x) - h.w * 0.3);
-  heroCv.style.setProperty("--dash", dash + "px");
-  replay(heroCv, kind === "smash" ? "dashSmash" : "dash");
-  if (kind === "saber") sfx.saber(); else sfx.whoosh(kind === "smash");
+  const style = kind === "smash" ? "smash" : kind === "scythe" ? "sweep" : kind === "saber" ? "double" : "slash";
+  swing(style, dash, kind === "saber" || kind === "goldslash" || kind === "fireslash" ? col : null);
+  tone(140, .18, "triangle", .04, 260);                                                // wind-up
+  setTimeout(() => { if (kind === "saber") sfx.saber(); else sfx.whoosh(kind === "smash"); }, 190);
   const c = kind === "smash" ? "#a8743f" : (col || "#1d2f5c");
   setTimeout(() => {
     if (kind === "saber"){
@@ -3065,8 +3114,9 @@ function fx(kind, col){
       if (kind === "fireslash") add("burst", {left:(tx-35)+"px", top:(ty-35)+"px", color:"#ff7a1a"});
       sfx.clang();
     }
-  }, 150);
-  return 180;
+    if (kind === "smash") replay($("arena"), "quake");
+  }, 300);
+  return 330;
 }
 
 function answer(i){
@@ -3224,11 +3274,11 @@ function bossDown(){
     const nb = G.kind === "tower" ? null : BOSSES[b.idx + 1];
     const gift = G.gotGift; G.gotGift = false;
     ov.innerHTML = `${cheer}<p>${esc(b.name)} ${defeatedWord(b)}!</p>${G.kind !== "tower" && WIN_LORE[b.name] ? `<p class="lore">${loreText(WIN_LORE[b.name])}</p>` : ""}
-      ${gift ? `<div class="gifts"><canvas id="gift-lep"></canvas><canvas id="gift-hat"></canvas></div><p class="reward">Подарки от Ралины: лепёшка с каймаком (+1 сердце навсегда) и татарская тюбетейка, уже на тебе!</p>` : `<canvas class="chest" id="chest-cv"></canvas>`}${reward}
+      ${gift ? `<div class="gifts"><canvas id="gift-lep"></canvas><canvas id="gift-hat"></canvas></div><p class="reward">Подарки от Ралины: лепёшка с каймаком (+1 сердце навсегда) и татарский национальный костюм с тюбетейкой, уже на тебе!</p>` : `<canvas class="chest" id="chest-cv"></canvas>`}${reward}
       ${chest.item ? `<button class="link" id="btn-equip-new">Надеть ${esc(chest.item.name)}</button>` : ""}
       <p>${G.kind === "tower" ? `Следующий этаж: ${b.floor + 1}` : `${unlockedNew ? "Открыт новый босс" : "Следующий босс"}: <b>${esc(nb.name)}</b>`}</p>
       <button class="btn primary" id="btn-next">Дальше</button>`;
-    if (gift){ drawSprite($("gift-lep"), SPR.lep, PALS.lep); drawHero($("gift-hat"), {...P.equip, weapon:"none", back:"noback", pet:"nopet", aura:"noaura"}); sfx.level(); renderHUD(); drawHero(heroCv, P.equip, $("hero-aura")); }
+    if (gift){ drawSprite($("gift-lep"), SPR.lep, PALS.lep); drawHero($("gift-hat"), {...P.equip, weapon:"none", armor:"noarmor", back:"noback", pet:"nopet", aura:"noaura"}); sfx.level(); renderHUD(); drawHero(heroCv, P.equip, $("hero-aura")); }
     else drawSprite($("chest-cv"), SPR.chest, PALS.chest);
     if (chest.item) $("btn-equip-new").onclick = () => { P.equip[chest.item.slot] = chest.item.id; save(); drawHero(heroCv, P.equip, $("hero-aura")); $("btn-equip-new").textContent = "Надето!"; $("btn-equip-new").disabled = true; renderHUD(); };
     $("btn-next").onclick = () => {
@@ -3389,7 +3439,7 @@ document.addEventListener("keydown", e => {
 // live hero animation (aura + pet) for the big hero views
 const HERO_ANIM = [
   {cv: $("home-hero"), wrap: $("home-aura"), eq: () => P.equip},
-  {cv: heroCv, wrap: $("hero-aura"), eq: () => P.equip},
+  {cv: heroCv, wrap: $("hero-aura"), eq: () => G && G.swinging ? {...P.equip, weapon:"none"} : P.equip},
   {cv: $("end-hero"), wrap: $("end-aura"), eq: () => P.equip},
   {cv: $("shop-hero"), wrap: $("shop-aura"), eq: () => tryOn ? {...P.equip, [ITEM[tryOn].slot]: tryOn} : P.equip}
 ];
@@ -3503,6 +3553,6 @@ $("btn-rename").onclick = () => {
 };
 
 if (P.name){ renderHome(); if (!P.storySeen) showStory(); } else askName();
-if (P.lepToast){ delete P.lepToast; save(); setTimeout(() => toast("Ралина передала тебе подарки за победу: лепёшку с каймаком (+1 сердце) и татарскую тюбетейку!", "ach"), 1500); }
+if (P.lepToast){ delete P.lepToast; save(); setTimeout(() => toast("Ралина передала тебе подарки за победу: лепёшку с каймаком (+1 сердце) и татарский национальный костюм с тюбетейкой! Смотри в гардеробе.", "ach"), 1500); }
 })();
 </script>
