@@ -57,7 +57,7 @@ export function addXP(n) {
       }, 450);
     } else toast(msg);
     const unlockedNow = ITEMS.filter((i) => i.lvl === l && i.price > 0).map((i) => i.name);
-    if (unlockedNow.length) setTimeout(() => toast(`В гардеробе открылось: ${unlockedNow.join(", ")}`), 900);
+    if (unlockedNow.length) setTimeout(() => toast(`В магазине открылось: ${unlockedNow.join(", ")}`), 900);
   }
   checkAch();
 }

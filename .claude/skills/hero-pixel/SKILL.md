@@ -78,6 +78,7 @@ node .claude/skills/hero-pixel/scripts/preview-sprite.mjs robot cyber         # 
 node .claude/skills/hero-pixel/scripts/preview-sprite.mjs pet:cat             # питомец, оба кадра
 node .claude/skills/hero-pixel/scripts/preview-sprite.mjs angelika --blink    # как моргает
 node .claude/skills/hero-pixel/scripts/preview-sprite.mjs angelika --angry    # ярость
+node .claude/skills/hero-pixel/scripts/preview-sprite.mjs merchant           # Котофей: хвост, моргание, «^ ^»
 ```
 
 Скрипт пишет PNG в `.claude/skills/hero-pixel/out/` (в `.gitignore`), увеличенный в 8 раз. Открой

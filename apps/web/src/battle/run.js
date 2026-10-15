@@ -293,7 +293,7 @@ export function bossDown() {
     quest("tower");
     if (P.towerBest > prev) {
       const un = ITEMS.filter((i) => i.floor && i.floor > prev && i.floor <= P.towerBest).map((i) => i.name);
-      if (un.length) setTimeout(() => toast(`Башня открыла в гардеробе: ${un.join(", ")}`, "ach"), 1200);
+      if (un.length) setTimeout(() => toast(`Башня открыла в магазине: ${un.join(", ")}`, "ach"), 1200);
     }
     if (b.floor % 10 === 0) {
       const bonus = addCoins(300 + b.floor * 20, false);
@@ -435,7 +435,7 @@ export function endGame(won) {
     ? "Словарь спасён! Теперь попробуй Башню."
     : task
       ? `Монстры запомнили свои сердечки, побеждено ${monsters(G.task, P.tasks?.[G.task.id]).beaten} из ${monsters(G.task, P.tasks?.[G.task.id]).total}. Отдохни и возвращайся!`
-      : "Монеты и опыт сохранились. Загляни в гардероб и попробуй ещё раз.";
+      : "Монеты и опыт сохранились. Загляни в магазин и попробуй ещё раз.";
   if (isRecord && G.score > 0) sub = `Новый рекорд очков! ${sub}`;
   $("end-sub").textContent = sub;
   heroCard("end");

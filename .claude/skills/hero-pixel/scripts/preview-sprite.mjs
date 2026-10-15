@@ -9,6 +9,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..", "..", "..", "..");
 const { SPR, PALS, BLINK } = await import(join(root, "apps/web/src/content/sprites.js"));
 const { PET_SPR, PET_SPR2, PET_PAL } = await import(join(root, "apps/web/src/content/pets.js"));
+const { merchantSprite, MERCHANT_PAL, MERCHANT_BLINK } = await import(join(root, "apps/web/src/content/merchant.js"));
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 const flags = process.argv.slice(2).filter((a) => a.startsWith("--"));
@@ -27,7 +28,17 @@ if (!args.length) {
 
 const frames = [];
 let name = args[0];
-if (name.startsWith("pet:")) {
+if (name === "merchant") {
+  // Котофей из гардероба: хвост 0 и 1, моргание, довольный
+  const blink = { ...MERCHANT_PAL };
+  for (const [k, v] of Object.entries(MERCHANT_BLINK)) blink[k] = MERCHANT_PAL[v];
+  frames.push(
+    [merchantSprite(0), MERCHANT_PAL],
+    [merchantSprite(1), MERCHANT_PAL],
+    [merchantSprite(0), blink],
+    [merchantSprite(1, true), MERCHANT_PAL],
+  );
+} else if (name.startsWith("pet:")) {
   const k = name.slice(4);
   if (!PET_SPR[k]) throw new Error("нет питомца " + k);
   frames.push([PET_SPR[k], PET_PAL[k]], [PET_SPR2[k] || PET_SPR[k], PET_PAL[k]]);

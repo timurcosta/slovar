@@ -330,6 +330,16 @@ const SCENARIOS = [
       await p.click("#btn-shop");
       await tick(p);
       await shot("02-shop");
+      // Котофей отвечает на примерку, а погладишь — щурится от удовольствия
+      await p
+        .locator("#items .icard:has([data-buy])")
+        .first()
+        .click({ position: { x: 20, y: 20 } });
+      await tick(p);
+      await shot("02c-shop-keeper-try");
+      await p.click("#keeper-cat");
+      await tick(p, 200);
+      await shot("02d-shop-keeper-pet");
       for (const tab of ["armor", "pet", "aura", "costume", "look"]) {
         const t = p.locator(`#tabs .tab[data-s="${tab}"]`);
         if (await t.count()) {

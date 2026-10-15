@@ -9,7 +9,7 @@ import { tone } from "../audio/sfx.js";
 import { bossCv, drawFighters, heroCv } from "../battle/hud.js";
 import { G } from "../battle/run.js";
 import { rel, say } from "../battle/effects.js";
-import { tryOn } from "./screens/shop.js";
+import { drawKeeper, tryOn } from "./screens/shop.js";
 
 // live hero animation (aura + pet) for the big hero views
 const HERO_ANIM = [
@@ -27,6 +27,7 @@ if (!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matche
       if (h.cv.offsetParent !== null) drawHero(h.cv, h.eq(), h.wrap, heroFrame);
     });
     if (heroCv.offsetParent !== null) drawFighters(heroFrame);
+    if ($("keeper-cv").offsetParent !== null) drawKeeper(heroFrame);
     if (G && G.boss && bossCv.offsetParent !== null && !bossCv.classList.contains("dead")) {
       const angry = G.hp > 0 && G.hp / G.boss.hp < 0.3;
       drawBoss(bossCv, G.boss, false, !angry && (heroFrame % 13 === 0 || heroFrame % 13 === 1), angry);

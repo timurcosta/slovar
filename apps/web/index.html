@@ -199,7 +199,7 @@
               <span class="ico" data-ico="tower"></span><b>Башня</b><small id="tower-sub"></small>
             </button>
             <button class="tile gold" id="btn-shop" type="button">
-              <span class="ico" data-ico="sword"></span><b>Гардероб</b><small id="shop-sub"></small
+              <span class="ico" data-ico="sword"></span><b>Магазин</b><small id="shop-sub"></small
               ><em class="tbadge" id="shop-badge" hidden>!</em>
             </button>
             <button class="tile" id="btn-awards" type="button">
@@ -319,7 +319,7 @@
         <p class="note">Сделай скриншот этого экрана и отправь учителю.</p>
         <div class="row backbar">
           <button class="btn primary" id="btn-again">Ещё раз</button>
-          <button class="btn gold" id="btn-end-shop">Гардероб</button>
+          <button class="btn gold" id="btn-end-shop">Магазин</button>
           <button class="link" id="btn-home">На главную</button>
         </div>
       </section>
@@ -327,17 +327,24 @@
       <!-- SHOP -->
       <section class="screen cols" id="s-shop" hidden>
         <div class="topbar">
-          <h1>Гардероб</h1>
+          <h1>Магазин</h1>
           <span class="coins" id="shop-coins"></span>
         </div>
         <div class="col col-main">
+          <div class="keeper">
+            <div class="awning"><span class="sign">Лавка Котофея</span></div>
+            <div class="keeper-in">
+              <button class="keeper-cat" id="keeper-cat" aria-label="Погладить Котофея">
+                <canvas id="keeper-cv"></canvas>
+              </button>
+              <div class="keeper-say" aria-live="polite"><b>Котофей</b><span id="keeper-say"></span></div>
+            </div>
+            <div class="counter" aria-hidden="true"></div>
+          </div>
           <div class="preview">
             <div id="shop-aura"><canvas id="shop-hero" aria-label="Примерка"></canvas></div>
             <div class="info" style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
               <b id="shop-pv-name">Твой боец</b>
-              <span class="note" id="shop-pv-note"
-                >Нажми на предмет, чтобы примерить. Монеты дают за правильные ответы, боссов и задания.</span
-              >
               <div class="perks" id="shop-perks"></div>
             </div>
           </div>

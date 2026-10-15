@@ -74,7 +74,7 @@ function questStrip() {
     .join("");
   return `<b>Задания дня: ${done} из ${q.length}</b><span class="minibars">${bars}</span><small>${P.daily.bonus ? "Все выполнены! Завтра новые" : "За все три: большой сундук"}</small>`;
 }
-/** Ближайшая покупка для плитки «Гардероб»: что уже по карману или сколько осталось накопить. */
+/** Ближайшая покупка для плитки «Магазин»: что уже по карману или сколько осталось накопить. */
 function goal() {
   const lvl = levelOf(P.xp),
     open = ITEMS.filter((i) => i.price > 0 && !i.gift && !P.owned[i.id] && i.lvl <= lvl && !itemLocked(i));

@@ -1,4 +1,4 @@
-// Гардероб: вкладки, покупка, примерка, внешность.
+// Магазин (бывший гардероб, лавка Котофея): вкладки, покупка, примерка, внешность.
 import { $, esc } from "../../lib/dom.js";
 import { pick } from "../../lib/random.js";
 import {
@@ -14,7 +14,10 @@ import {
 import { ITEM, ITEMS, RARITY, SLOTS, UPGRADES, showcaseEquip, upCost } from "../../content/items.js";
 import { shownDmg } from "../../content/rules.ts";
 import { COSTUMES, COSTUME_KEY } from "../../content/costumes.js";
+import { MERCHANT_BLINK, MERCHANT_LINES, MERCHANT_PAL, merchantSprite } from "../../content/merchant.js";
+import { plural } from "../../lib/text.js";
 import { drawHero } from "../../render/hero.js";
+import { drawSprite } from "../../render/sprite.js";
 import { P, heroLook, save } from "../../state/profile.ts";
 import { gear } from "../../progress/gear.js";
 import { levelOf } from "../../progress/levels.ts";
@@ -28,12 +31,79 @@ import { perkChips } from "./home.js";
 
 export let shopTab = "weapon",
   tryOn = null;
-/** Открыть гардероб; tab — вкладка (строка), например из «Копишь на …» на главной. */
+/** Открыть магазин; tab — вкладка (строка), например из «Копишь на …» на главной. */
 export function openShop(tab) {
   tryOn = null;
   if (typeof tab === "string") shopTab = tab;
+  const L = MERCHANT_LINES;
+  petCount = 0;
+  keeperSay(line(L.greet.concat(P.coins >= 5000 ? L.greetRich : P.coins < 50 ? L.greetPoor : [])));
+  $("keeper-cat").onclick = () => {
+    sfx.meow();
+    if (keeperSleep) return keeperSay(line(L.wake), true);
+    petCount++;
+    keeperSay(L.petMany[petCount] || line(L.pet), true);
+  };
   renderShop();
   show("s-shop");
+}
+
+// Котофей за прилавком: реплики, моргание, хвост; довольные глаза после покупки, засыпает без дела
+const SLEEP_MS = 25000;
+let keeperHappy = 0,
+  keeperFr = 0,
+  keeperAct = 0,
+  keeperSleep = false,
+  lastLine = "",
+  petCount = 0;
+/** Случайная реплика из списка, не та же, что в прошлый раз. */
+function line(list) {
+  const t = pick(list.length > 1 ? list.filter((x) => x !== lastLine) : list);
+  lastLine = t;
+  return t.replace("{name}", P.name || "герой");
+}
+function keeperSay(text, happy) {
+  $("keeper-say").textContent = text;
+  keeperAct = Date.now();
+  keeperSleep = false;
+  if (happy) {
+    keeperHappy = Date.now() + 2200;
+    const c = $("keeper-cat");
+    c.classList.remove("hop");
+    void c.offsetWidth;
+    c.classList.add("hop");
+  }
+  drawKeeper();
+}
+/** Кадр Котофея (fr — кадр анимации героя, тикает каждые 170 мс). */
+export function drawKeeper(fr = keeperFr) {
+  keeperFr = fr;
+  if (!keeperSleep && keeperAct && Date.now() - keeperAct > SLEEP_MS) {
+    keeperSleep = true;
+    $("keeper-say").textContent = line(MERCHANT_LINES.sleep);
+  }
+  const happy = Date.now() < keeperHappy,
+    blink = keeperSleep || (!happy && fr % 19 >= 17);
+  let pal = MERCHANT_PAL;
+  if (blink) {
+    pal = { ...pal };
+    for (const [k, v] of Object.entries(MERCHANT_BLINK)) pal[k] = MERCHANT_PAL[v];
+  }
+  drawSprite($("keeper-cv"), merchantSprite((fr >> 2) & 1, happy), pal);
+}
+const RARITY_STEP = [400, 1500, 5000, 15000];
+function keeperOnItem(i) {
+  const L = MERCHANT_LINES;
+  if (P.owned[i.id]) return keeperSay(line(L.owned));
+  if (i.gift) return keeperSay(L.gift);
+  if (itemLocked(i)) return keeperSay(L.locked);
+  if (i.lvl > levelOf(P.xp)) return keeperSay(L.level.replace("{lvl}", i.lvl));
+  if (P.coins < i.price) {
+    const n = i.price - P.coins;
+    return keeperSay(line(L.short).replace("{n}", `${n} ${plural(n, ["монета", "монеты", "монет"])}`));
+  }
+  const tier = RARITY_STEP.filter((p) => i.price >= p).length;
+  keeperSay(line(L.rarity[tier]));
 }
 function renderShop() {
   refreshCoins();
@@ -50,6 +120,7 @@ function renderShop() {
         (b.onclick = () => {
           shopTab = b.dataset.s;
           tryOn = null;
+          keeperSay(line(MERCHANT_LINES.tab[shopTab]));
           renderShop();
         }),
     );
@@ -91,6 +162,7 @@ function renderShop() {
             save();
             sfx.level();
             toast(`${u.name}: уровень ${n + 1}!`, "quest");
+            keeperSay(n + 1 >= u.max ? MERCHANT_LINES.forgeMax : line(MERCHANT_LINES.forge), true);
             renderShop();
           }),
       );
@@ -127,6 +199,7 @@ function renderShop() {
         (el.onclick = (e) => {
           if (e.target.closest("button")) return;
           tryOn = el.dataset.try;
+          keeperOnItem(ITEM[tryOn]);
           renderShop();
         }),
     );
@@ -140,6 +213,7 @@ function renderShop() {
           save();
           tryOn = null;
           sfx.block();
+          keeperSay(line(MERCHANT_LINES.equip), true);
           renderShop();
         }),
     );
@@ -157,6 +231,7 @@ function renderShop() {
           save();
           sfx.coin();
           toast(`Куплено: ${it.name}!`, "quest");
+          keeperSay(line(MERCHANT_LINES.buy), true);
           tryOn = null;
           checkAch();
           renderShop();
@@ -210,6 +285,7 @@ function renderLook() {
     P.look = { ...heroLook(), [g]: v };
     save();
     sfx.block();
+    keeperSay(line(MERCHANT_LINES.lookSet));
     renderShop();
   };
   $("items")

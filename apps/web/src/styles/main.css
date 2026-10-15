@@ -1858,6 +1858,138 @@ body.hurt .sheet {
   height: auto;
 }
 
+/* Лавка Котофея над примеркой: навес, кот за прилавком, облачко с репликой */
+.keeper {
+  border: 3px solid var(--ink);
+  background: #fff3dc;
+  display: flex;
+  flex-direction: column;
+}
+.awning {
+  position: relative;
+  height: 18px;
+  background: repeating-linear-gradient(90deg, var(--pen) 0 22px, #fff 22px 44px);
+  border-bottom: 3px solid var(--ink);
+}
+/* пиксельные «фестоны» навеса: ступенька уже полосы, снизу тёмная кромка */
+.awning::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 3px,
+    var(--pen) 3px 19px,
+    transparent 19px 25px,
+    #fff 25px 41px,
+    transparent 41px 44px
+  );
+  filter: drop-shadow(0 3px 0 var(--ink));
+}
+/* вывеска висит на навесе по центру */
+.sign {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 6px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  line-height: 1;
+  color: #fff3dc;
+  text-shadow: 2px 2px 0 var(--ink);
+  background: linear-gradient(#c98448 0 3px, #a8652f 3px);
+  border: 3px solid var(--ink);
+  padding: 7px 10px 6px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.keeper-in {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 26px 12px 0;
+}
+.keeper-cat {
+  flex: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+}
+.keeper-cat canvas {
+  width: 124px;
+  height: auto;
+  image-rendering: pixelated;
+}
+.keeper-cat.hop {
+  animation: keeper-hop 0.45s steps(4);
+}
+@keyframes keeper-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+}
+.keeper-say {
+  position: relative;
+  align-self: center;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  line-height: 1.3;
+}
+.keeper-say b {
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  font-size: 10px;
+  color: #5a3aa8;
+}
+/* хвостик облачка к коту */
+.keeper-say::before {
+  content: "";
+  position: absolute;
+  left: -11px;
+  top: 50%;
+  width: 8px;
+  height: 12px;
+  margin-top: -6px;
+  background: var(--ink);
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+.counter {
+  height: 14px;
+  background: linear-gradient(#e0a15e 0 4px, #b5723a 4px);
+  border-top: 3px solid var(--ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .keeper-cat.hop {
+    animation: none;
+  }
+}
+@media (max-width: 380px) {
+  .keeper-cat canvas {
+    width: 96px;
+  }
+  .keeper-say {
+    font-size: 14px;
+  }
+}
+
 /* Awards */
 
 .todaybar {
