@@ -335,7 +335,13 @@ const fed =
     "--jwks-url",
     "https://token.actions.githubusercontent.com/.well-known/jwks",
   );
-const subject = `repo:${repo}:ref:refs/heads/main`;
+// subject в токене GitHub: «repo:владелец/репо:…» или, если у репо включены неизменяемые subject,
+// «repo:владелец@id/репо@id:…» — формат берём из настроек репо, иначе Yandex Cloud не узнает токен
+const subCfg = await fetch(`https://api.github.com/repos/${repo}/actions/oidc/customization/sub`)
+  .then((r) => (r.ok ? r.json() : {}))
+  .catch(() => ({}));
+if (subCfg.use_default === false) throw new Error(`У ${repo} свой шаблон subject OIDC — допиши его сюда`);
+const subject = `${subCfg.use_immutable_subject && subCfg.sub_claim_prefix ? subCfg.sub_claim_prefix : `repo:${repo}`}:ref:refs/heads/main`;
 const creds = yc("iam", "workload-identity", "federated-credential", "list", "--service-account-id", saDeploy.id) ?? [];
 if (!creds.some((c) => c.federation_id === fed.id && c.external_subject_id === subject))
   yc(

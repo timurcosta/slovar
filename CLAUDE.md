@@ -179,7 +179,7 @@ YDB — при развёртывании в Yandex Cloud.
 - `npm run cloud:test-ydb` — тесты API против настоящей YDB во временной таблице.
 - **Выкладка из GitHub**: пуш в `main` → job `cloud` в CI (`scripts/cloud/ci-deploy.mjs`) обновляет код
   функции и файлы игры. Входит без ключей (федерация `github-actions` → сервисный аккаунт
-  `repetitor-deployer`, только `repo:timurcosta/slovar:ref:refs/heads/main`; при переименовании репо —
+  `repetitor-deployer`, только ветка `main` этого репо: subject `repo:timurcosta@29523821/slovar@1414524500:ref:refs/heads/main` — у репо включены неизменяемые subject с id, скрипт берёт формат из GitHub; при переименовании репо —
   перезапустить `npm run cloud:deploy`). Секреты новая версия берёт у текущей. Шлюз, базу, роли и пароль
   меняет только `npm run cloud:deploy` с компьютера владельца.
 - **Аварийное выключение**: триггер `repetitor-budget-stop` на бюджет «Страховка» (100 ₽/мес) вызывает
