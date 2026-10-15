@@ -7,7 +7,7 @@
 // Секреты функции (AUTH_SECRET, TUTOR_PASSWORD_HASH) в GitHub не хранятся: новая версия берёт
 // переменные окружения у текущей версии $latest.
 //
-// Нужны переменные: YC_FOLDER_ID, YC_DEPLOYER_SA_ID; сборки apps/api/dist и apps/web/dist-online.
+// Нужны переменные: YC_FOLDER_ID, YC_DEPLOYER_SA_ID; сборки apps/api/dist и apps/web/dist.
 import { execFileSync } from "child_process";
 import fs from "fs";
 import os from "os";
@@ -88,7 +88,7 @@ const ver = await wait(
 console.log(`Функция ${FN}: новая версия ${ver.id}`);
 
 // ---------- файлы игры ----------
-const DIST = path.join(ROOT, "apps/web/dist-online");
+const DIST = path.join(ROOT, "apps/web/dist");
 const TYPES = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",

@@ -1,32 +1,33 @@
-// Вход по коду от учителя (только в сборке с сервером, VITE_BACKEND=1).
+// «Кто играет?»: вход по коду от учителя, игра гостем, ссылка в кабинет учителя. Окно поверх заставки или главной.
 import { $ } from "../../lib/dom.js";
 import { P } from "../../state/profile.ts";
-import { BACKEND, join, linkedName } from "../../net/sync.ts";
-import { show } from "../screens.js";
+import { levelOf } from "../../progress/levels.ts";
+import { isGuest, join, linkedName, setGuest } from "../../net/sync.ts";
 import { toast } from "../toast.js";
 import { renderHome } from "./home.js";
-import { showStory } from "./intro.js";
-import { showTitle } from "./title.js";
+import { enterGame } from "./title.js";
 
-const LEAD = $("join-lead").textContent;
-let joinBack = "s-home",
-  busy = false;
+let busy = false,
+  backFocus = null;
 
+/** «Войти по коду» внизу главной — только тем, кто ещё не вошёл: остальным прогресс сохраняется сам. */
 export function syncJoinButtons() {
-  $("btn-join").hidden = !BACKEND;
-  $("btn-join").textContent = linkedName() ? "У учителя ✓" : "Код учителя";
+  $("btn-join").hidden = !!linkedName();
 }
 
-export function openJoin(back) {
-  joinBack = back;
-  const n = linkedName();
-  $("join-lead").textContent = n
-    ? `Ты подключён к учителю как ${n}. Прогресс сохраняется сам. Новый код нужен, только если учитель его сменил.`
-    : LEAD;
+export function openLogin() {
+  backFocus = document.activeElement;
+  // герой уже есть на устройстве (гость или игравший на старом адресе): пусть знает, что он не пропадёт
+  const hasHero = P.xp > 0;
+  $("login-hero").hidden = !hasHero;
+  $("login-hero").textContent = hasHero
+    ? `Твой герой${P.name ? " " + P.name : ""}, уровень ${levelOf(P.xp)}, перейдёт к учителю после входа.`
+    : "";
+  $("btn-guest").hidden = isGuest(); // гость открыл окно, чтобы войти по коду
   $("join-in").value = "";
   $("join-msg").textContent = "";
   $("join-msg").className = "msg";
-  show("s-join");
+  $("login").hidden = false;
   setTimeout(() => {
     try {
       $("join-in").focus();
@@ -34,14 +35,29 @@ export function openJoin(back) {
   }, 60);
 }
 
-$("btn-join").onclick = () => openJoin("s-home");
-$("btn-join-back").onclick = () => {
-  if (joinBack === "s-title" || !P.name) showTitle();
-  else {
-    renderHome();
-    show("s-home");
-  }
+export function closeLogin() {
+  if ($("login").hidden) return;
+  $("login").hidden = true;
+  try {
+    backFocus?.focus();
+  } catch (e) {}
+}
+
+$("btn-join").onclick = openLogin;
+$("btn-login-close").onclick = closeLogin;
+$("login").addEventListener("click", (e) => {
+  if (e.target === $("login")) closeLogin();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeLogin();
+});
+
+$("btn-guest").onclick = () => {
+  setGuest();
+  closeLogin();
+  enterGame();
 };
+
 $("join-form").onsubmit = async (ev) => {
   ev.preventDefault();
   if (busy) return;
@@ -59,15 +75,15 @@ $("join-form").onsubmit = async (ev) => {
     const name = await join(code);
     toast(`Привет, ${name}! Теперь прогресс сохраняется у учителя.`, "quest");
     syncJoinButtons();
-    renderHome();
-    if (!P.storySeen) showStory();
-    else show("s-home");
+    closeLogin();
+    if ($("s-home").hidden) enterGame();
+    else renderHome();
   } catch (e) {
     m.className = "msg err";
     m.textContent =
       e && e.status === 404
         ? "Такого кода нет. Проверь буквы и цифры."
-        : "Не получилось связаться с учителем. Проверь интернет и попробуй ещё раз.";
+        : "Для входа нужен интернет. Проверь его и попробуй ещё раз. Потом играть можно и без интернета.";
   } finally {
     busy = false;
   }

@@ -1,21 +1,7 @@
 // Переключение экранов.
 import { $ } from "../lib/dom.js";
 
-const SCREENS = [
-  "s-title",
-  "s-trophy",
-  "s-home",
-  "s-game",
-  "s-end",
-  "s-shop",
-  "s-awards",
-  "s-teacher",
-  "s-pin",
-  "s-name",
-  "s-story",
-  "s-save",
-  "s-join",
-];
+const SCREENS = ["s-title", "s-trophy", "s-home", "s-game", "s-end", "s-shop", "s-awards", "s-story"];
 /** Экран, созданный из кода (меню разработчика), тоже участвует в переключении. */
 export const addScreen = (id) => SCREENS.push(id);
 export function show(id) {

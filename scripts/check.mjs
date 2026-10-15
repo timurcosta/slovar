@@ -1,21 +1,20 @@
 // Прогон игры в Chromium: несколько сценариев, скриншоты и итоговое состояние в папку shots/.
 // Падает, если в консоли есть ошибки. Всё детерминировано (фиксированные время и Math.random),
 // поэтому два прогона можно сравнить побайтно:
-//   npm run check                                  → собрать и проверить apps/web/dist(-online), результат в shots/
+//   npm run check                                  → собрать и проверить apps/web/dist, результат в shots/
 //   node scripts/check.mjs other/index.html out/   → прогнать другую сборку в другую папку
-// Страницы отдаёт маленький локальный сервер: ES-модули не грузятся по file://.
-// Сценарий online берёт сборку dist-online (рядом с проверяемой) и настоящий API из apps/api с базой в памяти.
+// Страницы отдаёт маленький локальный сервер (ES-модули не грузятся по file://) вместе с настоящим API
+// из apps/api с базой в памяти, как шлюз в облаке. У каждого сценария свой сервер и своя база.
 import { chromium } from "playwright";
 import fs from "fs";
 import http from "http";
 import path from "path";
 import { createApp } from "../apps/api/src/app.ts";
-import { hashPassword } from "../apps/api/src/auth.ts";
+import { hashPassword, signToken } from "../apps/api/src/auth.ts";
 import { MemoryStore } from "../apps/api/src/store/memory.ts";
 
 const page_ = path.resolve(process.argv[2] || "apps/web/dist/index.html");
 const outDir = path.resolve(process.argv[3] || "shots");
-const onlineRoot = path.join(path.dirname(page_), "..", "dist-online");
 fs.mkdirSync(outDir, { recursive: true });
 const TYPES = {
   ".html": "text/html",
@@ -44,7 +43,7 @@ async function serve(docRoot, api) {
       res.end(Buffer.from(await r.arrayBuffer()));
       return;
     }
-    const f = path.join(docRoot, decodeURIComponent(url.pathname));
+    const f = path.join(docRoot, decodeURIComponent(url.pathname).replace(/\/$/, "/index.html"));
     if (!f.startsWith(docRoot) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) {
       res.writeHead(404);
       res.end();
@@ -57,9 +56,48 @@ async function serve(docRoot, api) {
   return { server, base: `http://127.0.0.1:${server.address().port}/` };
 }
 
-const offline = await serve(path.dirname(page_));
-const URL_ = offline.base + path.basename(page_);
+const DIST = path.dirname(page_);
 const NOW = new Date("2026-10-15T10:00:00");
+// адрес игры в облаке, куда ведёт страница переезда со старого адреса (как GAME_URL в apps/web/src/moved.ts)
+const GAME_URL = "https://d5dc1pebpoct5vvkti5h.l5v6loqa.apigw.yandexcloud.net/";
+const SECRET = "check";
+
+/** Игра и API с пустой базой. */
+async function site() {
+  const store = new MemoryStore();
+  const api = createApp({ store, secret: SECRET, tutorPasswordHash: hashPassword("secret"), now: () => NOW });
+  return { store, ...(await serve(DIST, api)) };
+}
+
+/**
+ * Ученик, которого учитель уже завёл. С profile — он уже входил по коду и играл на этом устройстве:
+ * возвращает его localStorage (прогресс, токен входа). Без profile — ещё не входил, localStorage пуст.
+ */
+async function addKid(store, { name, code = "ABC234", profile = null, stats = null }) {
+  const t = NOW.toISOString(),
+    id = "kid-" + code;
+  await store.createStudent({
+    id,
+    name,
+    code,
+    codeVersion: 1,
+    settings: {},
+    profile,
+    stats,
+    rev: profile ? 1 : 0,
+    createdAt: t,
+    updatedAt: t,
+    lastSeenAt: profile ? t : null,
+  });
+  if (!profile) return {};
+  return {
+    sb2_profile: profile,
+    ...(stats ? { sb_stats: stats } : {}),
+    sb_token: signToken({ role: "student", sid: id, cv: 1 }, SECRET),
+    sb_tutor_name: name,
+    sb_rev: 1,
+  };
+}
 
 // «прокачанный» игрок: много вещей, кампания почти пройдена, башня открыта
 const VETERAN = {
@@ -118,6 +156,8 @@ async function enter(p, shot) {
   await p.click("#title-press");
   await tick(p, 400);
   if (shot) await shot("00-title-menu");
+  // не вошёл и не гость: открылось окно «Кто играет?», дальше решает сценарий
+  if (await p.locator("#login:not([hidden])").count()) return;
   await p.click("#btn-title-play");
   await tick(p);
 }
@@ -153,10 +193,6 @@ async function bigScreens(p, shot) {
   await p.click("#opt0");
   await tick(p, 2500);
   await shot("05-tower-fight");
-  await p.click("#btn-quit");
-  await p.click("#btn-teacher-1");
-  await tick(p);
-  await shot("06-teacher");
 }
 
 // старое сохранение: до вставки новых боссов (rv:1) и до новой формулы опыта (xpv нет)
@@ -174,13 +210,15 @@ const LEGACY = {
 
 const SCENARIOS = [
   {
+    // учитель завёл ученика «Тест» с кодом ABC234, ученик открывает игру впервые
     name: "new",
-    storage: {},
+    kid: { name: "Тест" },
     run: async (p, shot) => {
       await enter(p, shot);
-      await shot("01-name");
-      await p.fill("#name-in", "Тест");
-      await p.click("#name-form button[type=submit]");
+      await shot("01-login");
+      await p.fill("#join-in", "abc234");
+      await p.click("#join-form button[type=submit]");
+      await p.waitForSelector("#s-story:not([hidden])");
       await tick(p, 500);
       await shot("02-story");
       await storyThrough(p, shot);
@@ -206,11 +244,45 @@ const SCENARIOS = [
   },
   {
     name: "veteran",
-    storage: { sb2_profile: VETERAN, sb_stats: { берёза: { right: 3, wrong: 2 }, ворона: { right: 1, wrong: 4 } } },
+    kid: { name: "Тест", profile: VETERAN, stats: { берёза: { right: 3, wrong: 2 }, ворона: { right: 1, wrong: 4 } } },
     run: async (p, shot) => {
       await enter(p, shot);
       await tick(p, 1100);
       await shot("01-home");
+      await p.locator("#map").scrollIntoViewIfNeeded();
+      await shot("01b-home-bottom");
+      await p.click("#btn-prefs");
+      await tick(p);
+      await shot("01e-opts");
+      await p.click("#btn-prefs-close");
+      await p.click("#btn-share");
+      await p.waitForFunction(
+        () => document.getElementById("share-img").complete && !document.getElementById("share").hidden,
+      );
+      await tick(p);
+      await shot("01c-share");
+      // сама картинка с каждым фоном — чтобы посмотреть её целиком
+      const saveCard = async (file) => {
+        const card = await p.evaluate(async () => {
+          const b = await (await fetch(document.getElementById("share-img").src)).blob();
+          return await new Promise((r) => {
+            const f = new FileReader();
+            f.onload = () => r(String(f.result).split(",")[1]);
+            f.readAsDataURL(b);
+          });
+        });
+        fs.writeFileSync(path.join(outDir, file), Buffer.from(card, "base64"));
+      };
+      await saveCard("veteran-01d-share-castle.png");
+      for (const bg of ["volcano", "space", "neon"]) {
+        const before = await p.getAttribute("#share-img", "src");
+        await p.click(`#share-bgs [data-bg="${bg}"]`);
+        await p.waitForFunction((b) => document.getElementById("share-img").src !== b, before);
+        await saveCard(`veteran-01d-share-${bg}.png`);
+      }
+      await p.click('#share-bgs [data-bg="castle"]');
+      await tick(p);
+      await p.click("#btn-share-close");
       await p.click("#btn-shop");
       await tick(p);
       await shot("02-shop");
@@ -231,19 +303,6 @@ const SCENARIOS = [
       await tick(p);
       await shot("05-trophies");
       await p.click("#btn-tr-back");
-      await p.click("#btn-teacher-1");
-      await tick(p);
-      await shot("06-teacher");
-      for (const tab of ["limits", "stats", "pin", "guide", "words"]) {
-        await p.click(`#ttabs .tab[data-tt="${tab}"]`);
-        await tick(p);
-        await shot(`06-teacher-${tab}`);
-      }
-      await p.fill("#custom", "м(о)локо\nс(о)бака\nбез скобок");
-      await p.click("#btn-save-words");
-      await tick(p);
-      await shot("06b-teacher-words");
-      await p.click("#btn-back");
       await p.click("#btn-tower");
       await tick(p);
       await shot("07-tower-intro");
@@ -255,20 +314,65 @@ const SCENARIOS = [
     },
   },
   {
+    // старое сохранение на прежнем адресе (GitHub Pages): страница переезда передаёт его игре в облаке
     name: "legacy",
+    moved: true,
     storage: { sb2_profile: LEGACY },
     run: async (p, shot) => {
+      await tick(p, 500);
+      await shot("00-moved");
+      const arrived = p.waitForURL((u) => u.href.startsWith(GAME_URL) && !u.hash);
+      await tick(p, 4000);
+      await arrived;
+      await p.evaluate(() => document.fonts.ready);
       await enter(p);
+      await shot("01-login"); // герой со старого адреса уже здесь, кода пока нет — играем гостем
+      await p.click("#btn-guest");
       await tick(p, 2100);
+      await shot("02-home");
+      await p.click("#btn-prefs");
+      await tick(p);
+      await shot("03-opts-guest");
+      await p.click("#btn-prefs-close");
+    },
+  },
+  {
+    // нет сети: игра идёт как обычно, прогресс копится и уходит на сервер, когда сеть появляется
+    name: "offline",
+    offline: true,
+    kid: { name: "Тест", profile: { ...VETERAN, coins: 100 } },
+    run: async (p, shot, { ctx, store, expect }) => {
+      await enter(p);
+      await tick(p, 1100);
       await shot("01-home");
+      await p.click("#btn-campaign");
+      await tick(p);
+      await p.click("#btn-fight");
+      await tick(p, 800);
+      for (const opt of ["#opt0", "#opt1", "#opt0"]) {
+        await p.click(opt);
+        await tick(p, 2500);
+      }
+      await shot("02-fight");
+      await tick(p, 31_000); // попытка отправки без сети
+      const before = (await store.getStudent("kid-ABC234")).profile.coins;
+      expect(before === 100, "без сети прогресс как-то дошёл до сервера");
+      expect(
+        await p.evaluate(() => localStorage.getItem("sb_dirty") === "true"),
+        "без сети прогресс не помечен к отправке",
+      );
+      await ctx.unroute("**/api/**");
+      const sent = p.waitForResponse((r) => r.url().endsWith("/api/me/progress") && r.request().method() === "PUT");
+      await p.evaluate(() => window.dispatchEvent(new Event("online")));
+      await sent;
+      const after = (await store.getStudent("kid-ABC234")).profile;
+      expect(after.coins > 100 && after.tot.correct > VETERAN.tot.correct, "после появления сети прогресс не дошёл");
     },
   },
   {
     // победа над боссом: сундук трясётся, открывается, монеты и вещь (Сила 99 убивает Кляксу с одного удара)
     name: "victory",
-    storage: {
-      sb2_profile: { ...VETERAN, unlocked: 1, beaten: [0], up: { str: 99, hp: 0, time: 0, gold: 3 } },
-    },
+    kid: { name: "Тест", profile: { ...VETERAN, unlocked: 1, beaten: [0], up: { str: 99, hp: 0, time: 0, gold: 3 } } },
     run: async (p, shot) => {
       await enter(p);
       await tick(p, 1100);
@@ -287,9 +391,9 @@ const SCENARIOS = [
       await shot("02-chest-open");
     },
   },
-  { name: "tablet", storage: { sb2_profile: VETERAN }, viewport: { width: 820, height: 1180 }, run: bigScreens },
-  { name: "laptop", storage: { sb2_profile: VETERAN }, viewport: { width: 1024, height: 768 }, run: bigScreens },
-  { name: "desktop", storage: { sb2_profile: VETERAN }, viewport: { width: 1440, height: 900 }, run: bigScreens },
+  { name: "tablet", kid: { name: "Тест", profile: VETERAN }, viewport: { width: 820, height: 1180 }, run: bigScreens },
+  { name: "laptop", kid: { name: "Тест", profile: VETERAN }, viewport: { width: 1024, height: 768 }, run: bigScreens },
+  { name: "desktop", kid: { name: "Тест", profile: VETERAN }, viewport: { width: 1440, height: 900 }, run: bigScreens },
 ];
 
 const tick = (p, ms = 400) => p.clock.runFor(ms);
@@ -297,32 +401,42 @@ const tick = (p, ms = 400) => p.clock.runFor(ms);
 const errors = [];
 const browser = await chromium.launch();
 
-/** Новая вкладка с фиксированными временем и случайностью и заранее заданным localStorage. */
-async function openPage(label, url, storage = {}, viewport = { width: 390, height: 844 }) {
+/**
+ * Новая вкладка с фиксированными временем и случайностью и заранее заданным localStorage (только на
+ * адресе url: на другие адреса, куда уходит страница переезда, он не кладётся). setup(ctx) — до загрузки.
+ */
+async function openPage(label, url, storage = {}, viewport = { width: 390, height: 844 }, setup = async () => {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, locale: "ru-RU" });
+  await setup(ctx);
   const p = await ctx.newPage();
   p.on("pageerror", (e) => errors.push(`[${label}] ${e.message}`));
   p.on("console", (m) => {
-    // браузер пишет в консоль любой ответ 4xx; в online-сценарии они ожидаемы (неверный код)
-    const expected = label.startsWith("online") && /Failed to load resource: .* (404|409)/.test(m.text());
+    // браузер пишет в консоль любой ответ 4xx; в online-сценарии они ожидаемы (неверный код),
+    // в offline — оборванные запросы к API
+    const expected =
+      (label.startsWith("online") && /Failed to load resource: .* (404|409)/.test(m.text())) ||
+      (label === "offline" && /Failed to load resource: net::ERR_FAILED/.test(m.text()));
     if (m.type() === "error" && !expected && !/fonts\.g/.test(m.text())) errors.push(`[${label}] console: ${m.text()}`);
   });
   await p.clock.install({ time: NOW });
   await p.clock.pauseAt(new Date(NOW.getTime() + 1000)); // время идёт только через tick()
-  await p.addInitScript((storage) => {
-    let a = 12345;
-    Math.random = () => {
-      a = (a + 0x6d2b79f5) | 0;
-      let t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-    if (!sessionStorage.getItem("seeded")) {
-      sessionStorage.setItem("seeded", "1");
-      localStorage.clear();
-      for (const [k, v] of Object.entries(storage)) localStorage.setItem(k, JSON.stringify(v));
-    }
-  }, storage);
+  await p.addInitScript(
+    ([storage, origin]) => {
+      let a = 12345;
+      Math.random = () => {
+        a = (a + 0x6d2b79f5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+      if (location.origin === origin && !sessionStorage.getItem("seeded")) {
+        sessionStorage.setItem("seeded", "1");
+        localStorage.clear();
+        for (const [k, v] of Object.entries(storage)) localStorage.setItem(k, JSON.stringify(v));
+      }
+    },
+    [storage, new URL(url).origin],
+  );
   await p.goto(url);
   await p.evaluate(() => document.fonts.ready);
   const shot = async (name, mask = []) =>
@@ -347,24 +461,36 @@ async function openPage(label, url, storage = {}, viewport = { width: 390, heigh
 }
 
 for (const sc of SCENARIOS) {
-  const { ctx, p, shot, dump } = await openPage(sc.name, URL_, sc.storage, sc.viewport);
+  const game = await site();
+  const expect = (cond, what) => cond || errors.push(`[${sc.name}] ${what}`);
+  const storage = { ...(sc.kid ? await addKid(game.store, sc.kid) : {}), ...sc.storage };
+  // старый адрес — отдельный сайт (другой origin, свой localStorage); адрес облака отдаёт наш сайт с API
+  const old = sc.moved ? await serve(DIST) : null;
+  const url = old ? old.base + "moved.html" : game.base + path.basename(page_);
+  const { ctx, p, shot, dump } = await openPage(sc.name, url, storage, sc.viewport, async (ctx) => {
+    await ctx.route(GAME_URL + "**", async (route) => {
+      const u = new URL(route.request().url());
+      await route.fulfill({ response: await route.fetch({ url: game.base + u.pathname.slice(1) + u.search }) });
+    });
+    if (sc.offline) await ctx.route("**/api/**", (route) => route.abort("failed"));
+  });
   try {
-    await sc.run(p, shot);
+    await sc.run(p, shot, { ctx, store: game.store, expect });
   } catch (e) {
     errors.push(`[${sc.name}] шаг упал: ${e.message.split("\n")[0]}`);
     await shot("FAILED");
   }
   await dump(sc.name);
   await ctx.close();
+  game.server.close();
+  old?.server.close();
 }
 
 // ---------- online: репетитор заводит ученика, ученик входит по коду, прогресс и настройки ходят через API ----------
-let ran = SCENARIOS.length;
-if (fs.existsSync(path.join(onlineRoot, "index.html"))) {
-  ran++;
-  const store = new MemoryStore();
-  const api = createApp({ store, secret: "check", tutorPasswordHash: hashPassword("secret"), now: () => NOW });
-  const online = await serve(onlineRoot, api);
+const ran = SCENARIOS.length + 1;
+{
+  const online = await site(),
+    store = online.store;
   const expect = (cond, what) => cond || errors.push(`[online] ${what}`);
   const wide = { width: 1024, height: 900 };
   const tutor = await openPage("online-tutor", online.base + "tutor.html", {}, wide);
@@ -389,6 +515,7 @@ if (fs.existsSync(path.join(onlineRoot, "index.html"))) {
     await k.click("#title-press");
     await tick(k, 400);
     await kid.shot("01-title");
+    await k.click("#btn-login-close");
     await k.click("#btn-title-play");
     await tick(k);
     await kid.shot("02-join");
@@ -457,7 +584,6 @@ if (fs.existsSync(path.join(onlineRoot, "index.html"))) {
 }
 
 await browser.close();
-offline.server.close();
 
 if (errors.length) {
   console.error("Ошибки:\n" + errors.join("\n"));

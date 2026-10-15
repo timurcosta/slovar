@@ -6,6 +6,7 @@ import type { Student, TokenResponse, TutorSettings } from "@repetitor/shared";
 import { esc } from "../lib/dom.js";
 import { today } from "../lib/date.js";
 import { BOSSES } from "../content/bosses.js";
+import { drawBoss } from "../render/sprite.js";
 import { LEARN_N } from "../content/rules.ts";
 import { TITLES, levelOf } from "../progress/levels.ts";
 import { W12, W34 } from "../topics/words/lists.js";
@@ -68,17 +69,24 @@ function msg(el: Element | null, text: string, kind: "err" | "okm" | "" = "") {
 
 function renderLogin() {
   app.innerHTML = `
-    <section class="screen">
-      <h1>Кабинет учителя</h1>
-      <p class="lead">Здесь видно, как занимаются ученики, в каких словах ошибаются, и можно задать им слова и лимиты.</p>
-      <div class="panel">
-        <form class="pinrow" id="login">
-          <input id="pass" type="password" autocomplete="current-password" placeholder="Пароль" aria-label="Пароль" />
+    <section class="screen tutor-login">
+      <div class="panel tutor-login-card">
+        <canvas id="login-ralina" aria-hidden="true"></canvas>
+        <h1>Кабинет учителя</h1>
+        <p class="note">Ученики, их прогресс и трудные слова. Здесь же задаются слова, лимиты и задания.</p>
+        <form id="login">
+          <label for="pass">Пароль</label>
+          <input id="pass" type="password" autocomplete="current-password" />
           <button class="btn primary" type="submit">Войти</button>
         </form>
         <p class="msg" id="login-msg"></p>
+        <a class="link" href="./">← В игру</a>
       </div>
     </section>`;
+  drawBoss(
+    app.querySelector("#login-ralina")!,
+    BOSSES.find((b) => b.name === "Репетитор Ралина"),
+  );
   const form = app.querySelector<HTMLFormElement>("#login")!;
   form.onsubmit = async (ev) => {
     ev.preventDefault();

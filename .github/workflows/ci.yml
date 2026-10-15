@@ -34,12 +34,15 @@ jobs:
         with:
           name: shots
           path: shots/
+      # на старом адресе GitHub Pages вместо игры — страница переезда (moved.html), она ведёт в Yandex Cloud
+      - if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: mkdir -p pages && cp -r apps/web/dist/assets pages/ && cp apps/web/dist/moved.html pages/index.html
       - uses: actions/upload-pages-artifact@v4
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
-          path: apps/web/dist
+          path: pages
 
-  # офлайн-версия на GitHub Pages
+  # старый адрес на GitHub Pages: страница переезда
   pages:
     needs: check
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -82,5 +85,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build -w @repetitor/api
-      - run: npm run build:online
+      - run: npm run build
       - run: node scripts/cloud/ci-deploy.mjs

@@ -45,16 +45,17 @@ import "./ui/screens.js";
 import "./ui/confetti.js";
 import "./ui/animation.js";
 import "./ui/screens/home.js";
-import "./ui/screens/save.js";
 import "./ui/screens/shop.js";
 import "./ui/screens/intro.js";
 import "./ui/screens/awards.js";
-import "./ui/screens/teacher.js";
 import "./ui/screens/trophies.js";
 import "./ui/screens/title.js";
+import "./ui/share.js";
 
 import { $ } from "./lib/dom.js";
 import { P, save } from "./state/profile.ts";
+import { LS } from "./state/storage.ts";
+import { unpackSave } from "./state/savecode.ts";
 import { saveSettings, settings } from "./state/settings.ts";
 import { blockedToday } from "./progress/limits.js";
 import { frontier, towerOpen } from "./progress/unlocks.js";
@@ -72,7 +73,7 @@ import { renderAwards } from "./ui/screens/awards.js";
 import { renderTrophies } from "./ui/screens/trophies.js";
 import { pull, setOnRemote } from "./net/sync.ts";
 import { syncJoinButtons } from "./ui/screens/join.js";
-import { backToGame, setOnEnter, showTitle } from "./ui/screens/title.js";
+import { setOnEnter, showTitle } from "./ui/screens/title.js";
 
 $("btn-campaign").onclick = () => {
   if (!blockedToday()) startCampaign(frontier());
@@ -107,7 +108,6 @@ $("btn-again").onclick = () => {
 };
 $("btn-home").onclick = home;
 $("btn-quit").onclick = home;
-$("btn-back").onclick = backToGame;
 $("word").addEventListener("pointerdown", wordPress);
 $("word").addEventListener("pointermove", wordPress);
 // слово не выделяется и не уводит фокус из поля ввода
@@ -233,7 +233,27 @@ setOnEnter(() => {
     );
   }
 });
-showTitle();
-pull();
+// переезд со старого адреса: moved.html передаёт прогресс кодом сохранения в адресе (#import=SBZ…).
+// Берём его, только если на этом устройстве опыта меньше; потом перезапуск без кода в адресе.
+async function importFromHash() {
+  const code = decodeURIComponent(location.hash.slice("#import=".length));
+  history.replaceState(null, "", location.pathname + location.search);
+  try {
+    const d = await unpackSave(code);
+    if (d.p.xp > P.xp) {
+      LS.set("sb2_profile", d.p);
+      if (d.s) LS.set("sb_stats", d.s);
+      LS.set("sb_dirty", true); // если ученик уже вошёл по коду, прогресс уйдёт учителю
+    }
+  } catch (e) {
+    // битый код — просто открываем игру
+  }
+  location.reload();
+}
+if (location.hash.startsWith("#import=")) importFromHash();
+else {
+  showTitle();
+  pull();
+}
 // меню разработчика: только в npm run dev, из сборки вырезается целиком
 if (import.meta.env.DEV) import("./dev/panel.js");

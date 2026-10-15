@@ -145,7 +145,7 @@ console.log("  есть");
 // ---------- сборка ----------
 step("Сборка");
 run("npm", ["run", "build", "-w", "@repetitor/api"], { stdio: ["ignore", "ignore", "inherit"] });
-run("npm", ["run", "build:online"], { stdio: ["ignore", "ignore", "inherit"] });
+run("npm", ["run", "build"], { stdio: ["ignore", "ignore", "inherit"] });
 const zip = path.join(os.tmpdir(), `repetitor-api-${Date.now()}.zip`);
 run("zip", ["-j", "-q", zip, "apps/api/dist/index.js", "apps/api/dist/package.json"]);
 console.log(`  функция: ${(fs.statSync(zip).size / 1024).toFixed(0)} КБ в архиве`);
@@ -204,7 +204,7 @@ bind(
 
 // ---------- файлы игры ----------
 step("Файлы игры");
-const DIST = path.join(ROOT, "apps/web/dist-online");
+const DIST = path.join(ROOT, "apps/web/dist");
 const TYPES = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -441,3 +441,6 @@ else {
 }
 
 console.log(`\n✓ Готово: https://${gw.domain}/  ·  кабинет: https://${gw.domain}/tutor.html`);
+// старый адрес на GitHub Pages переадресует сюда: после пересоздания шлюза адрес новый
+if (!fs.readFileSync(path.join(ROOT, "apps/web/src/moved.ts"), "utf8").includes(`https://${gw.domain}/`))
+  console.log(`  ⚠ Адрес шлюза сменился: поменяй GAME_URL в apps/web/src/moved.ts и запушь в main`);

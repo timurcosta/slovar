@@ -30,40 +30,16 @@
         </div>
         <div class="ts-spot" id="title-boss-spot"><canvas id="title-boss" aria-hidden="true"></canvas></div>
         <div class="ts-menu" id="title-menu">
+          <p class="ts-greet" id="title-greet" hidden></p>
           <button class="btn primary" id="btn-title-play">
             <span id="title-play-t">Играть</span><small id="title-play-sub"></small>
           </button>
-          <button class="btn" id="btn-title-join" hidden>У меня код от учителя</button>
+          <button class="btn" id="btn-title-join" hidden>Войти по коду от учителя</button>
         </div>
         <button class="ts-press" id="title-press" type="button">Нажми, чтобы начать</button>
         <div class="ts-foot">
           <a class="link" id="title-teacher" href="tutor.html">Для учителя</a>
           <button class="link" id="btn-title-music" type="button">Музыка: вкл</button>
-        </div>
-      </section>
-
-      <!-- NAME -->
-      <section class="screen" id="s-name" hidden>
-        <h1>Новый герой</h1>
-        <div class="herocard">
-          <div><canvas id="name-hero" aria-hidden="true"></canvas></div>
-          <div class="info">
-            <p class="lead"><b>Привет!</b> Как зовут бойца?</p>
-            <form class="pinrow" id="name-form">
-              <input
-                id="name-in"
-                type="text"
-                maxlength="16"
-                autocomplete="off"
-                autocapitalize="words"
-                placeholder="Имя"
-                aria-label="Имя бойца"
-              />
-              <button class="btn primary" type="submit">Готово</button>
-            </form>
-            <p class="msg err" id="name-msg"></p>
-            <button class="link" id="btn-name-load" type="button">Уже играл? Загрузить по коду</button>
-          </div>
         </div>
       </section>
 
@@ -75,60 +51,105 @@
         <button class="btn primary" id="btn-story-go">Дальше</button>
       </section>
 
-      <section class="screen" id="s-join" hidden>
-        <h1>Код от учителя</h1>
-        <p class="lead" id="join-lead">
-          Учитель даст тебе короткий код. После входа прогресс сохраняется у учителя: его не страшно потерять, и можно
-          продолжать с любого устройства.
-        </p>
-        <form class="pinrow" id="join-form">
-          <input
-            id="join-in"
-            type="text"
-            maxlength="12"
-            autocomplete="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            placeholder="Код"
-            aria-label="Код от учителя"
-          />
-          <button class="btn primary" type="submit">Войти</button>
-        </form>
-        <p class="msg" id="join-msg"></p>
-        <button class="btn" id="btn-join-back">Назад</button>
-      </section>
-
-      <section class="screen" id="s-save" hidden>
-        <h1>Код сохранения</h1>
-        <p class="lead">
-          В этом коде весь прогресс: имя, уровень, монеты, вещи и побеждённые боссы. Сохрани его, например отправь себе
-          в Telegram, и продолжай с того же места на другом телефоне или компьютере.
-        </p>
-        <textarea id="save-code" class="codebox" readonly rows="5" aria-label="Код сохранения"></textarea>
-        <div class="row">
-          <button class="btn primary small" id="btn-save-copy">Скопировать</button
-          ><button class="btn small" id="btn-save-share" hidden>Отправить</button>
+      <!-- ПОХВАСТАТЬСЯ: картинка с героем, чтобы отправить или сохранить -->
+      <div class="modal" id="share" hidden>
+        <div class="modal-card share-card" role="dialog" aria-modal="true" aria-labelledby="share-h">
+          <button class="modal-x" id="btn-share-close" type="button" aria-label="Закрыть">×</button>
+          <h2 id="share-h">Похвастаться</h2>
+          <img id="share-img" alt="Карточка героя: уровень, лучшая вещь и заслуги" />
+          <div class="share-bgs" id="share-bgs" role="group" aria-label="Фон"></div>
+          <div class="row">
+            <button class="btn primary" id="btn-share-send" type="button">Отправить</button
+            ><a class="btn" id="btn-share-save" href="#" download>Сохранить</a>
+          </div>
         </div>
-        <p class="msg" id="save-copy-msg"></p>
-        <h2>Загрузить прогресс</h2>
-        <p class="note">Вставь код, и прогресс из него заменит то, что сейчас на этом устройстве.</p>
-        <textarea
-          id="load-code"
-          class="codebox"
-          rows="4"
-          placeholder="Вставь код сюда"
-          aria-label="Код для загрузки"
-        ></textarea>
-        <div class="row"><button class="btn small" id="btn-load-code">Загрузить</button></div>
-        <p class="msg" id="load-msg"></p>
-        <button class="btn" id="btn-save-back">Назад</button>
-      </section>
+      </div>
+
+      <!-- НАСТРОЙКИ: звук, сложность, история (шестерёнка на главной) -->
+      <div class="modal" id="prefs" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="prefs-h">
+          <button class="modal-x" id="btn-prefs-close" type="button" aria-label="Закрыть">×</button>
+          <h2 id="prefs-h">Настройки</h2>
+          <div class="prefs-row">
+            <button class="btn" id="btn-music-home" type="button">Музыка: вкл</button
+            ><button class="btn" id="btn-mute-home" type="button">Звук: вкл</button>
+          </div>
+          <p class="note" id="ios-sound" hidden>
+            Нет звука на айфоне? Проверь переключатель беззвучного режима сбоку и громкость, потом нажми на любую кнопку
+            в игре.
+          </p>
+          <h3>Сложность слов</h3>
+          <div class="modes compact" id="diff-modes" role="radiogroup" aria-label="Сложность слов">
+            <label class="mode"
+              ><input type="radio" name="diff" value="auto" /><span
+                ><b>По боссам</b><small>Слова сложнее с каждым боссом</small></span
+              ></label
+            >
+            <label class="mode"
+              ><input type="radio" name="diff" value="a" /><span
+                ><b>Лёгкая</b><small>1–2 класс, +2 сердца</small></span
+              ></label
+            >
+            <label class="mode"
+              ><input type="radio" name="diff" value="ab" /><span
+                ><b>Средняя</b><small>Все слова, боссы злее. Награды ×1.5</small></span
+              ></label
+            >
+            <label class="mode"
+              ><input type="radio" name="diff" value="b" /><span
+                ><b>Сложная</b><small>3–4 класс, боссы очень злые. Награды ×2</small></span
+              ></label
+            >
+          </div>
+          <p class="note" id="diff-custom" hidden>Учитель выбрал слова для тебя.</p>
+          <button class="btn" id="btn-story" type="button">История</button>
+          <button class="btn" id="btn-join" type="button" hidden>Войти по коду от учителя</button>
+        </div>
+      </div>
+
+      <!-- ВХОД: кто играет (поверх заставки или главной) -->
+      <div class="modal" id="login" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="login-h">
+          <button class="modal-x" id="btn-login-close" type="button" aria-label="Закрыть">×</button>
+          <h2 id="login-h">Кто играет?</h2>
+          <p class="note" id="login-hero" hidden></p>
+          <form class="pinrow" id="join-form">
+            <input
+              id="join-in"
+              type="text"
+              maxlength="12"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              placeholder="Код"
+              aria-label="Код от учителя"
+            />
+            <button class="btn primary" type="submit">Войти</button>
+          </form>
+          <p class="msg" id="join-msg"></p>
+          <p class="note">
+            Код даёт учитель. С ним прогресс сохраняется у учителя, и играть можно с любого устройства.
+          </p>
+          <div class="modal-or"><span>или</span></div>
+          <button class="btn" id="btn-guest" type="button">
+            Играть как гость<small
+              >Прогресс останется только на этом устройстве, учитель его не увидит, задания и слова учителя не придут.
+              Войдёшь по коду позже — прогресс перейдёт к учителю.</small
+            >
+          </button>
+          <a class="link modal-teacher" href="tutor.html">Я учитель: открыть кабинет</a>
+        </div>
+      </div>
 
       <!-- HOME -->
       <section class="screen cols" id="s-home">
         <div class="topbar">
           <h1>Охотники за ошибками</h1>
-          <span class="coins" id="home-coins"></span>
+          <span class="topbar-r"
+            ><span class="coins" id="home-coins"></span
+            ><button class="icobtn" id="btn-prefs" type="button" aria-label="Настройки" title="Настройки">
+              <span class="ico" data-ico="gear"></span></button
+          ></span>
         </div>
         <div class="col col-main">
           <div class="herocard">
@@ -142,16 +163,41 @@
               <div class="perks" id="home-perks"></div>
               <div class="badges" id="home-badges"></div>
             </div>
+            <button
+              class="icobtn share-btn"
+              id="btn-share"
+              type="button"
+              aria-label="Похвастаться"
+              title="Похвастаться"
+            >
+              <span class="ico" data-ico="share"></span>
+            </button>
           </div>
-          <div class="menu">
-            <button class="btn primary wide" id="btn-campaign">В бой!<small id="campaign-sub"></small></button>
-            <button class="strip wide" id="home-qstrip"></button>
-            <button class="strip wide" id="home-goal" hidden></button>
-            <button class="btn" id="btn-tower">Башня<small id="tower-sub"></small></button>
-            <button class="btn gold" id="btn-shop">Гардероб<small>оружие, броня, скины</small></button>
-            <button class="btn" id="btn-awards">Достижения<small id="awards-sub"></small></button>
-            <button class="btn gold" id="btn-trophy">Трофеи<small id="trophy-sub"></small></button>
+          <div class="fight">
+            <button class="btn primary" id="btn-campaign">В бой!<small id="campaign-sub"></small></button>
+            <div class="seg" role="radiogroup" aria-label="Режим игры">
+              <label><input type="radio" name="play" value="pick" /><span>Выбор буквы</span></label
+              ><label
+                ><input type="radio" name="play" value="type" /><span>Пишу сам <b>×2</b></span></label
+              >
+            </div>
           </div>
+          <div class="tiles">
+            <button class="tile" id="btn-tower" type="button">
+              <span class="ico" data-ico="tower"></span><b>Башня</b><small id="tower-sub"></small>
+            </button>
+            <button class="tile gold" id="btn-shop" type="button">
+              <span class="ico" data-ico="sword"></span><b>Гардероб</b><small id="shop-sub"></small
+              ><em class="tbadge" id="shop-badge" hidden>!</em>
+            </button>
+            <button class="tile" id="btn-awards" type="button">
+              <span class="ico" data-ico="star"></span><b>Достижения</b><small id="awards-sub"></small>
+            </button>
+            <button class="tile gold" id="btn-trophy" type="button">
+              <span class="ico" data-ico="cup"></span><b>Трофеи</b><small id="trophy-sub"></small>
+            </button>
+          </div>
+          <button class="strip" id="home-qstrip" type="button"></button>
           <div id="today-home"></div>
         </div>
         <div class="col col-side">
@@ -160,69 +206,11 @@
             <button class="btn" id="btn-train-err">Работа над ошибками<small id="train-err-sub"></small></button>
             <button class="btn" id="btn-train-new">Новые слова<small id="train-new-sub"></small></button>
           </div>
-          <div class="quests" id="home-quests"></div>
-          <h2>Режим</h2>
-          <div class="modes" role="radiogroup" aria-label="Режим игры">
-            <label class="mode"
-              ><input type="radio" name="play" value="pick" /><span
-                ><b>Выбор буквы</b><small>Из двух вариантов</small></span
-              ></label
-            >
-            <label class="mode"
-              ><input type="radio" name="play" value="type" /><span
-                ><b>Пишу сам</b><small>Слово целиком. Урон x1.5, опыт и монеты x2</small></span
-              ></label
-            >
+          <div class="map-h">
+            <h2>Боссы кампании</h2>
+            <small id="map-count"></small>
           </div>
-          <h2>Сложность слов</h2>
-          <div class="modes" id="diff-modes" role="radiogroup" aria-label="Сложность слов">
-            <label class="mode"
-              ><input type="radio" name="diff" value="auto" /><span
-                ><b>По боссам</b><small>Как в кампании: боссы и слова постепенно сложнее</small></span
-              ></label
-            >
-            <label class="mode"
-              ><input type="radio" name="diff" value="a" /><span
-                ><b>Лёгкая</b><small>Слова 1–2 класса, +2 сердца и больше времени</small></span
-              ></label
-            >
-            <label class="mode"
-              ><input type="radio" name="diff" value="ab" /><span
-                ><b>Средняя</b
-                ><small>Все слова. Боссы злее: больше жизней, меньше времени, +1 подлянка. Награды x1.5</small></span
-              ></label
-            >
-            <label class="mode"
-              ><input type="radio" name="diff" value="b" /><span
-                ><b>Сложная</b
-                ><small>Слова 3–4 класса. Боссы x1.7 жизней, мало времени, +2 подлянки. Награды x2</small></span
-              ></label
-            >
-          </div>
-          <p class="note" id="diff-custom" hidden>
-            Учитель включил свои слова. Сложность выбирается в разделе для учителя.
-          </p>
-          <h2>Боссы кампании</h2>
           <div class="map" id="map"></div>
-          <p class="note">
-            С каждым боссом больше жизней, меньше времени и новые подлые приёмы. Нажми на любого открытого, чтобы начать
-            с него.
-          </p>
-          <div class="row" style="justify-content: space-between">
-            <span class="row"
-              ><button class="link" id="btn-teacher-1">Для учителя</button
-              ><button class="link" id="btn-story">История</button
-              ><button class="link" id="btn-save">Сохранить прогресс</button
-              ><button class="link" id="btn-join" hidden>Код учителя</button></span
-            ><span class="row"
-              ><button class="link" id="btn-music-home">Музыка: вкл</button
-              ><button class="link" id="btn-mute-home">Звук: вкл</button></span
-            >
-          </div>
-          <p class="note">
-            Нет звука на айфоне? Проверь переключатель беззвучного режима сбоку и громкость, потом нажми на любую кнопку
-            в игре.
-          </p>
         </div>
       </section>
 
@@ -383,177 +371,6 @@
         <p class="note" id="tr-count"></p>
         <div class="trophies" id="trophies"></div>
         <div class="row"><button class="btn primary" id="btn-tr-back">Назад</button></div>
-      </section>
-
-      <!-- PIN -->
-      <section class="screen" id="s-pin" hidden>
-        <h1>Для учителя</h1>
-        <p class="lead">Этот раздел закрыт PIN-кодом учителя.</p>
-        <form class="pinrow" id="pin-form">
-          <input
-            id="pin-in"
-            type="password"
-            inputmode="numeric"
-            autocomplete="off"
-            maxlength="8"
-            aria-label="PIN-код"
-          />
-          <button class="btn primary" type="submit">Войти</button>
-        </form>
-        <p class="msg err" id="pin-msg"></p>
-        <div class="row"><button class="link" id="btn-pin-back">Назад</button></div>
-      </section>
-
-      <!-- TEACHER -->
-      <section class="screen" id="s-teacher" hidden>
-        <h1>Для учителя</h1>
-        <p class="note">Всё, что здесь, хранится только в этом браузере на этом устройстве.</p>
-        <div class="tabs" role="tablist" id="ttabs">
-          <button class="tab" data-tt="pupil">Ученик</button><button class="tab" data-tt="words">Слова</button
-          ><button class="tab" data-tt="limits">Лимиты</button> <button class="tab" data-tt="stats">Статистика</button
-          ><button class="tab" data-tt="pin">Защита</button><button class="tab" data-tt="guide">Инструкция</button>
-        </div>
-        <div class="panel" data-tp="pupil">
-          <h2>Прогресс бойца</h2>
-          <div class="pinrow">
-            <input
-              id="rename-in"
-              type="text"
-              maxlength="16"
-              autocomplete="off"
-              aria-label="Имя ученика"
-              placeholder="Имя ученика"
-            /><button class="btn small" id="btn-rename">Сохранить имя</button><span class="msg" id="rename-msg"></span>
-          </div>
-          <p class="note" id="prog-note"></p>
-          <div class="row"><button class="btn small" id="btn-reset-hero">Начать бойца заново</button></div>
-        </div>
-        <div class="panel" data-tp="pupil">
-          <h2>Наградить монетами</h2>
-          <p class="note">Например, за выученные слова или сделанную домашку. Ученик увидит сообщение от учителя.</p>
-          <div class="row">
-            <input type="number" id="gift-n" min="1" max="1000000" value="50" aria-label="Сколько монет" /><button
-              class="btn small"
-              id="btn-gift"
-            >
-              Выдать</button
-            ><span class="msg" id="gift-msg"></span>
-          </div>
-        </div>
-        <div class="panel" data-tp="words">
-          <h2>Какие слова</h2>
-          <label><input type="radio" name="words" value="auto" /> Как в кампании: сначала 1–2 класс, потом 3–4</label>
-          <label><input type="radio" name="words" value="a" /> Только 1–2 класс</label>
-          <label><input type="radio" name="words" value="ab" /> Все слова вперемешку</label>
-          <label><input type="radio" name="words" value="b" /> Только 3–4 класс</label>
-          <label><input type="radio" name="words" value="custom" /> Только мои слова</label>
-          <label><input type="checkbox" id="opt-timer" /> Атака босса (таймер)</label>
-        </div>
-        <div class="panel" data-tp="words">
-          <h2>Мои слова</h2>
-          <p class="note">
-            Одно слово в строке. Трудную букву возьмите в скобки: <b>м(о)локо</b>. Неправильный вариант можно указать
-            через косую черту: <b>м(о/а)локо</b>. Можно несколько скобок: <b>т(е)тра(дь)</b>. Двойные согласные:
-            <b>кла(сс)</b>.
-          </p>
-          <textarea id="custom" placeholder="м(о)локо&#10;с(о)бака&#10;кла(сс)"></textarea>
-          <div class="row">
-            <button class="btn small" id="btn-save-words">Сохранить</button><span class="msg" id="save-msg"></span>
-          </div>
-        </div>
-        <div class="panel" data-tp="limits">
-          <h2>Сколько играть в день</h2>
-          <p class="note">
-            Поставьте один или несколько лимитов. Когда любой из них достигнут, бой спокойно заканчивается («На сегодня
-            всё!»), монеты и опыт сохраняются, а новые бои откроются завтра. 0 значит без лимита.
-          </p>
-          <div class="limgrid">
-            <label>Минут игры<input type="number" min="0" max="600" id="lim-min" /></label>
-            <label>Новых слов<input type="number" min="0" max="500" id="lim-fresh" /></label>
-            <label>Верных ответов<input type="number" min="0" max="2000" id="lim-correct" /></label>
-            <label>Боёв<input type="number" min="0" max="200" id="lim-battles" /></label>
-            <label>Ошибок (стоп, если устал)<input type="number" min="0" max="500" id="lim-mistakes" /></label>
-          </div>
-          <div class="row">
-            <button class="btn small" id="btn-lim-save">Сохранить лимиты</button
-            ><button class="btn small" id="btn-lim-reset">Обнулить счётчики за сегодня</button
-            ><span class="msg" id="lim-msg"></span>
-          </div>
-          <h3>Сегодня</h3>
-          <div class="stats" id="today-stats"></div>
-          <p class="note">
-            Новое слово: слово, на которое ученик впервые ответил правильно. Время считается только в бою.
-          </p>
-        </div>
-        <div class="panel" data-tp="stats">
-          <h2>Выучено слов</h2>
-          <p class="note" id="learned-note"></p>
-        </div>
-        <div class="panel" data-tp="stats">
-          <h2>Ошибки ученика</h2>
-          <div class="tbl-wrap" id="stats-wrap"></div>
-          <div class="row"><button class="btn small" id="btn-reset">Стереть статистику</button></div>
-        </div>
-        <div class="panel" data-tp="pin">
-          <h2>PIN-код</h2>
-          <p class="note" id="pin-note"></p>
-          <div class="pinrow">
-            <input
-              id="pin-new"
-              type="password"
-              inputmode="numeric"
-              autocomplete="off"
-              maxlength="8"
-              aria-label="Новый PIN-код"
-              placeholder="4 цифры"
-            /><button class="btn small" id="btn-pin-set">Поставить PIN</button
-            ><button class="btn small" id="btn-pin-off">Убрать PIN</button>
-          </div>
-          <span class="msg" id="pin-set-msg"></span>
-          <p class="note">
-            Поставьте PIN, чтобы ученик не мог зайти сюда, выдать себе монеты или снять лимиты. Если забудете PIN,
-            сбросить его можно только очисткой данных сайта, а вместе с ними сотрётся и прогресс (сначала сохраните код
-            прогресса на главной).
-          </p>
-        </div>
-        <div class="panel guide" data-tp="guide">
-          <h2>Как встроить игру в занятия</h2>
-          <p>
-            Игра заменяет зубрёжку списка. Вместо «выучи 30 слов ко вторнику» ученик получает «побей босса, 10 минут в
-            день».
-          </p>
-          <ol>
-            <li>
-              <b>Прогресс живёт в браузере.</b> Чтобы перенести бойца на другой телефон, нажмите на главной «Сохранить
-              прогресс», скопируйте код и загрузите его на новом устройстве.
-            </li>
-            <li>
-              <b>Настройка на первом уроке.</b> Во вкладке «Слова» впишите слова текущей темы и те, где он ошибается.
-              Если ученик нервничает из-за времени, выключите таймер.
-            </li>
-            <li>
-              <b>Лимиты.</b> Во вкладке «Лимиты» задайте, сколько играть в день: например, 15 минут или 20 новых слов.
-              Так игра не съест весь вечер.
-            </li>
-            <li>
-              <b>Тренировки.</b> На главной есть «Работа над ошибками» (слова, где он чаще ошибался) и «Новые слова»
-              (ещё не встречавшиеся). Хорошо давать как домашку.
-            </li>
-            <li>
-              <b>Сначала выбор буквы, потом «Пишу сам».</b> В выборе из двух вариантов можно угадать, а слово целиком
-              так не угадаешь.
-            </li>
-            <li>
-              <b>Монеты за реальные дела.</b> Выучил слова, написал диктант без ошибок: выдайте монеты во вкладке
-              «Ученик».
-            </li>
-            <li>
-              <b>Статистика.</b> Во вкладке «Статистика» видно, сколько слов выучено и где ошибки. Их и разбирайте на
-              следующем уроке.
-            </li>
-          </ol>
-        </div>
-        <div class="row"><button class="btn primary" id="btn-back">Назад</button></div>
       </section>
     </main>
 

@@ -1,11 +1,10 @@
-// Первый запуск: имя бойца и история.
+// История для нового героя (имя задаёт учитель при заведении ученика).
 import { $, esc, replay } from "../../lib/dom.js";
 import { BOSSES } from "../../content/bosses.js";
 import { drawHero } from "../../render/hero.js";
 import { drawBoss } from "../../render/sprite.js";
 import { P, save } from "../../state/profile.ts";
 import { sfx } from "../../audio/sfx.js";
-import { toast } from "../toast.js";
 import { show } from "../screens.js";
 import { renderHome } from "./home.js";
 
@@ -64,35 +63,4 @@ $("btn-story-go").onclick = () => {
   }
   renderHome();
   show("s-home");
-};
-export function cleanName(v) {
-  return String(v || "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 16);
-}
-export function askName() {
-  drawHero($("name-hero"), P.equip);
-  $("name-in").value = "";
-  $("name-msg").textContent = "";
-  show("s-name");
-  setTimeout(() => {
-    try {
-      $("name-in").focus();
-    } catch (e) {}
-  }, 60);
-}
-$("name-form").onsubmit = (ev) => {
-  ev.preventDefault();
-  const v = cleanName($("name-in").value);
-  if (!v) {
-    $("name-msg").textContent = "Напиши имя, хотя бы одну букву.";
-    return;
-  }
-  P.name = v;
-  save();
-  sfx.coin();
-  toast(`Добро пожаловать, ${v}!`, "quest");
-  renderHome();
-  showStory();
 };

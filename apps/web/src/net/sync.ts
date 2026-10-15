@@ -1,5 +1,5 @@
-// Синхронизация с сервером репетитора. Игра работает и без него: localStorage — основная копия на
-// устройстве, сервер — общая. Включается при сборке с VITE_BACKEND=1 (без него модуль ничего не делает).
+// Синхронизация с сервером репетитора. Игра работает и без сети: localStorage — основная копия на
+// устройстве, сервер — общая. Без сети изменения копятся (sb_dirty) и уходят, когда она появится.
 import type { JoinResponse, MeResponse, ProgressConflict, ProgressResponse } from "@repetitor/shared";
 import { HttpError, request } from "./http.ts";
 import { LS } from "../state/storage.ts";
@@ -9,14 +9,15 @@ import { setStats, stats } from "../state/stats.ts";
 import { saveSettings, settings } from "../state/settings.ts";
 import { setCustomRaw } from "../topics/words/pools.js";
 
-export const BACKEND = import.meta.env.VITE_BACKEND === "1";
-
-const K = { token: "sb_token", rev: "sb_rev", dirty: "sb_dirty", name: "sb_tutor_name" };
+const K = { token: "sb_token", rev: "sb_rev", dirty: "sb_dirty", name: "sb_tutor_name", guest: "sb_guest" };
 // не чаще раза в 30 с: бесплатный уровень Yandex Cloud — 100 тыс. запросов к API Gateway в месяц
 const PUSH_DELAY = 30_000;
 
-export const linkedName = (): string | null =>
-  BACKEND && LS.get<string | null>(K.token, null) ? LS.get(K.name, null) : null;
+export const linkedName = (): string | null => (LS.get<string | null>(K.token, null) ? LS.get(K.name, null) : null);
+
+/** Гость: играет без кода, прогресс только на этом устройстве. Войдёт по коду — прогресс уйдёт учителю. */
+export const isGuest = (): boolean => !linkedName() && LS.get(K.guest, false);
+export const setGuest = () => LS.set(K.guest, true);
 
 /** Вызывается, когда данные пришли с сервера и экран надо перерисовать. */
 let onRemote = () => {};
@@ -119,6 +120,7 @@ export async function join(code: string): Promise<string> {
   const r = await api<JoinResponse>("POST", "/join", { code });
   LS.set(K.token, r.token);
   LS.set(K.name, r.name);
+  LS.set(K.guest, false);
   const me = await api<MeResponse>("GET", "/me");
   // на сервере уже есть прогресс побольше — продолжаем его, иначе отправляем свой
   const takeServer = !!me.profile && (me.profile.xp ?? 0) >= P.xp;
@@ -134,14 +136,14 @@ export async function join(code: string): Promise<string> {
   return r.name;
 }
 
-if (BACKEND) {
-  onSave(schedule);
-  setInterval(() => push(), 60_000);
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      clearTimeout(timer);
-      timer = undefined;
-      push(true);
-    }
-  });
-}
+onSave(schedule);
+setInterval(() => push(), 60_000);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    clearTimeout(timer);
+    timer = undefined;
+    push(true);
+  }
+});
+// сеть вернулась: забрать настройки и задания учителя и отправить то, что накопилось без неё
+window.addEventListener("online", () => pull());

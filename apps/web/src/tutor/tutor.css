@@ -43,3 +43,49 @@
   letter-spacing: 0.02em;
   font-size: 20px;
 }
+
+/* вход: карточка по центру */
+.tutor-login {
+  display: grid;
+  place-items: center;
+  min-height: 80vh;
+}
+.tutor-login-card {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px 20px;
+}
+.tutor-login-card h1 {
+  margin: 0;
+}
+#login-ralina {
+  width: 112px;
+  height: auto;
+}
+#login {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  text-align: left;
+}
+#login label {
+  font-weight: 800;
+}
+#pass {
+  font: inherit;
+  font-size: 18px;
+  border: 3px solid var(--ink);
+  padding: 10px 12px;
+  border-radius: 0;
+  color: var(--ink);
+  background: var(--card);
+}
+#login .btn {
+  text-align: center;
+}

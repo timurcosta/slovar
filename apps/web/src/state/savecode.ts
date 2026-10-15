@@ -1,6 +1,5 @@
-// Коды сохранения: профиль и статистика → сжатая строка SBZ… и обратно.
-import { stats } from "./stats.ts";
-import { P } from "./profile.ts";
+// Коды сохранения: профиль и статистика → сжатая строка SBZ… и обратно. Чистые функции без
+// текущего профиля: ими пользуется и страница переезда со старого адреса (moved.html).
 import type { SaveData } from "./types.ts";
 
 const b64u = (bytes: Uint8Array) => {
@@ -19,8 +18,8 @@ const unb64u = (str: string) => {
 const pipeBytes = (bytes: Uint8Array, stream: CompressionStream | DecompressionStream) =>
   new Response(new Blob([bytes as BlobPart]).stream().pipeThrough(stream)).arrayBuffer().then((b) => new Uint8Array(b));
 
-export async function packSave(): Promise<string> {
-  const raw = new TextEncoder().encode(JSON.stringify({ v: 1, p: P, s: stats }));
+export async function packSave(data: SaveData): Promise<string> {
+  const raw = new TextEncoder().encode(JSON.stringify(data));
   try {
     return "SBZ" + b64u(await pipeBytes(raw, new CompressionStream("deflate-raw")));
   } catch (e) {

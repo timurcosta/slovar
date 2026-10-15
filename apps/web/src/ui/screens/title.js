@@ -8,17 +8,16 @@ import { bossPx, drawBoss } from "../../render/sprite.js";
 import { drawTitleScene } from "../../render/title.js";
 import { P } from "../../state/profile.ts";
 import { settings } from "../../state/settings.ts";
-import { levelOf } from "../../progress/levels.ts";
+import { TITLES, levelOf } from "../../progress/levels.ts";
 import { frontier } from "../../progress/unlocks.js";
 import { sfx } from "../../audio/sfx.js";
 import { startMusic, stopMusic } from "../../audio/music.js";
 import { unlockAudio } from "../../audio/context.js";
-import { BACKEND, linkedName } from "../../net/sync.ts";
+import { isGuest, linkedName } from "../../net/sync.ts";
 import { show } from "../screens.js";
-import { home, renderHome } from "./home.js";
-import { askName, showStory } from "./intro.js";
-import { openJoin } from "./join.js";
-import { openTeacher } from "./teacher.js";
+import { renderHome } from "./home.js";
+import { showStory } from "./intro.js";
+import { openLogin } from "./join.js";
 
 const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 // враги на титуле — злодеи кампании, без заколдованных друзей; первым выходит следующий босс игрока
@@ -89,16 +88,17 @@ function frame(now) {
   raf = REDUCED ? 0 : requestAnimationFrame(frame);
 }
 
+/** Можно сразу в игру: вошёл по коду или выбрал игру гостем. Иначе «Играть» спрашивает, кто играет. */
+const canEnter = () => !!linkedName() || isGuest();
+
 function renderMenu() {
   const linked = linkedName(),
-    needCode = BACKEND && !P.name;
-  $("title-play-t").textContent = needCode ? "Войти по коду" : P.name ? "Играть" : "Новая игра";
-  $("title-play-sub").textContent = P.name
-    ? `${P.name} · уровень ${levelOf(P.xp)}`
-    : needCode
-      ? "Код даст учитель"
-      : "Придумай имя герою";
-  $("btn-title-join").hidden = !(BACKEND && P.name && !linked);
+    l = levelOf(P.xp);
+  $("title-greet").hidden = !linked;
+  $("title-greet").textContent = linked ? `С возвращением, ${P.name || linked}!` : "";
+  $("title-play-t").textContent = "Играть";
+  $("title-play-sub").textContent = canEnter() ? `${linked ? "" : "Гость · "}уровень ${l} · ${TITLES[l - 1]}` : "";
+  $("btn-title-join").hidden = !isGuest();
 }
 
 export function showTitle() {
@@ -122,26 +122,25 @@ function start(byKey) {
   if (settings.music && !settings.muted) startMusic("title");
   else sfx.coin();
   if (byKey) $("btn-title-play").focus();
+  // ещё не вошёл и не гость: сразу спрашиваем, кто играет (меню остаётся под окном)
+  if (!canEnter()) setTimeout(openLogin, 350);
+}
+
+/** С заставки в игру: история для нового героя, иначе главная. */
+export function enterGame() {
+  stopMusic();
+  renderHome();
+  if (P.storySeen) show("s-home");
+  else showStory();
+  if (!entered) {
+    entered = true;
+    onEnter();
+  }
 }
 
 function play() {
-  stopMusic();
-  if (P.name) {
-    renderHome();
-    if (P.storySeen) show("s-home");
-    else showStory();
-    if (!entered) {
-      entered = true;
-      onEnter();
-    }
-  } else if (BACKEND) openJoin("s-title");
-  else askName();
-}
-
-/** Выход из раздела учителя или экрана кода: в игру, а если героя ещё нет — на титул. */
-export function backToGame() {
-  if (P.name) home();
-  else showTitle();
+  if (canEnter()) enterGame();
+  else openLogin();
 }
 
 $("s-title").addEventListener("click", (e) => {
@@ -153,16 +152,7 @@ document.addEventListener("keydown", (e) => {
   start(true);
 });
 $("btn-title-play").onclick = play;
-$("btn-title-join").onclick = () => {
-  stopMusic();
-  openJoin("s-title");
-};
-$("title-teacher").onclick = (e) => {
-  if (BACKEND) return; // кабинет учителя — отдельная страница tutor.html
-  e.preventDefault();
-  stopMusic();
-  openTeacher();
-};
+$("btn-title-join").onclick = openLogin;
 const relayout = () => {
   geo = null;
   if (visible() && !raf) render(performance.now());

@@ -83,6 +83,7 @@ canvas {
 }
 .btn {
   font: inherit;
+  text-decoration: none;
   font-weight: 900;
   font-size: 17px;
   color: var(--ink);
@@ -248,16 +249,9 @@ textarea:focus-visible {
   font-size: 16px;
   color: var(--ink-soft);
 }
-#name-hero {
-  width: 158px;
-  height: auto;
-}
-#name-in {
-  width: min(220px, 100%);
-  letter-spacing: 0.02em;
-}
 #join-in {
-  width: min(220px, 100%);
+  flex: 1;
+  min-width: 0;
   text-transform: uppercase;
 }
 #join-in::placeholder {
@@ -1409,16 +1403,6 @@ textarea:focus-visible {
     transform: scale(1.5) translateY(-12px);
   }
 }
-.codebox {
-  min-height: 0 !important;
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 12px !important;
-  line-height: 1.35;
-  word-break: break-all;
-}
-#s-save .row {
-  margin: 8px 0;
-}
 .lore {
   font-size: 13px;
   font-style: italic;
@@ -1858,29 +1842,7 @@ body.hurt .sheet {
 }
 
 /* Awards */
-.limgrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
-  margin: 8px 0;
-}
-.limgrid label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-weight: 800;
-  font-size: 13px;
-}
-.limgrid input {
-  font: inherit;
-  font-size: 16px;
-  border: 2px solid var(--ink);
-  padding: 6px 8px;
-  background: var(--paper);
-  color: var(--ink);
-  border-radius: 0;
-  width: 100%;
-}
+
 .todaybar {
   border: 2px dashed var(--ink);
   background: var(--card);
@@ -2025,11 +1987,6 @@ textarea {
   resize: vertical;
   border-radius: 0;
 }
-.tbl-wrap {
-  overflow-x: auto;
-  max-height: 340px;
-  overflow-y: auto;
-}
 table {
   border-collapse: collapse;
   width: 100%;
@@ -2051,40 +2008,6 @@ td.n {
 }
 td.n.bad {
   color: var(--pen);
-}
-.guide summary {
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-.guide summary::-webkit-details-marker {
-  display: none;
-}
-.guide summary::after {
-  content: "−";
-  font-family: var(--font-pixel);
-  font-size: 12px;
-  color: var(--ink-soft);
-}
-.guide:not([open]) summary::after {
-  content: "+";
-}
-.guide p {
-  max-width: 62ch;
-}
-.guide ol {
-  margin: 0;
-  padding-left: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 62ch;
-}
-.guide li {
-  font-size: 15px;
 }
 .msg {
   font-weight: 800;
@@ -2686,15 +2609,11 @@ body.on-title .sheet::before {
     font-size: 17px;
   }
   #home-hero,
-  #end-hero,
-  #name-hero {
+  #end-hero {
     width: 210px;
   }
   #shop-hero {
     width: 180px;
-  }
-  .map {
-    grid-template-columns: repeat(6, 1fr);
   }
   .bcard canvas {
     width: 52px;
@@ -2738,13 +2657,8 @@ body.on-title .sheet::before {
     --sheet: 1240px;
   }
   /* text screens stay readable: centred, not stretched */
-  #s-name,
-  #s-join,
-  #s-save,
   #s-story,
-  #s-end,
-  #s-pin,
-  #s-teacher {
+  #s-end {
     width: 100%;
     max-width: 760px;
     margin-inline: auto;
@@ -2779,9 +2693,7 @@ body.on-title .sheet::before {
   #shop-hero {
     width: 252px;
   }
-  .map {
-    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-  }
+
   .achs,
   .trophies {
     grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -3184,9 +3096,6 @@ body.on-title .sheet::before {
 .minibars i.on em {
   background: var(--gold);
 }
-#home-goal .minibars em {
-  background: var(--gold);
-}
 
 /* ---------- история комиксом ---------- */
 .story .dots {
@@ -3343,4 +3252,374 @@ body.on-title .sheet::before {
 }
 #rage-wrap.hot .bar.rage i {
   background: var(--pen);
+}
+
+/* Вход: «Кто играет?» поверх заставки или главной */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(14 8 40 / 0.62);
+  overflow: auto;
+}
+.modal[hidden] {
+  display: none;
+}
+.modal-card {
+  position: relative;
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px 18px 18px;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  animation: modal-in 0.2s steps(3);
+}
+.modal-card h2 {
+  margin: 0;
+  padding-right: 32px;
+}
+.modal-card .pinrow {
+  flex-wrap: nowrap;
+}
+.modal-card > .btn {
+  width: 100%;
+  text-align: left;
+}
+.modal-card .pinrow .btn {
+  flex: none;
+}
+.modal-card .btn small {
+  font-weight: 700;
+  line-height: 1.35;
+}
+.modal-x {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  font: inherit;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.modal-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-soft);
+  font-weight: 800;
+  font-size: 14px;
+}
+.modal-or::before,
+.modal-or::after {
+  content: "";
+  flex: 1;
+  border-top: 2px dashed var(--grid);
+}
+.modal-teacher {
+  align-self: center;
+  font-weight: 800;
+}
+@keyframes modal-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-card {
+    animation: none;
+  }
+}
+/* заставка: приветствие вошедшего ученика */
+.ts-greet {
+  font-family: var(--font-pixel);
+  font-size: clamp(12px, 3.6vw, 16px);
+  line-height: 1.6;
+  text-align: center;
+  color: #fff;
+  text-shadow: 2px 2px 0 #1b0f3a;
+}
+
+/* Похвастаться */
+.share-card #share-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  border: 3px solid var(--ink);
+  image-rendering: auto;
+  background: #120f36;
+}
+.share-card .row {
+  gap: 10px;
+}
+.share-card .row .btn {
+  flex: 1;
+  text-align: center;
+}
+.share-bgs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.share-bgs .chip {
+  padding: 8px 10px;
+  text-align: center;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  font-size: 14px;
+}
+.share-bgs .chip[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--card);
+}
+
+/* ---------- главная: шестерёнка, «Похвастаться», режим, плитки-иконки, карта лентой ---------- */
+.topbar-r {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.icobtn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+}
+.icobtn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+.ico {
+  display: inline-block;
+  line-height: 0;
+}
+.ico svg {
+  width: 100%;
+  height: 100%;
+}
+.icobtn .ico {
+  width: 24px;
+  height: 24px;
+}
+#s-home .herocard {
+  position: relative;
+}
+.share-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+.fight {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fight .btn.primary {
+  width: 100%;
+}
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 2px solid var(--ink);
+  background: var(--card);
+}
+.seg label {
+  position: relative;
+  cursor: pointer;
+}
+.seg input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.seg span {
+  display: block;
+  padding: 9px 6px;
+  text-align: center;
+  font-weight: 900;
+  font-size: 15px;
+}
+.seg label + label span {
+  border-left: 2px solid var(--ink);
+}
+.seg b {
+  color: var(--pen);
+}
+.seg input:checked + span {
+  background: var(--ink);
+  color: var(--card);
+}
+.seg input:checked + span b {
+  color: var(--gold-l);
+}
+.seg input:focus-visible + span {
+  outline: 3px solid var(--gold);
+  outline-offset: -3px;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 2px 8px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+}
+.tile.gold {
+  background: var(--gold-l);
+}
+.tile:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+.tile:disabled {
+  cursor: default;
+  opacity: 0.55;
+  box-shadow: none;
+}
+.tile .ico {
+  width: 30px;
+  height: 32px;
+}
+.tile b {
+  font-size: 11px;
+  font-weight: 900;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tile small {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.tbadge {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: #fff;
+  background: var(--pen);
+  border: 2px solid var(--ink);
+  animation: tbadge 1.2s steps(2) infinite;
+}
+@keyframes tbadge {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tbadge {
+    animation: none;
+  }
+}
+.map-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.map-h small {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+/* карта боссов на телефоне и планшете — лента с прокруткой */
+.map {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 2px 4px 8px 0;
+  scrollbar-width: thin;
+}
+.map .bcard {
+  flex: none;
+  width: 84px;
+  scroll-snap-align: center;
+}
+.prefs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.prefs-row .btn {
+  text-align: center;
+  font-size: 15px;
+  padding: 10px 6px;
+}
+.modal-card h3 {
+  margin: 4px 0 0;
+}
+.modes.compact .mode span {
+  padding: 8px 10px;
+}
+.modes.compact .mode b {
+  font-size: 15px;
+}
+/* на компьютере справа много места: карта боссов сеткой, а не лентой */
+@media (min-width: 1000px) {
+  .map {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    overflow: visible;
+    padding: 0;
+  }
+  .map .bcard {
+    width: auto;
+  }
+}
+#s-home .hname {
+  padding-right: 48px;
+}
+@media (min-width: 720px) {
+  .tile .ico {
+    width: 36px;
+    height: 38px;
+  }
+  .tile b {
+    font-size: 14px;
+  }
+  .tile small {
+    font-size: 12px;
+  }
 }
