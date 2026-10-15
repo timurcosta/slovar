@@ -13,7 +13,7 @@ function autoWrong(c){
 export function parseEntry(raw){
   raw = raw.trim();
   if (!raw) return null;
-  const segs = []; const re = /\(([^()\/]+)(?:\/([^()]+))?\)/g; let last = 0, m;
+  const segs = []; const re = /\(([^()/]+)(?:\/([^()]+))?\)/g; let last = 0, m;
   while ((m = re.exec(raw))){
     if (m.index > last) segs.push({t: raw.slice(last, m.index)});
     const c = m[1].trim(); const w = (m[2] || "").trim() || autoWrong(c);

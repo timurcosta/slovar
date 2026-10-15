@@ -164,8 +164,6 @@ export const AURA_COL = {
   galaxy:["#c77dff","#ffffff","#7a4fd6","#45d1e6"], dragonfire:["#ff3b3b","#ff7a1a","#ffd23f","#2b9348"], godbolt:["#ffffff","#45d1e6","#ffd23f","#a8f0ff"],
   supernovaaura:["#ffffff","#fff3a0","#ffd23f","#ff7a1a","#ff4fd8"]
 };
-const AURA_GLOW = {sparks:"drop-shadow(0 0 5px #ffd84a)", fireaura:"drop-shadow(0 0 6px #ff7a1a)", storm:"drop-shadow(0 0 6px #45d1e6)",
-  galaxy:"drop-shadow(0 0 7px #7a4fd6) drop-shadow(0 0 2px #c77dff)", dragonfire:"drop-shadow(0 0 8px #ff3b3b) drop-shadow(0 0 3px #ffd23f)", godbolt:"drop-shadow(0 0 10px #45d1e6) drop-shadow(0 0 4px #ffffff)"};
 export const EPIC_AURA = {galaxy:1, dragonfire:1, godbolt:1, supernovaaura:1};
 export const AURA_GLOWC = {sparks:"#ffd84a", fireaura:"#ff7a1a", storm:"#45d1e6", galaxy:"#9a6bff", dragonfire:"#ff3b3b", godbolt:"#45d1e6", supernovaaura:"#ffb84a"};
 // second animation frame for each pet: blink, tail wag, wing flap, propellers
