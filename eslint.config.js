@@ -4,7 +4,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["**/dist/", "**/dist-online/", "shots/", "**/.data/"] },
+  { ignores: ["**/dist/", "**/dist-online/", "**/dist-killswitch/", "shots/", "**/.data/"] },
   js.configs.recommended,
   tseslint.configs.recommended,
   {
@@ -12,7 +12,7 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ["scripts/**/*.{js,mjs}", "**/*.config.js", "apps/api/**/*.ts"],
+    files: ["scripts/**/*.{js,mjs}", ".claude/**/*.{js,mjs}", "**/*.config.js", "apps/api/**/*.ts"],
     languageOptions: { globals: { ...globals.node, ...globals.browser } }, // check.mjs also runs code inside the page
   },
   {

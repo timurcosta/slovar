@@ -64,6 +64,7 @@ const ensureSa = (name, description) =>
   yc("iam", "service-account", "create", name, "--description", description);
 const saApi = ensureSa(SA_API, "API игры: доступ только к базе repetitor");
 const saGw = ensureSa(SA_GW, "API Gateway игры: вызов функции и чтение файлов игры");
+const saDeploy = ensureSa("repetitor-deployer", "Выкладка из GitHub Actions: новая версия функции и файлы игры");
 console.log(`  ${SA_API}: ${saApi.id}\n  ${SA_GW}: ${saGw.id}`);
 
 const bind = (what, ...args) => {
@@ -111,7 +112,18 @@ yc(
   "--grants",
   `grant-type=grant-type-account,grantee-id=${saGw.id},permission=permission-read`,
 );
-console.log(`  приватный, читать может только ${SA_GW}`);
+bind(
+  "repetitor-deployer → storage.uploader на каталоге (бакет в каталоге один)",
+  "resource-manager",
+  "folder",
+  "add-access-binding",
+  folderId,
+  "--role",
+  "storage.uploader",
+  "--service-account-id",
+  saDeploy.id,
+);
+console.log(`  приватный: читает ${SA_GW}, пишет repetitor-deployer`);
 
 // ---------- таблица ----------
 step("Таблица students");
@@ -275,6 +287,72 @@ const gw = ycTry("serverless", "api-gateway", "get", GW)
   ? yc("serverless", "api-gateway", "update", GW, "--spec", specFile)
   : yc("serverless", "api-gateway", "create", "--name", GW, "--spec", specFile);
 fs.rmSync(specFile);
+// ---------- выкладка из GitHub ----------
+step("Выкладка из GitHub Actions (без ключей)");
+const repo = run("git", ["remote", "get-url", "origin"])
+  .trim()
+  .replace(/^.*github\.com[:/]/, "")
+  .replace(/\.git$/, "");
+const owner = repo.split("/")[0];
+bind(
+  `repetitor-deployer → functions.editor на ${FN}`,
+  "serverless",
+  "function",
+  "add-access-binding",
+  fn.id,
+  "--role",
+  "functions.editor",
+  "--service-account-id",
+  saDeploy.id,
+);
+bind(
+  `repetitor-deployer → iam.serviceAccounts.user на ${SA_API}`,
+  "iam",
+  "service-account",
+  "add-access-binding",
+  saApi.id,
+  "--role",
+  "iam.serviceAccounts.user",
+  "--service-account-id",
+  saDeploy.id,
+);
+const FED = "github-actions";
+const feds = yc("iam", "workload-identity", "oidc", "federation", "list") ?? [];
+const fed =
+  feds.find((f) => f.name === FED) ??
+  yc(
+    "iam",
+    "workload-identity",
+    "oidc",
+    "federation",
+    "create",
+    "--name",
+    FED,
+    "--issuer",
+    "https://token.actions.githubusercontent.com",
+    "--audiences",
+    `https://github.com/${owner}`,
+    "--jwks-url",
+    "https://token.actions.githubusercontent.com/.well-known/jwks",
+  );
+const subject = `repo:${repo}:ref:refs/heads/main`;
+const creds = yc("iam", "workload-identity", "federated-credential", "list", "--service-account-id", saDeploy.id) ?? [];
+if (!creds.some((c) => c.federation_id === fed.id && c.external_subject_id === subject))
+  yc(
+    "iam",
+    "workload-identity",
+    "federated-credential",
+    "create",
+    "--service-account-id",
+    saDeploy.id,
+    "--federation-id",
+    fed.id,
+    "--external-subject-id",
+    subject,
+  );
+console.log(`  входить может только ${subject}`);
+console.log(`  в .github/workflows/ci.yml: YC_FOLDER_ID=${folderId}, YC_DEPLOYER_SA_ID=${saDeploy.id}`);
+
 // ---------- аварийное выключение ----------
 step("Аварийное выключение по бюджету");
 const KILL = "repetitor-killswitch";

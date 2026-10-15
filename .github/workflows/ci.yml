@@ -39,7 +39,8 @@ jobs:
         with:
           path: apps/web/dist
 
-  deploy:
+  # офлайн-версия на GitHub Pages
+  pages:
     needs: check
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -55,3 +56,31 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # версия с сервером в Yandex Cloud: новая версия функции и файлы игры.
+  # Без ключей: OIDC-токен GitHub меняется на токен сервисного аккаунта repetitor-deployer,
+  # которому доверяют только запуски из ветки main этого репо (scripts/cloud/ci-deploy.mjs).
+  # Здесь нельзя ставить environment: — он меняет subject токена, и Yandex Cloud его не пустит.
+  cloud:
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: cloud
+      cancel-in-progress: false
+    env:
+      YC_FOLDER_ID: b1g97qgerk9aq846kab8
+      YC_DEPLOYER_SA_ID: ajeggbdf7e5ben6srdhs
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @repetitor/api
+      - run: npm run build:online
+      - run: node scripts/cloud/ci-deploy.mjs
