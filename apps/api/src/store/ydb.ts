@@ -36,19 +36,19 @@ export class YdbStore implements Store {
   }
 
   async listStudents() {
-    const [rows] = await this.sql<[DataRow[]]>`SELECT data FROM ${this.t}`.idempotent(true);
+    const [rows] = await this.sql<[DataRow]>`SELECT data FROM ${this.t}`.idempotent(true);
     return rows.map((r) => JSON.parse(r.data) as StudentRecord);
   }
 
   async getStudent(id: string) {
-    const [rows] = await this.sql<[DataRow[]]>`SELECT data FROM ${this.t} WHERE id = ${new Text(id)}`.idempotent(true);
+    const [rows] = await this.sql<[DataRow]>`SELECT data FROM ${this.t} WHERE id = ${new Text(id)}`.idempotent(true);
     return rows[0] ? (JSON.parse(rows[0].data) as StudentRecord) : null;
   }
 
   async findByCode(code: string) {
     // учеников единицы, поэтому без вторичного индекса
     const [rows] = await this.sql<
-      [DataRow[]]
+      [DataRow]
     >`SELECT data FROM ${this.t} WHERE code = ${new Text(code)} LIMIT 1`.idempotent(true);
     return rows[0] ? (JSON.parse(rows[0].data) as StudentRecord) : null;
   }
@@ -65,7 +65,7 @@ export class YdbStore implements Store {
   async putStudent(rec: StudentRecord, expectedRev?: number) {
     const [id, code, rev, data] = this.values(rec);
     return this.sql.begin(async (tx) => {
-      const [rows] = await tx<[{ rev: bigint }[]]>`SELECT rev FROM ${this.t} WHERE id = ${id}`;
+      const [rows] = await tx<[{ rev: bigint }]>`SELECT rev FROM ${this.t} WHERE id = ${id}`;
       if (!rows[0]) return false;
       if (expectedRev !== undefined && Number(rows[0].rev) !== expectedRev) return false;
       await tx`UPSERT INTO ${this.t} (id, code, rev, data) VALUES (${id}, ${code}, ${rev}, ${data})`;

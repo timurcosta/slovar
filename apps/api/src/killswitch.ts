@@ -29,7 +29,9 @@ export async function handler(event: { messages?: BudgetMessage[] }, context: Co
   }
   const { FOLDER_ID, GATEWAY_NAME } = process.env;
   const auth = { authorization: `Bearer ${context.token?.access_token}` };
-  const list = await fetch(`${API}?folderId=${FOLDER_ID}`, { headers: auth }).then((r) => r.json());
+  const list = (await fetch(`${API}?folderId=${FOLDER_ID}`, { headers: auth }).then((r) => r.json())) as {
+    apiGateways?: { id: string; name: string }[];
+  };
   const gw = (list.apiGateways ?? []).find((g: { name: string }) => g.name === GATEWAY_NAME);
   if (!gw) {
     console.log(`Шлюза ${GATEWAY_NAME} уже нет`);
