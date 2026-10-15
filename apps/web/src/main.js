@@ -63,7 +63,7 @@ import { sfx } from "./audio/sfx.js";
 import { TRACKS, TRACK_ORDER, startMusic, stopMusic } from "./audio/music.js";
 import { silentEl, unlockAudio } from "./audio/context.js";
 import { G, startCampaign, startTower, startTraining, stopGame } from "./battle/run.js";
-import { answer, typed } from "./battle/round.js";
+import { answer, hitIce, typed, wordPress } from "./battle/round.js";
 import { toast } from "./ui/toast.js";
 import { show } from "./ui/screens.js";
 import { home, renderHome } from "./ui/screens/home.js";
@@ -108,6 +108,10 @@ $("btn-again").onclick = () => {
 $("btn-home").onclick = home;
 $("btn-quit").onclick = home;
 $("btn-back").onclick = backToGame;
+$("word").addEventListener("pointerdown", wordPress);
+$("word").addEventListener("pointermove", wordPress);
+// слово не выделяется и не уводит фокус из поля ввода
+$("word").addEventListener("mousedown", (ev) => ev.preventDefault());
 $("opt0").onclick = () => answer(0);
 $("opt1").onclick = () => answer(1);
 $("typer").onsubmit = (ev) => {
@@ -192,6 +196,12 @@ document.addEventListener("keydown", (e) => {
         b.click();
       }
     }
+    return;
+  }
+  // лёд: любая клавиша бьёт по льду (на компьютере не надо тянуться к мышке)
+  if (G.ice && !G.locked && !e.repeat && !["Shift", "Control", "Alt", "Meta", "Tab"].includes(e.key)) {
+    e.preventDefault();
+    hitIce();
     return;
   }
   if (G.type) return;

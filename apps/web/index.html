@@ -71,7 +71,8 @@
         <h1>История</h1>
         <div class="cast" id="story-cast"></div>
         <div id="story-text"></div>
-        <button class="btn primary" id="btn-story-go">В поход!</button>
+        <div class="dots" id="story-dots" aria-hidden="true"></div>
+        <button class="btn primary" id="btn-story-go">Дальше</button>
       </section>
 
       <section class="screen" id="s-join" hidden>
@@ -144,6 +145,8 @@
           </div>
           <div class="menu">
             <button class="btn primary wide" id="btn-campaign">В бой!<small id="campaign-sub"></small></button>
+            <button class="strip wide" id="home-qstrip"></button>
+            <button class="strip wide" id="home-goal" hidden></button>
             <button class="btn" id="btn-tower">Башня<small id="tower-sub"></small></button>
             <button class="btn gold" id="btn-shop">Гардероб<small>оружие, броня, скины</small></button>
             <button class="btn" id="btn-awards">Достижения<small id="awards-sub"></small></button>
@@ -253,12 +256,13 @@
             </div>
             <div class="fighter bob">
               <div id="boss-wrap"><canvas id="boss-cv" aria-label="Босс"></canvas></div>
+              <div class="shields" id="boss-shields" aria-hidden="true"></div>
             </div>
             <div class="bubble" id="bubble"></div>
             <div class="stchips" id="st-chips"></div>
           </div>
           <div id="rage-wrap">
-            <div class="bar-label"><span>Ярость босса</span><span id="rage-sec"></span></div>
+            <div class="bar-label"><span id="rage-label">Атака босса</span><span id="rage-sec"></span></div>
             <div class="bar rage" aria-hidden="true"><i id="rage-fill" style="transform: scaleX(0)"></i></div>
           </div>
           <div class="overlay" id="boss-over" hidden></div>
@@ -443,7 +447,7 @@
           <label><input type="radio" name="words" value="ab" /> Все слова вперемешку</label>
           <label><input type="radio" name="words" value="b" /> Только 3–4 класс</label>
           <label><input type="radio" name="words" value="custom" /> Только мои слова</label>
-          <label><input type="checkbox" id="opt-timer" /> Ярость босса (таймер)</label>
+          <label><input type="checkbox" id="opt-timer" /> Атака босса (таймер)</label>
         </div>
         <div class="panel" data-tp="words">
           <h2>Мои слова</h2>

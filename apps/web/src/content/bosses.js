@@ -4,25 +4,25 @@ import { pick, shuffle } from "../lib/random.js";
 export const defeatedWord = (b) => (b.f ? "повержена" : "повержен");
 export const AB = {
   glitch: { n: "Кракозябры", d: "превращает буквы в закорючки, подожди секунду, и они вернутся" },
-  cloud: { n: "Облачко", d: "прячет слово за облаком, тапни по облаку, чтобы сдуть" },
+  cloud: { n: "Облачко", d: "прячет слово за облаком, нажми на облако, чтобы сдуть" },
   lens: { n: "Зоркие очки", d: "слово еле видно, чётко только под линзой, которая ползает по слову" },
   regen: { n: "Регенерация", d: "лечится, пока ты думаешь" },
-  armor: { n: "Панцирь", d: "первые 2 удара не проходят" },
+  armor: { n: "Панцирь", d: "закрыт двумя щитами: первые 2 удара разбивают щиты" },
   haste: { n: "Ускорение", d: "с каждым словом времени меньше" },
   double: { n: "Двойной удар", d: "ошибка снимает 2 сердца" },
-  swap: { n: "Путаница", d: "меняет кнопки местами, а когда пишешь сам, подсовывает ложную подсказку" },
+  swap: { n: "Путаница", d: "кнопки перелетают и меняются местами, следи за буквой" },
   fog: { n: "Туман", d: "слово быстро скрывается, запоминай" },
   enrage: { n: "Ярость", d: "когда мало жизни, сильно торопит" },
   flip: { n: "Перевёртыш", d: "переворачивает слово вверх ногами, читай как есть" },
-  ink: { n: "Клякса", d: "заляпывает слово чернилами" },
-  shake: { n: "Тряска", d: "слово трясётся и скачет" },
-  freeze: { n: "Заморозка", d: "морозит кнопки и поле ввода на пару секунд" },
-  steal: { n: "Воришка", d: "за каждую ошибку крадёт монеты" },
-  tiny: { n: "Уменьшатор", d: "делает слово крошечным" },
-  mirror: { n: "Зеркало", d: "отражает слово задом наперёд" },
+  ink: { n: "Клякса", d: "заляпывает слово чернилами, сотри кляксы: потри или нажми на них" },
+  stamp: { n: "Двойки", d: "штампует на слово красные двойки, сбивай их нажатием" },
+  freeze: { n: "Заморозка", d: "морозит кнопки, разбей лёд: три нажатия или три клавиши" },
+  steal: { n: "Воришка", d: "за ошибку крадёт монеты, победи его, и он всё вернёт" },
+  tiny: { n: "Уменьшатор", d: "делает слово крошечным, нажми на него, и оно вырастет" },
+  scramble: { n: "Перемешка", d: "разбрасывает буквы, нажми на слово, и они соберутся" },
   dark: { n: "Тьма", d: "гасит свет, слово видно только во вспышках" },
-  web: { n: "Паутина", d: "кнопки качаются, а когда пишешь, подкидывает лишнюю букву" },
-  rush: { n: "Спешка", d: "внезапно перематывает время вперёд" },
+  web: { n: "Паутина", d: "опутывает кнопку, порви паутину двумя нажатиями; когда пишешь, подкидывает лишнюю букву" },
+  rush: { n: "Спешка", d: "бросает часы: поймай их, иначе время перемотается" },
   vampire: { n: "Вампир", d: "за твою ошибку восстанавливает себе жизни" },
 };
 const TAUNTS = {
@@ -48,7 +48,7 @@ const TAUNTS = {
     "Я стёрла твой словарь!",
   ],
   ralina: [
-    "Саша, открывай тетрадь!",
+    "{name}, открывай тетрадь!",
     "А проверочное слово где?",
     "Я всё вижу, внимательнее!",
     "Красной ручкой исправлю!",
@@ -83,12 +83,12 @@ const CAMPAIGN = [
   ["Репетитор Ралина", "ralina", "ralina", true, [], "a"],
   ["Клякса", "blot", "blot", true, [], "a"],
   ["Слизняк Опечатка", "slime", "slime", false, ["regen"], "a"],
-  ["Двойка", "two", "two", true, ["shake"], "a"],
+  ["Двойка", "two", "two", true, ["stamp"], "a"],
   ["Мышь Путаница", "bat", "bat", true, ["swap"], "a"],
   ["Кактус Колючка", "cactus", "cactus", false, ["armor"], "a"],
   ["Кракозябра", "krakoz", "krakoz", true, ["glitch"], "a"],
   ["Робот Проверятор", "robot", "robot", false, ["haste", "rush"], "a"],
-  ["Тыква Тыквус", "pumpkin", "pumpkin", true, ["shake", "dark"], "a"],
+  ["Тыква Тыквус", "pumpkin", "pumpkin", true, ["scramble"], "a"],
   ["Паук Каракуль", "spider", "spider", false, ["web", "armor", "enrage"], "a"],
   ["Осьминог Чернильный", "octopus", "octopus", false, ["ink", "regen"], "a"],
   ["Пришелец Зырк", "alien", "alien", false, ["tiny", "swap", "enrage"], "a"],
@@ -104,7 +104,7 @@ const CAMPAIGN = [
   ["Злой Учебник", "book", "book", false, ["flip", "swap", "enrage"], "b"],
   ["Зомби Списун", "zombie", "zombie", false, ["vampire", "double", "enrage"], "b"],
   ["Кибер-Акула", "shark", "shark", true, ["rush", "double", "enrage"], "b"],
-  ["Маг Безграмот", "wizard", "wizard", false, ["mirror", "fog", "web", "enrage"], "b"],
+  ["Маг Безграмот", "wizard", "wizard", false, ["scramble", "fog", "web", "enrage"], "b"],
   ["Кибер-Двоечник", "robot", "cyber", false, ["freeze", "armor", "haste", "enrage"], "b"],
   ["Словарный дракон", "dragon", "dragon", false, ["double", "vampire", "rush", "enrage"], "b"],
   ["Король Ошибок", "king", "king", false, ["armor", "ink", "flip", "steal", "double", "enrage"], "b"],
@@ -120,7 +120,7 @@ export const LORE = {
   Кракозябра:
     "Пушистая вредина из сломанного компьютера. Это она стёрла половину страниц Словаря, превратив буквы в закорючки.",
   "Робот Проверятор": "Король собрал его на старой фабрике, чтобы ставить двойки быстрее всех.",
-  "Тыква Тыквус": "Хозяин тёмной теплицы на фабрике. Гасит свет и трясёт буквы.",
+  "Тыква Тыквус": "Хозяин тёмной теплицы на фабрике. Как крикнет «Бу!», все буквы разбегаются.",
   "Паук Каракуль": "Плетёт сети из неправильных слов. В его паутине застряли целые страницы Словаря.",
   "Осьминог Чернильный": "Утащил страницы на дно чернильного озера.",
   "Пришелец Зырк": "Прилетел на шум и решил, что на Земле пишут «малако». Переубеди его!",
@@ -168,20 +168,81 @@ export const BOSSES = CAMPAIGN.map(([name, spr, pal, f, ab, pool], i) => ({
   time: Math.max(5, 13 - i * 0.35),
   taunts: TAUNTS[pal],
 }));
-const TOWER_PREFIX = ["Злой", "Огненный", "Ледяной", "Теневой", "Мега", "Ржавый", "Кислотный", "Звёздный"];
+/** Вторая форма финальных боссов: на трети жизней меняют облик, кричат и получают новую подлянку. */
+export const FORM2 = {
+  "Маг Безграмот": {
+    name: "Тёмный Маг",
+    ab: "glitch",
+    say: "Хватит! Тёмная форма!",
+    filter: "brightness(.5) saturate(1.6) drop-shadow(0 0 8px #c77dff)",
+  },
+  "Словарный дракон": {
+    name: "Огненный дракон",
+    ab: "fog",
+    say: "Р-р-р! Дым и пламя!",
+    filter: "hue-rotate(250deg) saturate(2) drop-shadow(0 0 6px #ff7a1a)",
+  },
+  "Король Ошибок": {
+    name: "Истинный Король",
+    ab: "swap",
+    say: "Это ещё не всё! Склонись!",
+    filter: "saturate(1.6) contrast(1.15) drop-shadow(0 0 8px #ffd23f)",
+  },
+};
+// Башня: прилагательное в мужском и женском роде + короткое имя босса и его род.
+// Ралина и те, кого она просила спасти, в башню не попадают.
+const TOWER_PREFIX = [
+  ["Злой", "Злая"],
+  ["Огненный", "Огненная"],
+  ["Ледяной", "Ледяная"],
+  ["Теневой", "Теневая"],
+  ["Мега", "Мега"],
+  ["Ржавый", "Ржавая"],
+  ["Кислотный", "Кислотная"],
+  ["Звёздный", "Звёздная"],
+];
+const TOWER_NAME = {
+  blot: ["Клякса", true],
+  slime: ["Слизняк", false],
+  two: ["Двойка", true],
+  bat: ["Мышь", true],
+  cactus: ["Кактус", false],
+  krakoz: ["Кракозябра", true],
+  robot: ["Робот", false],
+  pumpkin: ["Тыква", true],
+  spider: ["Паук", false],
+  octopus: ["Осьминог", false],
+  alien: ["Пришелец", false],
+  snowman: ["Снеговик", false],
+  skeleton: ["Скелет", false],
+  ghost: ["Призрак", false],
+  goblin: ["Гоблин", false],
+  mummy: ["Мумия", true],
+  pirate: ["Пират", false],
+  ufo: ["Тарелка", true],
+  book: ["Учебник", false],
+  zombie: ["Зомби", false],
+  shark: ["Акула", true],
+  wizard: ["Маг", false],
+  cyber: ["Двоечник", false],
+  dragon: ["Дракон", false],
+  king: ["Король", false],
+};
+const TOWER_BOSSES = BOSSES.filter((b) => TOWER_NAME[b.pal]);
 export const TOWER_FILTER = [
   "hue-rotate(0deg) saturate(1.4)",
   "hue-rotate(320deg) saturate(1.6)",
   "hue-rotate(180deg)",
-  "brightness(.55) saturate(.6)",
+  "brightness(.6) saturate(1.3) drop-shadow(0 0 6px #7a4fd6)",
   "hue-rotate(90deg) saturate(1.5)",
   "sepia(.7) saturate(1.4)",
   "hue-rotate(60deg) saturate(2)",
   "hue-rotate(240deg) saturate(1.6)",
 ];
 export function towerBoss(floor) {
-  const base = pick(BOSSES),
-    k = (Math.random() * TOWER_PREFIX.length) | 0;
+  const base = pick(TOWER_BOSSES),
+    k = (Math.random() * TOWER_PREFIX.length) | 0,
+    [short, f] = TOWER_NAME[base.pal];
   const pool = shuffle([
     "regen",
     "armor",
@@ -195,7 +256,8 @@ export function towerBoss(floor) {
     "freeze",
     "steal",
     "tiny",
-    "mirror",
+    "scramble",
+    "stamp",
     "dark",
     "web",
     "rush",
@@ -209,10 +271,10 @@ export function towerBoss(floor) {
   if (floor >= 15) ab.push(pool[2]);
   if (floor >= 3) ab.push("enrage");
   return {
-    name: `${TOWER_PREFIX[k]} ${base.name.split(" ")[0]}`,
+    name: `${TOWER_PREFIX[k][f ? 1 : 0]} ${short}`,
     spr: base.spr,
     pal: base.pal,
-    f: false,
+    f,
     ab,
     pool: "tower",
     filter: TOWER_FILTER[k],

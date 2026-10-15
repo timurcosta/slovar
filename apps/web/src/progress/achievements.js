@@ -43,15 +43,15 @@ export const ACH = [
   {
     id: "leg1",
     n: "Легендарный",
-    d: "Получи предмет стоимостью от 2000",
-    c: () => ITEMS.some((i) => i.price >= 2000 && P.owned[i.id]),
+    d: "Получи легендарный предмет",
+    c: () => ITEMS.some((i) => i.price >= 5000 && P.owned[i.id]),
     r: 300,
   },
   {
     id: "myth1",
     n: "Мифический",
     d: "Получи мифический предмет",
-    c: () => ITEMS.some((i) => i.price >= 8000 && P.owned[i.id]),
+    c: () => ITEMS.some((i) => i.price >= 15000 && P.owned[i.id]),
     r: 1000,
   },
   { id: "l50", n: "Владыка Слова", d: "Достигни 50 уровня", c: () => levelOf(P.xp) >= 50, r: 10000 },

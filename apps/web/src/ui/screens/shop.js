@@ -11,7 +11,8 @@ import {
   LOOK_STYLE,
   hairMatches,
 } from "../../content/look.js";
-import { ITEM, ITEMS, RARITY, SLOTS, UPGRADES, upCost } from "../../content/items.js";
+import { ITEM, ITEMS, RARITY, SLOTS, UPGRADES, showcaseEquip, upCost } from "../../content/items.js";
+import { shownDmg } from "../../content/rules.ts";
 import { COSTUMES, COSTUME_KEY } from "../../content/costumes.js";
 import { drawHero } from "../../render/hero.js";
 import { P, heroLook, save } from "../../state/profile.ts";
@@ -27,8 +28,10 @@ import { perkChips } from "./home.js";
 
 export let shopTab = "weapon",
   tryOn = null;
-export function openShop() {
+/** Открыть гардероб; tab — вкладка (строка), например из «Копишь на …» на главной. */
+export function openShop(tab) {
   tryOn = null;
+  if (typeof tab === "string") shopTab = tab;
   renderShop();
   show("s-shop");
 }
@@ -70,7 +73,7 @@ function renderShop() {
           u.max <= 10
             ? `<div class="lvlbar">${Array.from({ length: u.max }, (_, k) => `<i class="${k < n ? "on" : ""}"></i>`).join("")}</div>`
             : `<span class="chip gold">Уровень ${n}</span>`;
-        return `<div class="fcard"><b>${u.name}</b><small class="note">${u.d}. Сейчас: ${u.id === "str" ? "+" + n + " урона" : u.id === "hp" ? "+" + n + " сердец" : u.id === "time" ? "+" + n * 0.5 + " с" : "+" + n * 10 + "% монет"}</small>${bar}
+        return `<div class="fcard"><b>${u.name}</b><small class="note">${u.d}. Сейчас: ${u.id === "str" ? "+" + shownDmg(n) + " урона" : u.id === "hp" ? "+" + n + " сердец" : u.id === "time" ? "+" + n * 0.5 + " с" : "+" + n * 10 + "% монет"}</small>${bar}
         <button class="btn small ${!max && P.coins >= cost ? "gold" : ""}" data-up="${u.id}" ${max || P.coins < cost ? "disabled" : ""}>${max ? "Максимум" : `Улучшить · ${cost}`}</button></div>`;
       }).join("") +
       `<p class="note" style="grid-column:1/-1">Кузница бесконечная: Силу можно качать до 99. Чем выше этаж в Башне, тем больше монет.</p>`;
@@ -111,11 +114,12 @@ function renderShop() {
       else if (lvlLock) act = `<button class="btn small" disabled>С ${i.lvl} уровня</button>`;
       else
         act = `<button class="btn small ${P.coins >= i.price ? "gold" : ""}" data-buy="${i.id}" ${P.coins >= i.price ? "" : "disabled"}>Купить · ${i.price}</button>`;
-      const tier = i.price >= 40000 ? " ultra" : i.price >= 8000 ? " myth" : i.price >= 2000 ? " leg" : "";
+      const tier = i.price >= 40000 ? " ultra" : i.price >= 15000 ? " myth" : i.price >= 5000 ? " leg" : "";
       return `<div class="icard${on ? " on" : ""}${locked ? " lock" : ""}${tier}" data-try="${i.id}" tabindex="0"><canvas id="ic-${i.id}"></canvas>${i.price ? `<span class="rar" style="color:${rc}">${rn}</span>` : i.gift ? `<span class="rar" style="color:#2a9d8f">ПОДАРОК</span>` : ""}<b>${esc(i.name)}</b><small>${esc(i.perk)}</small><div class="act">${act}</div></div>`;
     })
     .join("");
-  list.forEach((i) => drawHero($("ic-" + i.id), { ...P.equip, [i.slot]: i.id }));
+  // на карточке только сама вещь на герое: в полной экипировке оружие и шлем теряются за крыльями и питомцем
+  list.forEach((i) => drawHero($("ic-" + i.id), showcaseEquip(P.equip, i)));
   $("items")
     .querySelectorAll("[data-try]")
     .forEach(

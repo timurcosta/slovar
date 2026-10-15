@@ -450,6 +450,21 @@ BBBBBGGBBBBB
 BBBBBBBBBBBB
 BYYYYYYYYYYB
 BBBBBBBBBBBB`,
+  // открытый сундук: крышка откинута назад, изнутри свет
+  chestOpen: `
+.BBBBBBBBBB.
+BYYYYYYYYYYB
+BBBBBBBBBBBB
+.W..W..W..W.
+W.WWWWWWWW.W
+..WGGGGGGW..
+BBGGGGGGGGBB
+BYYYYYYYYYYB
+BBBBBGGBBBBB
+BBBBBGGBBBBB
+BBBBBBBBBBBB
+BYYYYYYYYYYB
+BBBBBBBBBBBB`,
 };
 export const PALS = {
   lep: { B: "#e0a050", D: "#a8642a", W: "#fff7e0", C: "#f0dcb0" },
@@ -561,7 +576,9 @@ export const PALS = {
     D: "#2a2238",
     X: "#ff3b3b",
   },
-  chest: { B: "#8a5a2b", Y: "#f0a000", G: "#ffd84a" },
+  chest: { B: "#8a5a2b", Y: "#f0a000", G: "#ffd84a", W: "#fff3a0" },
+  chest2: { B: "#4a5a7a", Y: "#c9d3e3", G: "#45d1e6", W: "#d6f3ff" },
+  chest3: { B: "#a86400", Y: "#ffe27a", G: "#ff4fd8", W: "#ffffff" },
 };
 // per-boss "blink" frame: which palette keys get swapped (eyes close, lights flicker)
 export const BLINK = {

@@ -2,9 +2,10 @@
 import { $, TOUCH, esc } from "../lib/dom.js";
 import { plural } from "../lib/text.js";
 import { pick, shuffle } from "../lib/random.js";
-import { ITEMS } from "../content/items.js";
+import { ITEM, ITEMS, RARITY, showcaseEquip } from "../content/items.js";
 import { AB, BOSSES, LORE, WIN_LORE, defeatedWord, towerBoss } from "../content/bosses.js";
 import { PALS, SPR } from "../content/sprites.js";
+import { shownDmg } from "../content/rules.ts";
 import { drawHero } from "../render/hero.js";
 import { drawBoss, drawSprite } from "../render/sprite.js";
 import { errWords, newWords, poolFor } from "../topics/words/pools.js";
@@ -15,7 +16,7 @@ import { quest, touchDay } from "../progress/daily.js";
 import { blockedToday, ensureDay, limitReason } from "../progress/limits.js";
 import { addCoins, addXP, grantChest } from "../progress/rewards.js";
 import { checkAch } from "../progress/achievements.js";
-import { sfx } from "../audio/sfx.js";
+import { sfx, tone } from "../audio/sfx.js";
 import { duckMusic, stopMusic } from "../audio/music.js";
 import { bossCv, drawFighters, heroCv, renderHUD } from "./hud.js";
 import { clearRound, later, nextQ } from "./round.js";
@@ -41,6 +42,8 @@ function newRun(kind) {
     floor: 0,
     xpGot: 0,
     coinsGot: 0,
+    coinsBonus: 0, // сколько монет и опыта добавили броня, питомец, шлем и «Богатство»
+    xpBonus: 0,
     items: [],
     timers: [],
     ints: [],
@@ -110,6 +113,59 @@ export function startTower() {
   G.floor = 1;
   startBoss(towerBoss(1));
 }
+export const abilChips = (ab) =>
+  ab.map((a) => `<span class="chip${a === "enrage" ? " red" : ""}" title="${esc(AB[a].d)}">${AB[a].n}</span>`).join("");
+const CHEST_PAL = { 1: PALS.chest, 2: PALS.chest2, 3: PALS.chest3 };
+/** Сундук на экране победы: трясётся, открывается, потом видно монеты и вещь в рамке её редкости. */
+function openChest(chest, tier, rewardHTML) {
+  const pal = CHEST_PAL[tier] || PALS.chest;
+  drawSprite($("chest-cv"), SPR.chest, pal);
+  [0, 160, 320, 480].forEach((ms) => later(() => tone(190 + ms / 4, 0.06, "square", 0.03, 120), ms));
+  later(() => {
+    const cv = $("chest-cv"),
+      loot = $("chest-loot");
+    if (!cv || !loot) return;
+    drawSprite(cv, SPR.chestOpen, pal);
+    cv.classList.replace("shaking", "opened");
+    loot.hidden = false;
+    let item = "";
+    if (chest.item) {
+      const [rn, rc] = RARITY(chest.item.price);
+      item = `<div class="lootitem" style="--rc:${rc}"><canvas id="loot-cv"></canvas><div><span class="rar">${rn}</span><b>${esc(chest.item.name)}</b>
+        <button class="btn small gold" id="btn-equip-new">Надеть</button></div></div>`;
+    }
+    loot.innerHTML = rewardHTML + item;
+    if (chest.item) {
+      drawHero($("loot-cv"), showcaseEquip(P.equip, chest.item));
+      sfx.fanfare(true);
+      $("btn-equip-new").onclick = () => {
+        P.equip[chest.item.slot] = chest.item.id;
+        save();
+        drawFighters();
+        $("btn-equip-new").textContent = "Надето!";
+        $("btn-equip-new").disabled = true;
+        renderHUD();
+      };
+    } else sfx.coin();
+  }, 900);
+}
+/** Строка о бонусах снаряжения за этого босса: чтобы «+25% монет» было видно, а не только написано. */
+function bonusHTML() {
+  const c = G.coinsBonus - G.bonus0.c,
+    x = G.xpBonus - G.bonus0.x,
+    it = (s) => ITEM[P.equip[s]],
+    parts = [];
+  if (c > 0) {
+    const who = [
+      it("armor").coinMul && it("armor").name,
+      it("pet").coinMul && it("pet").name,
+      P.up.gold && "Богатство",
+    ];
+    parts.push(`${who.filter(Boolean).join(" и ")}: +${c} монет`);
+  }
+  if (x > 0 && it("helmet").xpMul) parts.push(`${it("helmet").name}: +${x} опыта`);
+  return parts.length ? `<p class="note bonus">${esc(parts.join(" · "))}</p>` : "";
+}
 function startBoss(b) {
   clearRound();
   b = applyDiff(b);
@@ -120,24 +176,26 @@ function startBoss(b) {
   G.queue = shuffle(poolFor(b));
   G.shieldLeft = g.shield;
   G.armorLeft = b.ab.includes("armor") ? 2 : 0;
+  $("boss-shields").innerHTML = '<i class="shield"></i>'.repeat(G.armorLeft);
   G.firstHit = false;
   G.q = 0;
   G.enraged = false;
+  G.form2 = false;
+  G.stolen = 0;
+  G.bonus0 = { c: G.coinsBonus, x: G.xpBonus };
   G.bossMistakes = 0;
   G.angryShown = false;
   $("boss-wrap").classList.remove("angry");
   bossCv.className = "";
   $("boss-wrap").style.filter = b.filter || "";
-  $("boss-wrap").classList.remove("enraged");
+  $("boss-wrap").classList.remove("enraged", "form2");
   drawBoss(bossCv, b);
   heroCv.className = "";
   drawFighters();
   $("boss-name").textContent = b.name;
   $("boss-num").textContent =
     G.kind === "tower" ? `ЭТАЖ ${b.floor}` : G.kind === "training" ? "ТРЕНИРОВКА" : `${b.idx + 1}/${BOSSES.length}`;
-  $("boss-abil").innerHTML = b.ab
-    .map((a) => `<span class="chip${a === "enrage" ? " red" : ""}" title="${esc(AB[a].d)}">${AB[a].n}</span>`)
-    .join("");
+  $("boss-abil").innerHTML = abilChips(b.ab);
   $("word").innerHTML = "";
   $("feedback").textContent = "";
   [0, 1].forEach((i) => {
@@ -153,7 +211,7 @@ function startBoss(b) {
     ${b.training ? `<p class="lore">${b.training === "err" ? `Тренировка: ${G.trainPool.length} ${plural(G.trainPool.length, ["слово", "слова", "слов"])}, в которых ты ошибался. Каждый верный ответ стирает ошибку из памяти Тени.` : `Тренировка: ${G.trainPool.length} ${plural(G.trainPool.length, ["слово", "слова", "слов"])}, которые ты ещё не встречал. Запоминай!`}</p>` : ""}
     ${b.diff ? `<p class="note"><b>${b.diff === "b" ? "Сложный" : "Средний"} режим:</b> босс злее обычного</p>` : ""}
     ${b.ab.length ? `<ul>${b.ab.map((a) => `<li>${AB[a].n}: ${esc(AB[a].d)}</li>`).join("")}</ul>` : b.training ? "" : b.spr === "ralina" ? "<p>Добрая, но строгая. Разминка перед настоящими монстрами! Победишь, и она тебя чем-то угостит.</p>" : "<p>Разминка!</p>"}
-    <p class="note">Жизни ${b.hp} · время ${Math.round((b.time + g.time) * (G.type ? 1.8 : 1))} с · слова: ${DIFF_NAME[settings.words] || "по боссам"}</p>
+    <p class="note">Жизни ${shownDmg(b.hp)} · время ${Math.round((b.time + g.time) * (G.type ? 1.8 : 1))} с · слова: ${DIFF_NAME[settings.words] || "по боссам"}</p>
     <button class="btn primary" id="btn-fight">Бой!</button>`;
   drawBoss($("intro-cv"), b);
   $("intro-cv").style.filter = b.filter || "";
@@ -228,7 +286,11 @@ export function bossDown() {
   G.score += 50;
   const bossCoins = addCoins(Math.round((G.kind === "tower" ? 30 + b.floor * 9 : 30 + b.idx * 9) * diffMul()));
   addXP(Math.round((G.kind === "tower" ? 30 + b.floor * 4 : 30 + b.idx * 5) * diffMul()));
-  const chest = grantChest(G.kind === "tower" ? (b.floor % 5 === 0 ? 3 : 1) : unlockedNew ? 2 : 1, null);
+  const tier = G.kind === "tower" ? (b.floor % 5 === 0 ? 3 : 1) : unlockedNew ? 2 : 1;
+  const chest = grantChest(tier, null);
+  // Воришка побеждён: всё украденное возвращается
+  const back = G.stolen ? addCoins(G.stolen, false) : 0;
+  G.stolen = 0;
   quest("bosses");
   if (flawless) quest("flawless");
   if (G.hearts < g.maxH) G.hearts++;
@@ -266,7 +328,8 @@ export function bossDown() {
     $("typer").hidden = true;
     $("word").innerHTML = "";
     $("feedback").textContent = "";
-    const reward = `<p class="reward">+${bossCoins + chest.coins} монет${flawless ? " · без ошибок!" : ""}</p>${chest.item ? `<p class="reward">В сундуке: ${esc(chest.item.name)}!</p>` : ""}`;
+    const reward = `<p class="reward">+${bossCoins + chest.coins} монет${flawless ? " · без ошибок!" : ""}</p>${back ? `<p class="reward">Отобрал своё: +${back} монет!</p>` : ""}${bonusHTML()}`;
+    const chestBox = `<div class="chestrow"><canvas class="chest shaking" id="chest-cv"></canvas><div class="loot" id="chest-loot" hidden></div></div>`;
     const praise = pick([
       "ты наш герой!",
       "так держать!",
@@ -279,8 +342,8 @@ export function bossDown() {
     const cheer = `<div class="victory"><b>ПОБЕДА!</b><span>${P.name ? esc(P.name) + ", " + praise : praise.charAt(0).toUpperCase() + praise.slice(1)}</span></div>`;
     confetti(lastCampaign ? 260 : 150, lastCampaign ? 3600 : 2600);
     if (lastCampaign) {
-      ov.innerHTML = `${cheer}<p>${esc(b.name)} ${defeatedWord(b)}!</p>${WIN_LORE[b.name] ? `<p class="lore">${loreText(WIN_LORE[b.name])}</p>` : ""}<canvas class="chest" id="chest-cv"></canvas>${reward}<p><b>Кампания пройдена!</b> Дальше ждёт Башня.</p>`;
-      drawSprite($("chest-cv"), SPR.chest, PALS.chest);
+      ov.innerHTML = `${cheer}<p>${esc(b.name)} ${defeatedWord(b)}!</p>${WIN_LORE[b.name] ? `<p class="lore">${loreText(WIN_LORE[b.name])}</p>` : ""}${chestBox}<p><b>Кампания пройдена!</b> Дальше ждёт Башня.</p>`;
+      openChest(chest, tier, reward);
       later(() => endGame(true), 2200);
       return;
     }
@@ -288,8 +351,7 @@ export function bossDown() {
     const gift = G.gotGift;
     G.gotGift = false;
     ov.innerHTML = `${cheer}<p>${esc(b.name)} ${defeatedWord(b)}!</p>${G.kind !== "tower" && WIN_LORE[b.name] ? `<p class="lore">${loreText(WIN_LORE[b.name])}</p>` : ""}
-      ${gift ? `<div class="gifts"><canvas id="gift-lep"></canvas><canvas id="gift-hat"></canvas></div><p class="reward">Подарки от Ралины: лепёшка с каймаком (+1 сердце навсегда) и татарский национальный костюм с тюбетейкой, уже на тебе!</p>` : `<canvas class="chest" id="chest-cv"></canvas>`}${reward}
-      ${chest.item ? `<button class="link" id="btn-equip-new">Надеть ${esc(chest.item.name)}</button>` : ""}
+      ${gift ? `<div class="gifts"><canvas id="gift-lep"></canvas><canvas id="gift-hat"></canvas></div><p class="reward">Подарки от Ралины: лепёшка с каймаком (+1 сердце навсегда) и татарский национальный костюм с тюбетейкой, уже на тебе!</p>${reward}${chest.item ? `<button class="link" id="btn-equip-new">Надеть ${esc(chest.item.name)}</button>` : ""}` : chestBox}
       <p>${G.kind === "tower" ? `Следующий этаж: ${b.floor + 1}` : `${unlockedNew ? "Открыт новый босс" : "Следующий босс"}: <b>${esc(nb.name)}</b>`}</p>
       <button class="btn primary" id="btn-next">Дальше</button>`;
     if (gift) {
@@ -305,8 +367,8 @@ export function bossDown() {
       sfx.level();
       renderHUD();
       drawFighters();
-    } else drawSprite($("chest-cv"), SPR.chest, PALS.chest);
-    if (chest.item)
+    } else openChest(chest, tier, reward);
+    if (gift && chest.item)
       $("btn-equip-new").onclick = () => {
         P.equip[chest.item.slot] = chest.item.id;
         save();
@@ -342,7 +404,7 @@ export function endGame(won) {
   $("end-sub").textContent = sub;
   heroCard("end");
   const cells = [
-    ["Очки", G.score + (isRecord ? " ★" : "")],
+    ["Очки", shownDmg(G.score) + (isRecord ? " ★" : "")],
     ["Монеты", "+" + G.coinsGot],
     ["Опыт", "+" + G.xpGot],
     ["Лучшая серия", G.bestStreak],

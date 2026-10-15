@@ -1,6 +1,7 @@
 // Панель боя: сердца, очки, жизни босса.
 import { $ } from "../lib/dom.js";
 import { P } from "../state/profile.ts";
+import { shownDmg } from "../content/rules.ts";
 import { gear } from "../progress/gear.js";
 import { levelOf, xpProgress } from "../progress/levels.ts";
 import { refreshCoins } from "../progress/rewards.js";
@@ -27,11 +28,9 @@ export function renderHUD() {
   const nH = Math.max(g.maxH, G.hearts);
   $("hearts").classList.toggle("many", nH > 9);
   $("hearts").innerHTML = Array.from({ length: nH }, (_, i) => heartSVG(i < G.hearts)).join("");
-  $("st-chips").innerHTML =
-    (G.shieldLeft ? `<span class="chip">ЩИТ ${G.shieldLeft}</span>` : "") +
-    (G.armorLeft ? `<span class="chip red">ПАНЦИРЬ ${G.armorLeft}</span>` : "");
+  $("st-chips").innerHTML = G.shieldLeft ? `<span class="chip">ЩИТ ${G.shieldLeft}</span>` : ""; // щиты босса нарисованы на нём самом
   $("hearts").setAttribute("aria-label", `Жизни: ${G.hearts} из ${g.maxH}`);
-  $("score").textContent = G.score;
+  $("score").textContent = shownDmg(G.score);
   $("streak").textContent = G.streak >= 2 ? `СЕРИЯ x${G.streak}` : "";
   // hpLag — урон, который уже посчитан, но удар ещё летит: полоска падает в момент попадания
   $("hp-fill").style.transform = `scaleX(${Math.max(0, Math.min(1, (G.hp + (G.hpLag || 0)) / G.boss.hp))})`;

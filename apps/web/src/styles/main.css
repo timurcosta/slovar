@@ -1216,13 +1216,6 @@ textarea:focus-visible {
   color: var(--ink-soft);
   margin: 0 0.08em;
 }
-.gap.decoy {
-  width: auto;
-  color: #7a4fd6;
-  border-bottom: 4px dashed #7a4fd6;
-  font-size: 1em;
-  animation: wiggle 0.35s;
-}
 .gap s {
   color: var(--pen);
   font-size: 0.6em;
@@ -1244,11 +1237,13 @@ textarea:focus-visible {
   text-align: center;
 }
 .opts {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
 .opt {
+  position: relative;
   font-family: var(--font-body);
   font-weight: 900;
   font-size: 40px;
@@ -1296,6 +1291,7 @@ textarea:focus-visible {
   }
 }
 .typer {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
@@ -1326,15 +1322,9 @@ textarea:focus-visible {
 .word.flip {
   transform: rotate(180deg);
 }
-.word.shakeW {
-  animation: jitter 0.22s infinite;
-}
 .word.tiny {
   font-size: 13px !important;
   letter-spacing: 0.02em;
-}
-.word.mirror {
-  transform: scaleX(-1);
 }
 .word.dark {
   animation: darkness 2.2s infinite;
@@ -1476,28 +1466,6 @@ textarea:focus-visible {
     opacity: 0.03;
   }
 }
-.opts.runaway .opt:first-child {
-  animation: swayL 1.1s ease-in-out infinite alternate;
-}
-.opts.runaway .opt:last-child {
-  animation: swayR 1.1s ease-in-out infinite alternate;
-}
-@keyframes swayL {
-  from {
-    transform: translate(-14px, 0) rotate(-4deg);
-  }
-  to {
-    transform: translate(18px, 8px) rotate(3deg);
-  }
-}
-@keyframes swayR {
-  from {
-    transform: translate(14px, 6px) rotate(4deg);
-  }
-  to {
-    transform: translate(-18px, -4px) rotate(-3deg);
-  }
-}
 .blot {
   position: absolute;
   border-radius: 50%;
@@ -1511,23 +1479,6 @@ textarea:focus-visible {
   background: #d6f3ff !important;
   border-color: #45d1e6 !important;
   box-shadow: 5px 5px 0 #45d1e6 !important;
-}
-@keyframes jitter {
-  0% {
-    transform: translate(0, 0) rotate(0);
-  }
-  25% {
-    transform: translate(-4px, 2px) rotate(-3deg);
-  }
-  50% {
-    transform: translate(4px, -2px) rotate(3deg);
-  }
-  75% {
-    transform: translate(-2px, -2px) rotate(-1deg);
-  }
-  100% {
-    transform: translate(0, 0);
-  }
 }
 @keyframes splat {
   from {
@@ -1562,7 +1513,7 @@ textarea:focus-visible {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 6px;
   text-align: center;
   padding: 14px;
   z-index: 5;
@@ -2417,7 +2368,6 @@ body.kb .arena {
   .dashSmash,
   .steam,
   .word.dark,
-  .opts.runaway .opt,
   #boss-wrap.angry,
   .ouch,
   .hit,
@@ -2431,7 +2381,6 @@ body.kb .arena {
   body.hurt .sheet,
   .pop,
   .fx,
-  .word.shakeW,
   .blot {
     animation: none !important;
   }
@@ -2887,4 +2836,511 @@ body.on-title .sheet::before {
   .word {
     font-size: clamp(44px, 4.4vw, 64px);
   }
+}
+
+/* ---------- подлянки с контрприёмом: нажать, потереть, разбить, поймать ---------- */
+.word {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.word.tiny,
+.word.scrambled {
+  cursor: zoom-in;
+}
+.word.inky {
+  cursor: grab;
+  touch-action: none; /* тереть пальцем, а не листать страницу */
+}
+.word .tip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  color: #5f7fb8;
+  pointer-events: none;
+}
+.blot.gone {
+  opacity: 0 !important;
+  transition: opacity 0.2s;
+}
+.word .scg {
+  white-space: nowrap;
+}
+.word .sc {
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.word.scrambled .sc {
+  transform: translate(var(--dx), var(--dy)) rotate(var(--r));
+}
+.stamp {
+  position: absolute;
+  z-index: 2;
+  font-family: var(--font-pixel);
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--pen);
+  background: #fff0f0;
+  border: 3px solid var(--pen);
+  padding: 6px 9px 4px;
+  transform: rotate(var(--r));
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: stampin 0.18s ease-out;
+}
+.stamp.off {
+  animation: stampoff 0.3s forwards;
+}
+@keyframes stampin {
+  from {
+    transform: rotate(var(--r)) scale(2.2);
+    opacity: 0;
+  }
+}
+@keyframes stampoff {
+  to {
+    transform: translate(30px, -40px) rotate(160deg) scale(0.4);
+    opacity: 0;
+  }
+}
+.icecover {
+  position: absolute;
+  inset: -6px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  touch-action: manipulation;
+  color: #1b5f8a;
+  border: 3px solid #45d1e6;
+  background:
+    linear-gradient(
+      120deg,
+      transparent 0 18%,
+      rgba(255, 255, 255, 0.85) 18% 21%,
+      transparent 21% 58%,
+      rgba(255, 255, 255, 0.7) 58% 60%,
+      transparent 60%
+    ),
+    rgba(190, 236, 255, 0.86);
+  animation: icein 0.25s ease-out;
+}
+.icecover b {
+  font-family: var(--font-pixel);
+  font-size: 22px;
+}
+.icecover small {
+  font-size: 13px;
+  font-weight: 900;
+}
+/* трещины после каждого удара */
+.icecover[data-hits="1"] {
+  background:
+    linear-gradient(60deg, transparent 0 48%, #1b5f8a 48% 49%, transparent 49%),
+    linear-gradient(120deg, transparent 0 18%, rgba(255, 255, 255, 0.85) 18% 21%, transparent 21%),
+    rgba(190, 236, 255, 0.8);
+}
+.icecover[data-hits="2"] {
+  background:
+    linear-gradient(60deg, transparent 0 48%, #1b5f8a 48% 49%, transparent 49%),
+    linear-gradient(150deg, transparent 0 30%, #1b5f8a 30% 31%, transparent 31%),
+    linear-gradient(20deg, transparent 0 70%, #1b5f8a 70% 71%, transparent 71%), rgba(190, 236, 255, 0.7);
+}
+.icecover.broken {
+  animation: icebreak 0.3s forwards;
+}
+@keyframes icein {
+  from {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+@keyframes icebreak {
+  to {
+    opacity: 0;
+    transform: scale(1.2) rotate(3deg);
+    filter: blur(2px);
+  }
+}
+/* Путаница: кнопки перелетают крест-накрест по дуге, буквы меняются в конце перелёта */
+.opts.swapping .opt:first-child {
+  animation: swapR 0.48s ease-in-out;
+}
+.opts.swapping .opt:last-child {
+  animation: swapL 0.48s ease-in-out;
+}
+@keyframes swapR {
+  50% {
+    transform: translate(calc(50% + 7px), -26px) rotate(8deg);
+  }
+  to {
+    transform: translate(calc(100% + 14px), 0);
+  }
+}
+@keyframes swapL {
+  50% {
+    transform: translate(calc(-50% - 7px), 26px) rotate(-8deg);
+  }
+  to {
+    transform: translate(calc(-100% - 14px), 0);
+  }
+}
+/* Спешка: часы летят от босса через арену, их можно поймать */
+.clock {
+  position: absolute;
+  z-index: 4;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 4px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--gold-l);
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: clockfly 1.8s linear forwards;
+}
+.clock::before,
+.clock i {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 3px;
+  margin-left: -1.5px;
+  background: var(--pen);
+  transform-origin: 50% 100%;
+}
+.clock::before {
+  height: 13px;
+  animation: spin 0.5s linear infinite;
+}
+.clock i {
+  height: 9px;
+  background: var(--ink);
+  animation: spin 3s linear infinite;
+}
+.clock.caught {
+  animation: caught 0.3s forwards;
+}
+@keyframes clockfly {
+  from {
+    left: 78%;
+    top: 40%;
+    transform: scale(0.6);
+  }
+  30% {
+    top: 22%;
+    transform: scale(1) rotate(-20deg);
+  }
+  65% {
+    top: 45%;
+    transform: rotate(15deg);
+  }
+  to {
+    left: 12%;
+    top: 30%;
+    transform: rotate(-10deg);
+  }
+}
+@keyframes caught {
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* вторая форма финального босса */
+#boss-wrap.form2 {
+  scale: 1.12;
+  transform-origin: 50% 100%;
+}
+.pop.form2 {
+  top: 30%;
+  font-size: 22px;
+  color: var(--pen);
+  text-shadow: 2px 2px 0 var(--gold-l);
+}
+
+/* ---------- сундук на экране победы ---------- */
+.overlay .chest.shaking {
+  animation: chestshake 0.16s linear 5;
+}
+.overlay .chest.opened {
+  animation: pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+  filter: drop-shadow(0 0 8px var(--gold-l));
+}
+@keyframes chestshake {
+  25% {
+    transform: rotate(-8deg) translateY(-2px);
+  }
+  75% {
+    transform: rotate(8deg) translateY(-2px);
+  }
+}
+.chestrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.overlay .loot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
+  animation: pop 0.4s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.lootitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--card);
+  border: 3px solid var(--rc);
+  box-shadow:
+    4px 4px 0 var(--rc),
+    0 0 16px color-mix(in srgb, var(--rc) 55%, transparent);
+}
+.overlay .lootitem canvas {
+  width: 64px;
+  image-rendering: pixelated;
+}
+.lootitem > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+.lootitem .rar {
+  color: var(--rc);
+}
+.lootitem .btn.small {
+  padding: 4px 12px;
+  font-size: 14px;
+}
+.overlay .bonus {
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: var(--ok);
+}
+
+/* ---------- главная: полоски «Задания дня» и «Копишь на…» под «В бой!» ---------- */
+.strip {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 2px 12px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.strip b {
+  font-size: 14px;
+  font-weight: 900;
+}
+.strip small {
+  grid-column: 1/-1;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.minibars {
+  display: flex;
+  gap: 4px;
+}
+.minibars i {
+  flex: 1;
+  height: 10px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+}
+.minibars em {
+  position: absolute;
+  inset: 0;
+  background: var(--ok);
+  transform-origin: left;
+}
+.minibars i.on em {
+  background: var(--gold);
+}
+#home-goal .minibars em {
+  background: var(--gold);
+}
+
+/* ---------- история комиксом ---------- */
+.story .dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+.story .dots i {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--ink);
+  background: var(--card);
+}
+.story .dots i.on {
+  background: var(--pen);
+}
+.story #story-text p {
+  font-size: 18px;
+  text-align: center;
+  min-height: 4.5em;
+}
+.framein {
+  animation: pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp,
+  .stamp.off,
+  .icecover,
+  .opts.swapping .opt,
+  .clock::before,
+  .clock i,
+  .overlay .chest.shaking,
+  .overlay .loot,
+  .framein {
+    animation: none !important;
+  }
+  .word .sc {
+    transition: none;
+  }
+}
+
+/* Паутина на одной кнопке: два нажатия рвут её */
+.webcover {
+  position: absolute;
+  inset: -3px;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+  background:
+    repeating-linear-gradient(45deg, transparent 0 13px, rgba(90, 100, 130, 0.75) 13px 15px),
+    repeating-linear-gradient(-45deg, transparent 0 13px, rgba(90, 100, 130, 0.75) 13px 15px),
+    radial-gradient(
+      circle,
+      transparent 0 18%,
+      rgba(90, 100, 130, 0.6) 19% 21%,
+      transparent 22% 40%,
+      rgba(90, 100, 130, 0.6) 41% 43%,
+      transparent 44%
+    ),
+    rgba(255, 255, 255, 0.55);
+  animation: icein 0.25s ease-out;
+}
+.webcover small {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 900;
+  color: #3d4766;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 1px 4px;
+}
+.webcover.torn {
+  clip-path: polygon(0 0, 46% 0, 30% 50%, 52% 100%, 0 100%, 0 0, 100% 0, 100% 100%, 62% 100%, 44% 50%, 58% 0);
+  opacity: 0.8;
+}
+.webcover.gone {
+  animation: icebreak 0.25s forwards;
+}
+/* Панцирь: щиты перед боссом, каждый верный ответ разбивает один */
+.stage .fighter.bob {
+  position: relative;
+}
+.shields {
+  position: absolute;
+  left: -14px;
+  bottom: 18%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+.shield {
+  position: relative;
+  width: 26px;
+  height: 30px;
+  background: var(--ink);
+  clip-path: polygon(0 0, 100% 0, 100% 62%, 50% 100%, 0 62%);
+  animation: shieldbob 1.6s ease-in-out infinite alternate;
+}
+.shield::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: linear-gradient(90deg, #a8f0ff 0 45%, #45d1e6 45%);
+  clip-path: polygon(0 0, 100% 0, 100% 62%, 50% 100%, 0 62%);
+}
+.shield::after {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 7px;
+  width: 4px;
+  height: 12px;
+  background: var(--gold);
+}
+.shield.broke {
+  animation: shatter 0.5s forwards;
+}
+@keyframes shieldbob {
+  to {
+    transform: translateY(-3px);
+  }
+}
+@keyframes shatter {
+  0% {
+    filter: brightness(3);
+  }
+  30% {
+    transform: scale(1.4) rotate(-10deg);
+    filter: brightness(2);
+  }
+  100% {
+    transform: translate(-30px, 20px) scale(0.3) rotate(-120deg);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shield,
+  .webcover {
+    animation: none !important;
+  }
+  .shield.broke {
+    visibility: hidden;
+  }
+}
+
+/* Ускорение и Ярость: подпись таймера краснеет, полоска мигает */
+#rage-wrap.hot #rage-label {
+  color: var(--pen);
+}
+#rage-wrap.hot .bar.rage i {
+  background: var(--pen);
 }

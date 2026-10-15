@@ -13,9 +13,13 @@ import { coinsHTML } from "../ui/icons.js";
 import { toast } from "../ui/toast.js";
 
 export function addCoins(n, useMul = true) {
+  const base = n;
   if (useMul) n = Math.max(1, Math.round(n * gear().coinMul));
   P.coins += n;
-  if (G) G.coinsGot += n;
+  if (G) {
+    G.coinsGot += n;
+    G.coinsBonus = (G.coinsBonus || 0) + Math.max(0, n - base);
+  }
   save();
   refreshCoins();
   return n;
@@ -26,10 +30,14 @@ export function refreshCoins() {
   });
 }
 export function addXP(n) {
+  const base = Math.round(n);
   n = Math.round(n * gear().xpMul);
   const before = levelOf(P.xp);
   P.xp += n;
-  if (G) G.xpGot += n;
+  if (G) {
+    G.xpGot += n;
+    G.xpBonus = (G.xpBonus || 0) + Math.max(0, n - base);
+  }
   save();
   const after = levelOf(P.xp);
   for (let l = before + 1; l <= after; l++) {

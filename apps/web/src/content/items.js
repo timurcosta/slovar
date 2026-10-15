@@ -9,7 +9,8 @@ export const SLOTS = [
   ["aura", "Аура"],
   ["costume", "Костюм"],
 ];
-/* Prices follow one ladder (see RARITY): ОБЫЧНЫЙ < 400, РЕДКИЙ 400–1499, ЭПИК 1500–4999, ЛЕГЕНДА 5000–14999, МИФ 15000+.
+/* Урон в текстах (perk) показан ×10, как в бою (DMG_SHOW в content/rules.ts): dmg 10 → «Урон 100».
+   Prices follow one ladder (see RARITY): ОБЫЧНЫЙ < 400, РЕДКИЙ 400–1499, ЭПИК 1500–4999, ЛЕГЕНДА 5000–14999, МИФ 15000+.
    Rough income: 15 minutes a day gives about 150–250 coins. */
 export const ITEMS = [
   // weapons: school stuff → melee → guns → energy → mythic tech
@@ -22,7 +23,7 @@ export const ITEMS = [
     dmg: 10,
     fx: "slash",
     col: "#e0a800",
-    perk: "Урон 10",
+    perk: "Урон 100",
   },
   {
     id: "ruler",
@@ -33,7 +34,7 @@ export const ITEMS = [
     dmg: 11,
     fx: "slash",
     col: "#c9a227",
-    perk: "Урон 11",
+    perk: "Урон 110",
   },
   {
     id: "pen",
@@ -44,7 +45,7 @@ export const ITEMS = [
     dmg: 12,
     fx: "slash",
     col: "#1f4fd1",
-    perk: "Урон 12",
+    perk: "Урон 120",
   },
   {
     id: "spikebat",
@@ -55,7 +56,7 @@ export const ITEMS = [
     dmg: 13,
     fx: "smash",
     col: "#a8743f",
-    perk: "Урон 13, сокрушающий удар",
+    perk: "Урон 130, сокрушающий удар",
   },
   {
     id: "blaster",
@@ -66,7 +67,7 @@ export const ITEMS = [
     dmg: 15,
     fx: "bullets",
     col: "#45d1e6",
-    perk: "Урон 15, стреляет лазером",
+    perk: "Урон 150, стреляет лазером",
   },
   {
     id: "firestaff",
@@ -77,7 +78,7 @@ export const ITEMS = [
     dmg: 16,
     fx: "fire",
     col: "#ff7a1a",
-    perk: "Урон 16, огненные шары",
+    perk: "Урон 160, огненные шары",
   },
   {
     id: "lasersword",
@@ -88,7 +89,7 @@ export const ITEMS = [
     dmg: 18,
     fx: "saber",
     col: "#45d1e6",
-    perk: "Урон 18, светящийся разрез крест-накрест",
+    perk: "Урон 180, светящийся разрез крест-накрест",
   },
   {
     id: "hammer",
@@ -99,7 +100,7 @@ export const ITEMS = [
     dmg: 20,
     fx: "bolt",
     col: "#ffd23f",
-    perk: "Урон 20, бьёт молнией",
+    perk: "Урон 200, бьёт молнией",
   },
   {
     id: "goldsword",
@@ -110,7 +111,7 @@ export const ITEMS = [
     dmg: 21,
     fx: "goldslash",
     col: "#f0a000",
-    perk: "Урон 21, двойной золотой удар",
+    perk: "Урон 210, двойной золотой удар",
   },
   {
     id: "dualblaster",
@@ -121,7 +122,7 @@ export const ITEMS = [
     dmg: 23,
     fx: "bullets2",
     col: "#ff7a1a",
-    perk: "Урон 23, очередь из двух стволов",
+    perk: "Урон 230, очередь из двух стволов",
   },
   {
     id: "rocket",
@@ -132,7 +133,7 @@ export const ITEMS = [
     dmg: 25,
     fx: "rocket",
     col: "#d62839",
-    perk: "Урон 25, ракета со взрывом",
+    perk: "Урон 250, ракета со взрывом",
   },
   {
     id: "scythe",
@@ -144,7 +145,7 @@ export const ITEMS = [
     dmg: 28,
     fx: "scythe",
     col: "#c77dff",
-    perk: "Урон 28, широкий плазменный взмах",
+    perk: "Урон 280, широкий плазменный взмах",
   },
   {
     id: "railgun",
@@ -156,7 +157,7 @@ export const ITEMS = [
     dmg: 32,
     fx: "rail",
     col: "#45d1e6",
-    perk: "Урон 32, сверхзвуковой выстрел с ударной волной",
+    perk: "Урон 320, сверхзвуковой выстрел с ударной волной",
   },
   {
     id: "dragonblade",
@@ -168,7 +169,7 @@ export const ITEMS = [
     dmg: 37,
     fx: "fireslash",
     col: "#ff7a1a",
-    perk: "Урон 37, огненный разрез",
+    perk: "Урон 370, огненный разрез",
   },
   {
     id: "annihilator",
@@ -180,7 +181,7 @@ export const ITEMS = [
     dmg: 46,
     fx: "annihilate",
     col: "#ff4fd8",
-    perk: "Урон 46, разрушительный мега-луч, трясёт всю арену",
+    perk: "Урон 460, разрушительный мега-луч, трясёт всю арену",
   },
   // armor
   { id: "noarmor", slot: "armor", name: "Без брони", price: 0, lvl: 1, perk: "Ничего" },
@@ -216,7 +217,7 @@ export const ITEMS = [
     floor: 10,
     hp: 4,
     spikes: 10,
-    perk: "+4 сердца, шипы 10",
+    perk: "+4 сердца, шипы 100",
   },
   {
     id: "mech",
@@ -238,7 +239,7 @@ export const ITEMS = [
     floor: 35,
     hp: 6,
     spikes: 16,
-    perk: "+6 сердец, шипы 16",
+    perk: "+6 сердец, шипы 160",
   },
   {
     id: "stararmor",
@@ -381,7 +382,7 @@ export const ITEMS = [
     lvl: 9,
     dmgPlus: 3,
     guard5: true,
-    perk: "Кусает на 3. Каждый 5-й верный ответ лает и отгоняет подлянку босса на следующее слово",
+    perk: "Кусает на 30. Каждый 5-й верный ответ лает и отгоняет подлянку босса на следующее слово",
   },
   {
     id: "minidragon",
@@ -391,7 +392,7 @@ export const ITEMS = [
     lvl: 12,
     dmgPlus: 3,
     critMult: 2.5,
-    perk: "Огонь на 3 урона, крит x2.5 вместо x2",
+    perk: "Огонь на 30 урона, крит x2.5 вместо x2",
   },
   {
     id: "drone",
@@ -401,7 +402,7 @@ export const ITEMS = [
     lvl: 16,
     dmgPlus: 3,
     drone: true,
-    perk: "Лазер на 3 урона, каждый 4-й верный ответ: залп на двойной урон",
+    perk: "Лазер на 30 урона, каждый 4-й верный ответ: залп на двойной урон",
   },
   {
     id: "cyberwolf",
@@ -412,7 +413,7 @@ export const ITEMS = [
     floor: 15,
     dmgPlus: 4,
     heal6: true,
-    perk: "+4 урона, стреляет из пушки, чинит сердце каждый 6-й ответ",
+    perk: "+40 урона, стреляет из пушки, чинит сердце каждый 6-й ответ",
   },
   {
     id: "darkdragon",
@@ -423,16 +424,46 @@ export const ITEMS = [
     floor: 35,
     dmgPlus: 4,
     critMult: 3,
-    perk: "Огонь на 4 урона, крит x3",
+    perk: "Огонь на 40 урона, крит x3",
   },
   // aura (cosmetic)
   { id: "noaura", slot: "aura", name: "Без ауры", price: 0, lvl: 1, perk: "Ничего" },
-  { id: "sparks", slot: "aura", name: "Искры", price: 300, lvl: 3, perk: "Для красоты" },
-  { id: "fireaura", slot: "aura", name: "Огненная аура", price: 1100, lvl: 7, perk: "Для красоты" },
-  { id: "storm", slot: "aura", name: "Грозовая аура", price: 2200, lvl: 10, perk: "Для красоты" },
-  { id: "galaxy", slot: "aura", name: "Аура галактики", price: 5500, lvl: 15, perk: "Космическое сияние" },
-  { id: "dragonfire", slot: "aura", name: "Пламя дракона", price: 9500, lvl: 20, floor: 15, perk: "Огненное сияние" },
-  { id: "godbolt", slot: "aura", name: "Молнии богов", price: 18000, lvl: 25, floor: 30, perk: "Сияние легенды" },
+  { id: "sparks", slot: "aura", name: "Искры", price: 300, lvl: 3, perk: "Золотые искры мерцают вокруг героя" },
+  {
+    id: "fireaura",
+    slot: "aura",
+    name: "Огненная аура",
+    price: 1100,
+    lvl: 7,
+    perk: "Языки пламени поднимаются вокруг героя",
+  },
+  { id: "storm", slot: "aura", name: "Грозовая аура", price: 2200, lvl: 10, perk: "Искры и молнии сверкают по бокам" },
+  {
+    id: "galaxy",
+    slot: "aura",
+    name: "Аура галактики",
+    price: 5500,
+    lvl: 15,
+    perk: "Кольцо звёзд кружится вокруг героя",
+  },
+  {
+    id: "dragonfire",
+    slot: "aura",
+    name: "Пламя дракона",
+    price: 9500,
+    lvl: 20,
+    floor: 15,
+    perk: "Красно-зелёное драконье пламя",
+  },
+  {
+    id: "godbolt",
+    slot: "aura",
+    name: "Молнии богов",
+    price: 18000,
+    lvl: 25,
+    floor: 30,
+    perk: "Белые молнии и вспышки, как у богов",
+  },
   // costume (cosmetic)
   { id: "school", slot: "costume", name: "Школьник", price: 0, lvl: 1, perk: "Классика" },
   { id: "space", slot: "costume", name: "Космонавт", price: 600, lvl: 5, perk: "Скин" },
@@ -459,7 +490,7 @@ export const ITEMS = [
     dmg: 52,
     fx: "comet",
     col: "#45d1e6",
-    perk: "Урон 52, ледяная комета",
+    perk: "Урон 520, ледяная комета",
   },
   {
     id: "blackhole",
@@ -471,7 +502,7 @@ export const ITEMS = [
     dmg: 58,
     fx: "blackhole",
     col: "#7a4fd6",
-    perk: "Урон 58, засасывает босса в чёрную дыру",
+    perk: "Урон 580, засасывает босса в чёрную дыру",
   },
   {
     id: "novasword",
@@ -483,7 +514,7 @@ export const ITEMS = [
     dmg: 66,
     fx: "nova",
     col: "#fff3a0",
-    perk: "Урон 66, самое мощное оружие: взрыв звезды",
+    perk: "Урон 660, самое мощное оружие: взрыв звезды",
   },
   {
     id: "supernova",
@@ -495,7 +526,7 @@ export const ITEMS = [
     hp: 8,
     spikes: 20,
     coinMul: 1.6,
-    perk: "+8 сердец, шипы 20, монеты +60%",
+    perk: "+8 сердец, шипы 200, монеты +60%",
   },
   {
     id: "galaxycrown",
@@ -529,7 +560,7 @@ export const ITEMS = [
     floor: 60,
     dmgPlus: 10,
     heal5: true,
-    perk: "+10 урона, лечит каждый 5-й ответ",
+    perk: "+100 урона, лечит каждый 5-й ответ",
   },
   {
     id: "stardragon",
@@ -540,7 +571,7 @@ export const ITEMS = [
     floor: 85,
     dmgPlus: 5,
     critMult: 3.5,
-    perk: "Звёздный огонь на 5 урона, крит x3.5",
+    perk: "Звёздный огонь на 50 урона, крит x3.5",
   },
   {
     id: "supernovaaura",
@@ -549,7 +580,7 @@ export const ITEMS = [
     price: 50000,
     lvl: 33,
     floor: 60,
-    perk: "Сияние звезды",
+    perk: "Радужное кольцо взорвавшейся звезды",
   },
   {
     id: "spaceknight",
@@ -593,12 +624,25 @@ export const RARITY = (p) =>
             ? ["РЕДКИЙ", "#2f55c8"]
             : ["ОБЫЧНЫЙ", "#5d6f93"];
 export const UPGRADES = [
-  { id: "str", name: "Сила", d: "+1 к урону за уровень", max: 99, base: 100, k: 1.28 },
+  { id: "str", name: "Сила", d: "+10 к урону за уровень", max: 99, base: 100, k: 1.28 },
   { id: "hp", name: "Живучесть", d: "+1 сердце за уровень", max: 10, base: 200, k: 1.6 },
   { id: "time", name: "Выдержка", d: "+0.5 секунды на ответ", max: 10, base: 150, k: 1.45 },
   { id: "gold", name: "Богатство", d: "+10% монет", max: 10, base: 200, k: 1.5 },
 ];
 export const upCost = (u, n) => Math.round((u.base * Math.pow(u.k, n)) / 10) * 10;
+/** Экипировка для картинки одной вещи: герой в своём костюме и внешности, остальные вещи сняты, чтобы вещь было видно. */
+export function showcaseEquip(equip, item) {
+  return {
+    ...equip,
+    weapon: "none",
+    armor: "noarmor",
+    helmet: "nohelmet",
+    back: "noback",
+    pet: "nopet",
+    aura: "noaura",
+    [item.slot]: item.id,
+  };
+}
 export const DEFAULT_EQUIP = {
   weapon: "pencil",
   armor: "noarmor",

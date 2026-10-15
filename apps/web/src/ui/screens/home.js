@@ -1,6 +1,7 @@
 // Главный экран.
 import { $, esc } from "../../lib/dom.js";
 import { ITEMS } from "../../content/items.js";
+import { shownDmg } from "../../content/rules.ts";
 import { BOSSES } from "../../content/bosses.js";
 import { TROPHIES } from "../../content/trophies.js";
 import { drawHero } from "../../render/hero.js";
@@ -11,14 +12,15 @@ import { P } from "../../state/profile.ts";
 import { settings } from "../../state/settings.ts";
 import { gear } from "../../progress/gear.js";
 import { QUESTS, ensureDaily } from "../../progress/daily.js";
-import { MAXL, TITLES, xpProgress } from "../../progress/levels.ts";
+import { MAXL, TITLES, levelOf, xpProgress } from "../../progress/levels.ts";
 import { blockedToday, limitReason, todayHTML } from "../../progress/limits.js";
 import { refreshCoins } from "../../progress/rewards.js";
-import { frontier, towerOpen } from "../../progress/unlocks.js";
+import { frontier, itemLocked, towerOpen } from "../../progress/unlocks.js";
 import { ACH } from "../../progress/achievements.js";
 import { startCampaign, stopGame } from "../../battle/run.js";
 import { syncDiff } from "../../battle/difficulty.js";
 import { show } from "../screens.js";
+import { openShop } from "./shop.js";
 import { badgesHTML } from "./awards.js";
 import { paintTrophies } from "./trophies.js";
 
@@ -38,7 +40,7 @@ export function heroCard(prefix) {
     `До уровня ${l + 1}: <b>${need}</b> опыта.` + (unlock.length ? ` Откроется: <b>${esc(unlock.join(", "))}</b>` : "");
 }
 export function perkChips(g) {
-  const c = [`Сердца ${g.maxH}`, `Урон ${g.dmg}`];
+  const c = [`Сердца ${g.maxH}`, `Урон ${shownDmg(g.dmg)}`];
   if (g.shield) c.push(`Щит ${g.shield}`);
   if (g.time) c.push(`+${g.time} с`);
   if (g.critMult > 2) c.push(`Крит x${g.critMult}`);
@@ -61,6 +63,28 @@ export function questsHTML() {
     .join("");
   const streak = P.days.streak > 1 ? `<span class="days">Дней подряд: ${P.days.streak}</span>` : "";
   return `<div class="row" style="justify-content:space-between"><h2>Задания дня</h2>${streak}</div>${rows}<p class="note">${P.daily.bonus ? "Все задания выполнены! Завтра будут новые." : "Выполни все три и получи большой сундук."}</p>`;
+}
+/** Задания дня одной полоской под «В бой!»: на телефоне полный список ниже первого экрана. */
+function questStrip() {
+  const q = P.daily.q,
+    done = q.filter((x) => x.done).length;
+  const bars = q
+    .map((x) => `<i class="${x.done ? "on" : ""}"><em style="transform:scaleX(${x.p / x.n})"></em></i>`)
+    .join("");
+  return `<b>Задания дня: ${done} из ${q.length}</b><span class="minibars">${bars}</span><small>${P.daily.bonus ? "Все выполнены! Завтра новые" : "За все три: большой сундук"}</small>`;
+}
+/** Ближайшая покупка: что уже по карману или сколько осталось накопить. */
+function goal() {
+  const lvl = levelOf(P.xp),
+    open = ITEMS.filter((i) => i.price > 0 && !i.gift && !P.owned[i.id] && i.lvl <= lvl && !itemLocked(i));
+  const can = open.filter((i) => i.price <= P.coins).sort((a, b) => b.price - a.price)[0];
+  if (can) return [can, `<b>Можно купить: ${esc(can.name)}!</b><small>Загляни в гардероб</small>`];
+  const next = open.sort((a, b) => a.price - b.price)[0];
+  if (!next) return null;
+  return [
+    next,
+    `<b>Цель: ${esc(next.name)}</b><span class="minibars"><i><em style="transform:scaleX(${P.coins / next.price})"></em></i></span><small>ещё ${next.price - P.coins} монет</small>`,
+  ];
 }
 export function renderHome() {
   ensureDaily();
@@ -89,8 +113,16 @@ export function renderHome() {
       ? `рекорд: этаж ${P.towerBest}`
       : "бесконечные этажи"
     : "откроется после 6-го босса";
-  $("awards-sub").textContent = `Достижения: ${Object.keys(P.ach).length} из ${ACH.length}`;
+  $("awards-sub").textContent = `${Object.keys(P.ach).length} из ${ACH.length}`;
   $("home-quests").innerHTML = questsHTML();
+  $("home-qstrip").innerHTML = questStrip();
+  $("home-qstrip").onclick = () => $("home-quests").scrollIntoView({ behavior: "smooth", block: "center" });
+  const gl = goal();
+  $("home-goal").hidden = !gl;
+  if (gl) {
+    $("home-goal").innerHTML = gl[1];
+    $("home-goal").onclick = () => openShop(gl[0].slot);
+  }
   $("map").innerHTML = BOSSES.map((b, i) => {
     const open = i <= P.unlocked,
       done = P.beaten.includes(i),

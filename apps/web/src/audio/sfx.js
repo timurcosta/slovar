@@ -21,7 +21,7 @@ export function tone(f, d, type = "square", vol = 0.05, slide = 0, delay = 0) {
   } catch (e) {}
 }
 let sfxNoise = null;
-function noiseSweep(f0, f1, dur, vol, q = 1.2) {
+export function noiseSweep(f0, f1, dur, vol, q = 1.2) {
   const c = getAC();
   if (!c) return;
   if (!sfxNoise) {

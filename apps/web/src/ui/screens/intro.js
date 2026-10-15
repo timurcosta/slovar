@@ -1,5 +1,5 @@
 // Первый запуск: имя бойца и история.
-import { $, esc } from "../../lib/dom.js";
+import { $, esc, replay } from "../../lib/dom.js";
 import { BOSSES } from "../../content/bosses.js";
 import { drawHero } from "../../render/hero.js";
 import { drawBoss } from "../../render/sprite.js";
@@ -9,33 +9,59 @@ import { toast } from "../toast.js";
 import { show } from "../screens.js";
 import { renderHome } from "./home.js";
 
+// История комиксом: картинка и одна-две строки на кадр, дети 7–8 лет длинный текст пролистывают
+const FRAMES = [
+  {
+    cast: [["Король Ошибок", "Король Ошибок"]],
+    text: "Злой <b>Король Ошибок</b> разорвал Великий Словарь. Буквы перепутались, и все стали писать «малако»!",
+  },
+  {
+    cast: [["Ралина", "Репетитор Ралина"]],
+    text: "<b>Репетитор Ралина</b> спасла последнюю страницу. Ей нужен герой. Это ты, {name}!",
+  },
+  {
+    cast: [
+      ["Ангелика", "Ангел Ангелика"],
+      ["Олеся", "Олеся Зоркая"],
+    ],
+    text: "Король заколдовал подругу Ралины <b>Ангелику</b> и её сестру <b>Олесю</b>. Победи их, и чары спадут!",
+  },
+  { hero: true, text: "Собери страницы Словаря и дойди до замка Короля. Вперёд, {name}!" },
+];
+let frame = 0;
+function paintFrame() {
+  const f = FRAMES[frame],
+    nm = esc(P.name || "герой");
+  const cast = f.hero ? [[P.name || "Ты"]] : f.cast;
+  $("story-cast").innerHTML = cast.map(([t], i) => `<figure><canvas id="sc${i}"></canvas>${esc(t)}</figure>`).join("");
+  if (f.hero) drawHero($("sc0"), P.equip);
+  else
+    cast.forEach(([, n], i) =>
+      drawBoss(
+        $("sc" + i),
+        BOSSES.find((b) => b.name === n),
+      ),
+    );
+  $("story-text").innerHTML = `<p>${f.text.replace(/\{name\}/g, nm)}</p>`;
+  $("story-dots").innerHTML = FRAMES.map((_, i) => `<i class="${i === frame ? "on" : ""}"></i>`).join("");
+  $("btn-story-go").textContent = frame < FRAMES.length - 1 ? "Дальше" : "В поход!";
+  replay($("story-cast"), "framein");
+}
 export function showStory() {
-  const nm = esc(P.name || "герой");
-  const cast = [
-    ["Ралина", "Репетитор Ралина"],
-    ["Ангелика", "Ангел Ангелика"],
-    ["Олеся", "Олеся Зоркая"],
-    ["Король Ошибок", "Король Ошибок"],
-  ];
-  $("story-cast").innerHTML = cast.map(([t], i) => `<figure><canvas id="sc${i}"></canvas>${t}</figure>`).join("");
-  cast.forEach(([, n], i) =>
-    drawBoss(
-      $("sc" + i),
-      BOSSES.find((b) => b.name === n),
-    ),
-  );
-  $("story-text").innerHTML = `
-    <p>Давным-давно все слова жили в Великом Словаре, и каждая буква знала своё место.</p>
-    <p>Но <b>Король Ошибок</b> терпеть не мог порядок. Он разорвал Словарь, а его монстры растащили страницы и перепутали буквы. С тех пор дети пишут «малако» и «сабака», а двойки размножаются.</p>
-    <p><b>Репетитор Ралина</b> сберегла последнюю страницу и ищет героя, который вернёт буквы на места. Но сначала она проверит, готов ли ты, ${nm}.</p>
-    <p>Король не дремлет: чарами Безграмотности он заколдовал близких Ралины. Её подругу, ангела <b>Ангелику</b>, и её сестру, отличницу <b>Олесю</b>. Победи их, и чары спадут.</p>
-    <p>Собери страницы, расколдуй друзей и доберись до замка Короля. Удачи, ${nm}!</p>`;
+  frame = 0;
+  paintFrame();
   P.storySeen = 1;
   save();
   show("s-story");
 }
 $("btn-story").onclick = showStory;
 $("btn-story-go").onclick = () => {
+  if (frame < FRAMES.length - 1) {
+    frame++;
+    sfx.block();
+    paintFrame();
+    return;
+  }
   renderHome();
   show("s-home");
 };

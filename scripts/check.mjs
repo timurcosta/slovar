@@ -122,6 +122,16 @@ async function enter(p, shot) {
   await tick(p);
 }
 
+/** История комиксом: «Дальше» до последнего кадра и «В поход!». */
+async function storyThrough(p, shot) {
+  for (let i = 0; i < 3; i++) {
+    await p.click("#btn-story-go");
+    await tick(p);
+  }
+  if (shot) await shot("02b-story-last");
+  await p.click("#btn-story-go");
+}
+
 /** Экраны «прокачанного» игрока на большом экране: титул, главная, гардероб, бой. */
 async function bigScreens(p, shot) {
   await enter(p, shot);
@@ -173,7 +183,7 @@ const SCENARIOS = [
       await p.click("#name-form button[type=submit]");
       await tick(p, 500);
       await shot("02-story");
-      await p.click("#btn-story-go");
+      await storyThrough(p, shot);
       await tick(p, 1500);
       await shot("03-home");
       await p.click("#btn-shop");
@@ -251,6 +261,30 @@ const SCENARIOS = [
       await enter(p);
       await tick(p, 2100);
       await shot("01-home");
+    },
+  },
+  {
+    // победа над боссом: сундук трясётся, открывается, монеты и вещь (Сила 99 убивает Кляксу с одного удара)
+    name: "victory",
+    storage: {
+      sb2_profile: { ...VETERAN, unlocked: 1, beaten: [0], up: { str: 99, hp: 0, time: 0, gold: 3 } },
+    },
+    run: async (p, shot) => {
+      await enter(p);
+      await tick(p, 1100);
+      await p.click("#map .bcard[data-i='1']");
+      await tick(p);
+      await p.click("#btn-fight");
+      await tick(p, 800);
+      const dead = async () => (await p.locator("#boss-cv.dead").count()) > 0;
+      for (let i = 0; i < 8 && !(await dead()); i++) {
+        await p.click("#opt0");
+        for (let t = 0; t < 30 && !(await dead()); t++) await tick(p, 100);
+      }
+      await tick(p, 1300); // экран победы появляется через 1.1 с
+      await shot("01-chest-shaking");
+      await tick(p, 1000);
+      await shot("02-chest-open");
     },
   },
   { name: "tablet", storage: { sb2_profile: VETERAN }, viewport: { width: 820, height: 1180 }, run: bigScreens },
@@ -369,7 +403,7 @@ if (fs.existsSync(path.join(onlineRoot, "index.html"))) {
     await k.waitForSelector("#s-story:not([hidden])");
     await tick(k, 500);
     await kid.shot("04-story");
-    await k.click("#btn-story-go");
+    await storyThrough(k);
     await tick(k, 1500);
     await kid.shot("05-home");
     await k.click("#btn-campaign");
