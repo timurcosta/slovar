@@ -1,6 +1,6 @@
 // Хранилище в SQLite (встроено в Node): для разработки на компьютере. В облаке используется YDB.
 import { DatabaseSync } from "node:sqlite";
-import type { Store, StudentRecord } from "./types.ts";
+import type { Store, StudentRecord, TutorRecord } from "./types.ts";
 
 interface Row {
   id: string;
@@ -17,6 +17,10 @@ export class SqliteStore implements Store {
         id   TEXT PRIMARY KEY,
         code TEXT NOT NULL UNIQUE,
         rev  INTEGER NOT NULL,
+        data TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS tutors (
+        id   TEXT PRIMARY KEY,
         data TEXT NOT NULL
       )`);
   }
@@ -58,5 +62,16 @@ export class SqliteStore implements Store {
 
   async deleteStudent(id: string) {
     return Number(this.db.prepare("DELETE FROM students WHERE id = ?").run(id).changes) === 1;
+  }
+
+  async getTutor() {
+    const row = this.db.prepare("SELECT data FROM tutors WHERE id = 'main'").get() as { data: string } | undefined;
+    return row ? (JSON.parse(row.data) as TutorRecord) : null;
+  }
+
+  async putTutor(rec: TutorRecord) {
+    this.db
+      .prepare("INSERT INTO tutors (id, data) VALUES ('main', ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data")
+      .run(JSON.stringify(rec));
   }
 }

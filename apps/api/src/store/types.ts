@@ -17,6 +17,12 @@ export interface StudentRecord {
   lastSeenAt: string | null;
 }
 
+/** Учётка учителя: свой пароль, который он задаёт в кабинете. Пароль администратора — в настройках сервера. */
+export interface TutorRecord {
+  passwordHash: string;
+  updatedAt: string;
+}
+
 export interface Store {
   listStudents(): Promise<StudentRecord[]>;
   getStudent(id: string): Promise<StudentRecord | null>;
@@ -25,4 +31,6 @@ export interface Store {
   /** Записывает ученика целиком. С expectedRev пишет, только если rev в базе совпадает, иначе возвращает false. */
   putStudent(rec: StudentRecord, expectedRev?: number): Promise<boolean>;
   deleteStudent(id: string): Promise<boolean>;
+  getTutor(): Promise<TutorRecord | null>;
+  putTutor(rec: TutorRecord): Promise<void>;
 }

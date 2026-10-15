@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Hono, type Context } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type {
+  ChangePasswordRequest,
   CreateStudentRequest,
   JoinRequest,
   JoinResponse,
@@ -11,17 +12,29 @@ import type {
   ProgressRequest,
   Student,
   TokenResponse,
+  TutorMeResponse,
   TutorSettings,
   UpdateStudentRequest,
 } from "@repetitor/shared";
-import { checkPassword, newCode, normalizeCode, signToken, verifyToken, type TokenPayload } from "./auth.ts";
+import {
+  checkPassword,
+  hashPassword,
+  newCode,
+  normalizeCode,
+  signToken,
+  verifyToken,
+  type TokenPayload,
+} from "./auth.ts";
 import type { Store, StudentRecord } from "./store/types.ts";
 
 export interface AppConfig {
   store: Store;
   /** Секрет для подписи токенов. */
   secret: string;
-  /** Хэш пароля репетитора (см. hashPassword). */
+  /**
+   * Хэш пароля администратора (владелец: отладка, первый вход учителя). Учитель задаёт себе свой пароль
+   * в кабинете — его хэш лежит в базе (Store.getTutor), а этот продолжает работать.
+   */
   tutorPasswordHash: string;
   now?: () => Date;
 }
@@ -110,23 +123,64 @@ export function createApp(cfg: AppConfig) {
   // простая защита от перебора пароля (в пределах одного экземпляра сервера)
   let fails = 0,
     lockedUntil = 0;
+  const failed = () => {
+    if (++fails >= 5) {
+      fails = 0;
+      lockedUntil = now().getTime() + 60_000;
+    }
+  };
+  /** Чей это пароль: учителя (из базы) или администратора (из настроек сервера). */
+  async function whoseIs(password: unknown): Promise<"admin" | "tutor" | null> {
+    if (typeof password !== "string" || !password) return null;
+    // база недоступна — администратор всё равно должен войти
+    const tutor = await store.getTutor().catch((e) => (console.error(e), null));
+    if (tutor && checkPassword(password, tutor.passwordHash)) return "tutor";
+    return checkPassword(password, cfg.tutorPasswordHash) ? "admin" : null;
+  }
+
   app.post("/tutor/login", async (c) => {
     if (now().getTime() < lockedUntil) return bad(c, "too many attempts", 429);
     const b = await readJson<LoginRequest>(c);
-    if (!b || typeof b.password !== "string" || !checkPassword(b.password, cfg.tutorPasswordHash)) {
-      if (++fails >= 5) {
-        fails = 0;
-        lockedUntil = now().getTime() + 60_000;
-      }
+    const who = await whoseIs(b?.password);
+    if (!who) {
+      failed();
       return bad(c, "wrong password", 401);
     }
     fails = 0;
-    const res: TokenResponse = { token: signToken({ role: "tutor", exp: now().getTime() + TUTOR_TTL }, secret) };
+    const res: TokenResponse = {
+      token: signToken({ role: "tutor", who, exp: now().getTime() + TUTOR_TTL }, secret),
+    };
     return c.json(res);
   });
 
   app.use("/tutor/students/*", auth("tutor"));
   app.use("/tutor/students", auth("tutor"));
+  app.use("/tutor/me", auth("tutor"));
+  app.use("/tutor/password", auth("tutor"));
+
+  app.get("/tutor/me", async (c) => {
+    const p = c.get("auth");
+    const tutor = await store.getTutor().catch(() => null);
+    const res: TutorMeResponse = {
+      who: p.role === "tutor" && p.who === "tutor" ? "tutor" : "admin",
+      tutorPasswordAt: tutor?.updatedAt ?? null,
+    };
+    return c.json(res);
+  });
+
+  // свой пароль учителя: первый раз учитель входит паролем администратора и задаёт себе свой
+  app.post("/tutor/password", async (c) => {
+    if (now().getTime() < lockedUntil) return bad(c, "too many attempts", 429);
+    const b = await readJson<ChangePasswordRequest>(c);
+    if (!(await whoseIs(b?.current))) {
+      failed();
+      return bad(c, "wrong password", 403);
+    }
+    const next = typeof b?.next === "string" ? b.next : "";
+    if (next.length < 8 || next.length > 200) return bad(c, "password must be 8..200 chars");
+    await store.putTutor({ passwordHash: hashPassword(next), updatedAt: now().toISOString() });
+    return c.body(null, 204);
+  });
 
   app.get("/tutor/students", async (c) => {
     const list = (await store.listStudents()).map(toStudent);

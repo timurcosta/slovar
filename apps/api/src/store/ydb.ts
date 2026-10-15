@@ -4,7 +4,7 @@ import { Driver } from "@ydbjs/core";
 import type { CredentialsProvider } from "@ydbjs/auth";
 import { identifier, query } from "@ydbjs/query";
 import { Int64, Text } from "@ydbjs/value/primitive";
-import type { Store, StudentRecord } from "./types.ts";
+import type { Store, StudentRecord, TutorRecord } from "./types.ts";
 
 type DataRow = { data: string };
 
@@ -12,6 +12,9 @@ export class YdbStore implements Store {
   readonly driver: Driver;
   private sql: ReturnType<typeof query>;
   private t: ReturnType<typeof identifier>;
+  /** Учётка учителя (одна строка). Для тестовой таблицы students_test_… — tutors_test_…. */
+  private tt: ReturnType<typeof identifier>;
+  private tutorsReady: Promise<void> | null = null;
 
   /**
    * @param connectionString grpcs://ydb.serverless.yandexcloud.net:2135/?database=/ru-central1/…
@@ -21,6 +24,7 @@ export class YdbStore implements Store {
     this.driver = new Driver(connectionString, { credentialsProvider, "ydb.sdk.enable_discovery": false });
     this.sql = query(this.driver);
     this.t = identifier(table);
+    this.tt = identifier(table.replace(/^students/, "tutors"));
   }
 
   /** Создаёт таблицу, если её нет. Вызывается при развёртывании, не на каждый запрос. */
@@ -33,6 +37,34 @@ export class YdbStore implements Store {
       data Utf8 NOT NULL,
       PRIMARY KEY (id)
     )`;
+    await this.ensureTutors();
+  }
+
+  /** Таблица учётки учителя появилась позже: создаётся при первом обращении, если её ещё нет. */
+  private ensureTutors() {
+    this.tutorsReady ??= this.sql`CREATE TABLE IF NOT EXISTS ${this.tt} (
+      id Utf8 NOT NULL,
+      data Utf8 NOT NULL,
+      PRIMARY KEY (id)
+    )`.then(
+      () => {},
+      (e) => {
+        this.tutorsReady = null;
+        throw e;
+      },
+    );
+    return this.tutorsReady;
+  }
+
+  async getTutor() {
+    await this.ensureTutors();
+    const [rows] = await this.sql<[DataRow]>`SELECT data FROM ${this.tt} WHERE id = "main"`.idempotent(true);
+    return rows[0] ? (JSON.parse(rows[0].data) as TutorRecord) : null;
+  }
+
+  async putTutor(rec: TutorRecord) {
+    await this.ensureTutors();
+    await this.sql`UPSERT INTO ${this.tt} (id, data) VALUES ("main", ${new Text(JSON.stringify(rec))})`;
   }
 
   async listStudents() {
@@ -86,9 +118,12 @@ export class YdbStore implements Store {
   /** Только для тестов. */
   async _clear() {
     await this.sql`DELETE FROM ${this.t}`;
+    await this.ensureTutors();
+    await this.sql`DELETE FROM ${this.tt}`;
   }
 
   async _drop() {
     await this.sql`DROP TABLE ${this.t}`;
+    await this.sql`DROP TABLE IF EXISTS ${this.tt}`;
   }
 }

@@ -2,7 +2,8 @@
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 export type TokenPayload =
-  | { role: "tutor"; exp: number }
+  /** who: admin — вошёл паролем администратора (владелец, настройки сервера), tutor — своим паролем из базы. */
+  | { role: "tutor"; exp: number; who?: "admin" | "tutor" }
   /** Токен ученика бессрочный, но перестаёт действовать при смене кода (cv). */
   | { role: "student"; sid: string; cv: number };
 

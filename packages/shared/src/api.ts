@@ -36,6 +36,21 @@ export interface TokenResponse {
   token: string;
 }
 
+// GET /api/tutor/me — кто вошёл в кабинет
+export interface TutorMeResponse {
+  /** admin — пароль администратора (владелец, отладка), tutor — собственный пароль учителя. */
+  who: "admin" | "tutor";
+  /** Когда учитель задал свой пароль; null — ещё не задавал, вход только паролем администратора. */
+  tutorPasswordAt: string | null;
+}
+// POST /api/tutor/password — задать или сменить пароль учителя (хранится хэш в базе).
+// Пароль администратора так не меняется: он в настройках сервера (npm run cloud:password).
+export interface ChangePasswordRequest {
+  /** Текущий пароль: учителя или администратора. */
+  current: string;
+  next: string;
+}
+
 // GET /api/tutor/students → Student[]
 // POST /api/tutor/students
 export interface CreateStudentRequest {

@@ -1,10 +1,11 @@
 // Хранилище в памяти: для тестов и e2e-проверки.
-import type { Store, StudentRecord } from "./types.ts";
+import type { Store, StudentRecord, TutorRecord } from "./types.ts";
 
 const clone = <T>(v: T): T => structuredClone(v);
 
 export class MemoryStore implements Store {
   private rows = new Map<string, StudentRecord>();
+  private tutor: TutorRecord | null = null;
 
   async listStudents() {
     return [...this.rows.values()].map(clone);
@@ -35,5 +36,13 @@ export class MemoryStore implements Store {
 
   async deleteStudent(id: string) {
     return this.rows.delete(id);
+  }
+
+  async getTutor() {
+    return this.tutor ? clone(this.tutor) : null;
+  }
+
+  async putTutor(rec: TutorRecord) {
+    this.tutor = clone(rec);
   }
 }

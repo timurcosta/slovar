@@ -70,6 +70,48 @@ for (const [kind, makeStore] of factories) {
       expect((await call("POST", "/tutor/login", { password: "secret" })).status).toBe(200);
     });
 
+    it("учитель входит паролем администратора и задаёт себе свой, администратор входит по-прежнему", async () => {
+      const { call, tutor } = await setup();
+      const admin = await tutor();
+      expect((await call("GET", "/tutor/me", undefined, admin)).body).toEqual({ who: "admin", tutorPasswordAt: null });
+
+      expect((await call("POST", "/tutor/password", { current: "secret", next: "коротко" }, admin)).status).toBe(400);
+      expect((await call("POST", "/tutor/password", { current: "мимо", next: "ралина-2026" }, admin)).status).toBe(403);
+      expect((await call("POST", "/tutor/password", { current: "secret", next: "ралина-2026" })).status).toBe(401);
+      expect((await call("POST", "/tutor/password", { current: "secret", next: "ралина-2026" }, admin)).status).toBe(
+        204,
+      );
+
+      const own = await call("POST", "/tutor/login", { password: "ралина-2026" });
+      expect(own.status).toBe(200);
+      expect((await call("GET", "/tutor/me", undefined, own.body.token)).body).toEqual({
+        who: "tutor",
+        tutorPasswordAt: new Date(clock).toISOString(),
+      });
+      expect((await call("GET", "/tutor/students", undefined, own.body.token)).status).toBe(200);
+      // пароль администратора не меняется и открывает тот же кабинет
+      expect((await call("POST", "/tutor/login", { password: "secret" })).status).toBe(200);
+
+      // учитель меняет свой пароль, зная текущий; старый перестаёт работать
+      const t2 = await call(
+        "POST",
+        "/tutor/password",
+        { current: "ралина-2026", next: "новый-пароль" },
+        own.body.token,
+      );
+      expect(t2.status).toBe(204);
+      expect((await call("POST", "/tutor/login", { password: "ралина-2026" })).status).toBe(401);
+      expect((await call("POST", "/tutor/login", { password: "новый-пароль" })).status).toBe(200);
+    });
+
+    it("токен ученика не меняет пароль учителя", async () => {
+      const { call, tutor } = await setup();
+      const st = (await call("POST", "/tutor/students", { name: "Петя" }, await tutor())).body as Student;
+      const kid = (await call("POST", "/join", { code: st.code })).body.token;
+      expect((await call("POST", "/tutor/password", { current: "secret", next: "взлом-взлом" }, kid)).status).toBe(401);
+      expect((await call("GET", "/tutor/me", undefined, kid)).status).toBe(401);
+    });
+
     it("блокирует перебор пароля на минуту", async () => {
       const { call } = await setup();
       for (let i = 0; i < 5; i++) await call("POST", "/tutor/login", { password: "x" });

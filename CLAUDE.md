@@ -145,8 +145,11 @@ API описан типами в `packages/shared/src/api.ts`, реализац�
 `MemoryStore` (тесты, проверка), `SqliteStore` (разработка, файл `apps/api/.data/dev.sqlite`),
 YDB — при развёртывании в Yandex Cloud.
 
-- Репетитор один, его пароль задаётся хэшем в `TUTOR_PASSWORD_HASH`
-  (`npm run hash-password -w @repetitor/api -- 'пароль'`), токены подписываются `AUTH_SECRET`.
+- Кабинет один, паролей два. Пароль администратора (владелец, отладка) — хэш в `TUTOR_PASSWORD_HASH`
+  (`npm run cloud:password`, локально `npm run hash-password -w @repetitor/api -- 'пароль'`), работает всегда.
+  Учитель первый раз входит им и в кабинете («Пароль», `#/account`) задаёт свой: его хэш лежит в базе
+  (`Store.getTutor/putTutor`, в YDB таблица `tutors` создаётся сама при первом обращении), `POST /api/tutor/password`.
+  В токене кабинета `who: admin | tutor`. Токены подписываются `AUTH_SECRET`.
   Ни то, ни другое не коммитить: репо публичное. Хук перед коммитом и CI запускают
   `scripts/no-secrets.mjs` — он ищет токены Yandex Cloud, хэши паролей, закрытые ключи. Секреты живут
   только в настройках функции в облаке, в GitHub Secrets и в `.env` (он в `.gitignore`).

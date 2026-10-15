@@ -505,6 +505,33 @@ const ran = SCENARIOS.length + 1;
     await t.click("#login button[type=submit]");
     await t.waitForSelector("#add-name");
     await tutor.shot("02-empty");
+    // первый вход паролем администратора → учитель задаёт себе свой пароль и дальше входит им
+    await t.click('a[href="#/account"]');
+    await t.waitForSelector("#pw");
+    await tutor.shot("02b-account");
+    await t.fill("#pw-cur", "secret");
+    await t.fill("#pw-new", "ralina-2026");
+    await t.fill("#pw-rep", "ralina-2026");
+    await t.click("#pw button[type=submit]");
+    await t.waitForSelector("#pw-msg.okm");
+    await tutor.shot("02c-password-saved");
+    await t.goto(online.base + "tutor.html#/");
+    await t.waitForSelector("#logout");
+    await t.click("#logout");
+    await t.waitForSelector("#pass");
+    await t.fill("#pass", "ralina-2026");
+    await t.click("#login button[type=submit]");
+    await t.waitForSelector("#add-name");
+    expect(
+      (
+        await t.evaluate(() =>
+          fetch("api/tutor/me", { headers: { authorization: "Bearer " + localStorage.getItem("tutor_token") } }).then(
+            (r) => r.json(),
+          ),
+        )
+      ).who === "tutor",
+      "учитель не вошёл своим паролем",
+    );
     await t.fill("#add-name", "Маша");
     await t.click("#add button[type=submit]");
     await t.waitForSelector("#code");
