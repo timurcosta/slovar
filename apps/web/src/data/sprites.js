@@ -1,7 +1,7 @@
 // Пиксельные спрайты боссов (строки символов + палитры) и drawSprite().
 
 export const SPR = {
-angelika:`
+  angelika: `
 .......YYYYYY.......
 ......Y......Y......
 .......YYYYYY.......
@@ -21,7 +21,7 @@ OLLO.STTTTTTTTS.OLLO
 .....TTTTTTTTTT.....
 ......SS....SS......
 .....GGG....GGG.....`,
-olesya:`
+  olesya: `
 ....HHHHHHHH....
 ...HHHHHHHHHH...
 ..HHHHHHHHHHHH..
@@ -40,7 +40,7 @@ olesya:`
 ....KKKKKKKK....
 .....SS..SS.....
 ....LLL..LLL....`,
-krakoz:`
+  krakoz: `
 ...F..FF..F.....
 ..FFFFFFFFFFF...
 .FFFFFFFFFFFFF..
@@ -55,7 +55,7 @@ FFFFFFMMMMFFFFFF
 ..FFFFFFFFFFFF..
 .D.DFFFFFFFFD.D.
 ...DD.DDDD.DD...`,
-ralina:`
+  ralina: `
 .....HHHHHH.....
 ...HHHHHHHHHH...
 ..HHHHHHHHHHHH..
@@ -74,7 +74,7 @@ ralina:`
 ....KKKKKKKK....
 .....SS..SS.....
 ....LLL..LLL....`,
-blot:`
+  blot: `
 ......BBBB......
 ....BLLBBBBB....
 ...BLBBBBBBBB...
@@ -91,7 +91,7 @@ BBBBBKKKKKKBBBBB
 B...BB.BB.BB...B
 ....B..B...B....
 .......B........`,
-slime:`
+  slime: `
 ......GGGG......
 ....GGGGGGGG....
 ...GGLLGGGGGGG..
@@ -103,7 +103,7 @@ slime:`
 GGGGGGGGGGGGGGGG
 GGDGGGGGDGGGGDGG
 .DD.DDD.DDDD.DD.`,
-two:`
+  two: `
 ...RRRRRRRR...
 ..RRRRRRRRRR..
 .RRKRRRRRRKRR.
@@ -123,7 +123,7 @@ two:`
 ..RRRRRRRRRRR.
 ...K.......K..
 ..KK......KK..`,
-bat:`
+  bat: `
 P..............P
 PP............PP
 PPP...D..D...PPP
@@ -134,7 +134,7 @@ PPPPDDRDDRDDPPPP
 ..PPPDWDDWDPPP..
 ...PP.DDDD.PP...
 ....P..DD..P....`,
-robot:`
+  robot: `
 .......Y........
 .......D........
 ....MMMMMMMM....
@@ -151,7 +151,7 @@ robot:`
 ....DD....DD....
 ....DD....DD....
 ...DDD....DDD...`,
-spider:`
+  spider: `
 .K............K.
 ..K..........K..
 K..K..KKKK..K..K
@@ -164,7 +164,7 @@ K..KKKKKKKKKK..K
 ..K.KKKKKKKK.K..
 .K...KKKKKK...K.
 K......KK......K`,
-alien:`
+  alien: `
 ...G........G...
 ....G......G....
 .....GGGGGG.....
@@ -181,7 +181,7 @@ alien:`
 ...G.PPPPPP.G...
 .....PP..PP.....
 ....GGG..GGG....`,
-skeleton:`
+  skeleton: `
 .....WWWWWW.....
 ....WWWWWWWW....
 ....WKKWWKKW....
@@ -198,7 +198,7 @@ skeleton:`
 ......W..W......
 ......W..W......
 .....WW..WW.....`,
-ghost:`
+  ghost: `
 .....WWWWWW.....
 ...WWWWWWWWWW...
 ..WWWWWWWWWWWW..
@@ -214,7 +214,7 @@ ghost:`
 .LLWWWWWWWWWWLL.
 .L.LLWW.WWLL.L..
 ...L..L..L..L...`,
-mummy:`
+  mummy: `
 .....WWWWWW.....
 ....WBWWWWBW....
 ....WWWBWWWW....
@@ -229,7 +229,7 @@ WW..WBWWWWBW..WW
 ....WWB..BWW....
 ....WWW..WWW....
 ...BWWW..WWWB...`,
-pirate:`
+  pirate: `
 ....HHHHHHHH....
 ...HHHHXXHHHH...
 ..HHHHHXXHHHHH..
@@ -246,7 +246,7 @@ pirate:`
 ..S.CCCCCCCC.G..
 ....KK....KK....
 ...KKK....DD....`,
-book:`
+  book: `
 ..RRRRRRRRRRRR..
 .RRRRRRRRRRRRRR.
 .RRYYRRRRRRYYRR.
@@ -261,7 +261,7 @@ book:`
 ..RRRRRRRRRRRR..
 ...K........K...
 ..KK........KK..`,
-zombie:`
+  zombie: `
 ....HHHHHHHH....
 ...HHGHHHHGHH...
 ...GGGGGGGGGG...
@@ -278,7 +278,7 @@ zombie:`
 ....PPP..PPP....
 ....PPP..PPP....
 ...KKKK..KKKK...`,
-wizard:`
+  wizard: `
 .......P........
 ......PPP.......
 .....PPYPP......
@@ -295,7 +295,7 @@ wizard:`
 ..PPPPPPPPPPP.B.
 .PPPPPPPPPPPPPB.
 .PPYPPPPPPPYPPB.`,
-dragon:`
+  dragon: `
 ..H............H..
 ..HH..........HH..
 ...HGGGGGGGGGGH...
@@ -312,7 +312,7 @@ A..GTGGTGGTGGTG..A
 .....GGFFFFGG.....
 ......GGFFGG......
 ........FF........`,
-octopus:`
+  octopus: `
 .....PPPPPP.....
 ...PPPPPPPPPP...
 ..PPPPPPPPPPPP..
@@ -326,7 +326,7 @@ octopus:`
 .P.P...PP...P.P.
 P..P..P..P..P..P
 P...P.P..P.P...P`,
-snowman:`
+  snowman: `
 .....HHHHHH.....
 .....HHHHHH.....
 ....HHHHHHHH....
@@ -343,7 +343,7 @@ D.WWWWWWWWWWWWD.
 ..WWWWWWWWWWWWW.
 ...WWWWWKWWWWW..
 ....BWWWWWWWWB..`,
-cactus:`
+  cactus: `
 .......FF.......
 ......GGGG......
 .....GGGGGG.....
@@ -358,7 +358,7 @@ cactus:`
 ....PDPPPPDP....
 .....PPPPPP.....
 .....PPPPPP.....`,
-pumpkin:`
+  pumpkin: `
 .......GG.......
 ......GG........
 ...OOOOOOOOOO...
@@ -373,7 +373,7 @@ OOOKKKKKKKKKOOOO
 .OOODOOOODOOOOO.
 ..OODOOOODOOOO..
 ...OOOOOOOOOO...`,
-ufo:`
+  ufo: `
 ......CCCC......
 .....CGGGGC.....
 .....CGKKGC.....
@@ -387,7 +387,7 @@ MMMYMMMYMMMYMMMM
 ....B.BBBB.B....
 ...B..BBBB..B...
 ..B...BBBB...B..`,
-goblin:`
+  goblin: `
 .G............G.
 .GG..GGGGGG..GG.
 ..GGGGGGGGGGGG..
@@ -401,7 +401,7 @@ goblin:`
 ....BBBBBBBB.DD.
 ....GG....GG....
 ...GGG....GGG...`,
-shark:`
+  shark: `
 .......MM.......
 ......MMM.......
 ....SSSSSSS.....
@@ -413,7 +413,7 @@ KTKTKTSSSSSSSSSS
 ..WWWWWWWWSSS...
 ....WWWWW.SS....
 ...........S....`,
-king:`
+  king: `
 ...Y.Y.YY.Y.Y...
 ...YYYYYYYYYY...
 ...YRYYYYYYRY...
@@ -431,7 +431,7 @@ king:`
 .CCDDDXDDXDDDCC.
 CCCDDXDDDDXDDCCC
 CCC.DD....DD.CCC`,
-lep:`
+  lep: `
 ....WWWW....
 ...WWWWWW...
 ..WWWWWWWW..
@@ -440,7 +440,7 @@ BBDBBBBBBDBB
 BBBBBDBBBBBB
 .BBBBBBBDBB.
 ..BBBBBBBB..`,
-chest:`
+  chest: `
 ..BBBBBBBB..
 .BYYYYYYYYB.
 BYYBBBBBBYYB
@@ -449,48 +449,168 @@ BBBBBGGBBBBB
 BBBBBGGBBBBB
 BBBBBBBBBBBB
 BYYYYYYYYYYB
-BBBBBBBBBBBB`
+BBBBBBBBBBBB`,
 };
 export const PALS = {
-  lep:{B:"#e0a050",D:"#a8642a",W:"#fff7e0",C:"#f0dcb0"},
-  angelika:{Y:"#ffd23f",H:"#c98a3a",S:"#f2c7a5",W:"#ffffff",E:"#1b1b1b",R:"#f29aa8",M:"#d6476b",T:"#bcd4ff",O:"#5f7fb8",L:"#eef4ff",G:"#d9a400"},
-  olesya:{H:"#241612",S:"#f2c7a5",G:"#3a2a5a",W:"#ffffff",E:"#1b1b1b",R:"#f29aa8",M:"#d6476b",P:"#7a4fd6",T:"#ffffff",B:"#c0283a",D:"#fff7e0",K:"#2a2238",L:"#5a2a3a"},
-  krakoz:{F:"#8a5cf0",D:"#5b3aa8",W:"#ffffff",K:"#111111",M:"#2a1440",R:"#ff6b8a"},
-  ralina:{H:"#3b2418",S:"#f2c7a5",E:"#1b1b1b",W:"#ffffff",R:"#f29aa8",M:"#d6476b",C:"#2a9d8f",T:"#ffffff",P:"#d62839",Y:"#ffd23f",K:"#2a2238",L:"#5a2a3a"},
-  blot:{B:"#2f55c8",L:"#8aa5f2",W:"#ffffff",K:"#0b1640",R:"#e04f6a"},
-  slime:{G:"#6fcf4a",L:"#b8f29a",W:"#ffffff",K:"#1f4a14",D:"#3f8f2a"},
-  two:{R:"#d62839",W:"#ffffff",K:"#3a0a10"},
-  bat:{P:"#6a3fb5",D:"#2a1a4a",R:"#ff3b3b",W:"#ffffff"},
-  robot:{M:"#9aa7bd",D:"#4a5670",R:"#ff3b3b",Y:"#ffd23f",C:"#45d1e6"},
-  cyber:{M:"#2a2f4a",D:"#ff4fd8",R:"#45d1e6",Y:"#ffd23f",C:"#45d1e6"},
-  spider:{K:"#2a2238",P:"#d62839",R:"#ff3b3b",W:"#ffffff"},
-  alien:{G:"#5cc95c",B:"#111111",W:"#ffffff",K:"#2b5e2b",P:"#7a4fd6"},
-  skeleton:{W:"#e9e4d4",K:"#2a2a2a",R:"#ff3b3b"},
-  ghost:{W:"#d3def5",L:"#8ea6d6",K:"#1d2f5c"},
-  mummy:{W:"#efe6c8",B:"#b8a77a",Y:"#ffd23f",K:"#2a2a2a"},
-  pirate:{H:"#1b1b1b",X:"#ffffff",S:"#f2c09a",E:"#111111",K:"#2a1a10",N:"#d9926b",B:"#7a4a26",R:"#b5485a",C:"#c0283a",Y:"#f0a000",G:"#9aa7bd",D:"#a8743f"},
-  book:{R:"#8e1d2b",W:"#fff7e0",Y:"#ffd23f",K:"#1b1b1b",T:"#ffffff"},
-  zombie:{H:"#2f3a2a",G:"#8fb07a",W:"#ffffff",R:"#d62839",K:"#2a3324",T:"#4a6fa5",P:"#6b4e31"},
-  wizard:{P:"#3d2a6b",Y:"#ffd23f",S:"#9fb59a",K:"#ff3b3b",W:"#e6e6e6",B:"#6b4e31",O:"#45d1e6"},
-  dragon:{G:"#2b9348",H:"#f0a000",Y:"#ffd23f",K:"#111111",N:"#1b5e30",T:"#ffffff",A:"#7fc8a9",F:"#ff7a1a"},
-  octopus:{P:"#5b3fa0",W:"#ffffff",K:"#111111"},
-  snowman:{H:"#1b1b1b",W:"#dde8fa",K:"#1b1b1b",O:"#ff7a1a",R:"#d62839",D:"#6b4e31",B:"#9fb3d9"},
-  cactus:{G:"#3f9f4a",K:"#111111",Y:"#ffd23f",P:"#c0602a",D:"#8a3f1a",F:"#ff5a8a"},
-  pumpkin:{O:"#ff8c1a",D:"#c96a10",K:"#2a1a0a",Y:"#ffd23f",G:"#3f8f2a"},
-  ufo:{M:"#9aa7bd",D:"#4a5670",C:"#a8f0ff",G:"#5cc95c",K:"#111111",Y:"#ffd23f",B:"#9df58a"},
-  goblin:{G:"#7fb84a",R:"#ff3b3b",K:"#111111",N:"#4f7a2a",W:"#ffffff",B:"#7a4a26",Y:"#ffd23f",D:"#6b4e31"},
-  shark:{S:"#5f7fa6",W:"#e6eef8",K:"#1b1b1b",T:"#ffffff",R:"#ff3b3b",M:"#9aa7bd"},
-  king:{Y:"#f0a000",R:"#ff3b3b",H:"#f2e6c9",P:"#7a4fd6",K:"#111111",W:"#ffffff",C:"#8e1d2b",D:"#2a2238",X:"#ff3b3b"},
-  chest:{B:"#8a5a2b",Y:"#f0a000",G:"#ffd84a"}
+  lep: { B: "#e0a050", D: "#a8642a", W: "#fff7e0", C: "#f0dcb0" },
+  angelika: {
+    Y: "#ffd23f",
+    H: "#c98a3a",
+    S: "#f2c7a5",
+    W: "#ffffff",
+    E: "#1b1b1b",
+    R: "#f29aa8",
+    M: "#d6476b",
+    T: "#bcd4ff",
+    O: "#5f7fb8",
+    L: "#eef4ff",
+    G: "#d9a400",
+  },
+  olesya: {
+    H: "#241612",
+    S: "#f2c7a5",
+    G: "#3a2a5a",
+    W: "#ffffff",
+    E: "#1b1b1b",
+    R: "#f29aa8",
+    M: "#d6476b",
+    P: "#7a4fd6",
+    T: "#ffffff",
+    B: "#c0283a",
+    D: "#fff7e0",
+    K: "#2a2238",
+    L: "#5a2a3a",
+  },
+  krakoz: { F: "#8a5cf0", D: "#5b3aa8", W: "#ffffff", K: "#111111", M: "#2a1440", R: "#ff6b8a" },
+  ralina: {
+    H: "#3b2418",
+    S: "#f2c7a5",
+    E: "#1b1b1b",
+    W: "#ffffff",
+    R: "#f29aa8",
+    M: "#d6476b",
+    C: "#2a9d8f",
+    T: "#ffffff",
+    P: "#d62839",
+    Y: "#ffd23f",
+    K: "#2a2238",
+    L: "#5a2a3a",
+  },
+  blot: { B: "#2f55c8", L: "#8aa5f2", W: "#ffffff", K: "#0b1640", R: "#e04f6a" },
+  slime: { G: "#6fcf4a", L: "#b8f29a", W: "#ffffff", K: "#1f4a14", D: "#3f8f2a" },
+  two: { R: "#d62839", W: "#ffffff", K: "#3a0a10" },
+  bat: { P: "#6a3fb5", D: "#2a1a4a", R: "#ff3b3b", W: "#ffffff" },
+  robot: { M: "#9aa7bd", D: "#4a5670", R: "#ff3b3b", Y: "#ffd23f", C: "#45d1e6" },
+  cyber: { M: "#2a2f4a", D: "#ff4fd8", R: "#45d1e6", Y: "#ffd23f", C: "#45d1e6" },
+  spider: { K: "#2a2238", P: "#d62839", R: "#ff3b3b", W: "#ffffff" },
+  alien: { G: "#5cc95c", B: "#111111", W: "#ffffff", K: "#2b5e2b", P: "#7a4fd6" },
+  skeleton: { W: "#e9e4d4", K: "#2a2a2a", R: "#ff3b3b" },
+  ghost: { W: "#d3def5", L: "#8ea6d6", K: "#1d2f5c" },
+  mummy: { W: "#efe6c8", B: "#b8a77a", Y: "#ffd23f", K: "#2a2a2a" },
+  pirate: {
+    H: "#1b1b1b",
+    X: "#ffffff",
+    S: "#f2c09a",
+    E: "#111111",
+    K: "#2a1a10",
+    N: "#d9926b",
+    B: "#7a4a26",
+    R: "#b5485a",
+    C: "#c0283a",
+    Y: "#f0a000",
+    G: "#9aa7bd",
+    D: "#a8743f",
+  },
+  book: { R: "#8e1d2b", W: "#fff7e0", Y: "#ffd23f", K: "#1b1b1b", T: "#ffffff" },
+  zombie: { H: "#2f3a2a", G: "#8fb07a", W: "#ffffff", R: "#d62839", K: "#2a3324", T: "#4a6fa5", P: "#6b4e31" },
+  wizard: { P: "#3d2a6b", Y: "#ffd23f", S: "#9fb59a", K: "#ff3b3b", W: "#e6e6e6", B: "#6b4e31", O: "#45d1e6" },
+  dragon: {
+    G: "#2b9348",
+    H: "#f0a000",
+    Y: "#ffd23f",
+    K: "#111111",
+    N: "#1b5e30",
+    T: "#ffffff",
+    A: "#7fc8a9",
+    F: "#ff7a1a",
+  },
+  octopus: { P: "#5b3fa0", W: "#ffffff", K: "#111111" },
+  snowman: { H: "#1b1b1b", W: "#dde8fa", K: "#1b1b1b", O: "#ff7a1a", R: "#d62839", D: "#6b4e31", B: "#9fb3d9" },
+  cactus: { G: "#3f9f4a", K: "#111111", Y: "#ffd23f", P: "#c0602a", D: "#8a3f1a", F: "#ff5a8a" },
+  pumpkin: { O: "#ff8c1a", D: "#c96a10", K: "#2a1a0a", Y: "#ffd23f", G: "#3f8f2a" },
+  ufo: { M: "#9aa7bd", D: "#4a5670", C: "#a8f0ff", G: "#5cc95c", K: "#111111", Y: "#ffd23f", B: "#9df58a" },
+  goblin: {
+    G: "#7fb84a",
+    R: "#ff3b3b",
+    K: "#111111",
+    N: "#4f7a2a",
+    W: "#ffffff",
+    B: "#7a4a26",
+    Y: "#ffd23f",
+    D: "#6b4e31",
+  },
+  shark: { S: "#5f7fa6", W: "#e6eef8", K: "#1b1b1b", T: "#ffffff", R: "#ff3b3b", M: "#9aa7bd" },
+  king: {
+    Y: "#f0a000",
+    R: "#ff3b3b",
+    H: "#f2e6c9",
+    P: "#7a4fd6",
+    K: "#111111",
+    W: "#ffffff",
+    C: "#8e1d2b",
+    D: "#2a2238",
+    X: "#ff3b3b",
+  },
+  chest: { B: "#8a5a2b", Y: "#f0a000", G: "#ffd84a" },
 };
 // per-boss "blink" frame: which palette keys get swapped (eyes close, lights flicker)
-export const BLINK = {angelika:{E:"S",W:"S"}, olesya:{E:"W"}, krakoz:{W:"F",K:"F"}, ralina:{E:"S",W:"S"}, blot:{W:"B"}, slime:{W:"G"}, two:{W:"R"}, bat:{R:"D"}, robot:{R:"D",C:"M"}, cyber:{R:"M",C:"M"}, spider:{R:"K"}, alien:{W:"B"},
-  skeleton:{R:"K"}, mummy:{Y:"W"}, pirate:{K:"S"}, book:{Y:"R"}, zombie:{R:"W"}, wizard:{K:"S",O:"B"}, dragon:{Y:"G"}, octopus:{W:"P"},
-  snowman:{K:"W"}, cactus:{F:"G"}, pumpkin:{Y:"K"}, ufo:{Y:"D",B:"C"}, goblin:{R:"G"}, shark:{R:"S"}, king:{R:"P"}, ghost:{K:"W"}};
-export function drawSprite(cv, sp, pal, silhouette){
-  const rows = sp.trim().split("\n").map(r => r.trim());
-  const h = rows.length, w = Math.max(...rows.map(r => r.length));
-  cv.width = w; cv.height = h;
-  const x = cv.getContext("2d"); x.clearRect(0,0,w,h);
-  rows.forEach((r,y) => [...r].forEach((ch,i) => { if (ch !== "." && pal[ch]){ x.fillStyle = silhouette ? "#c9d3e3" : pal[ch]; x.fillRect(i,y,1,1); } }));
+export const BLINK = {
+  angelika: { E: "S", W: "S" },
+  olesya: { E: "W" },
+  krakoz: { W: "F", K: "F" },
+  ralina: { E: "S", W: "S" },
+  blot: { W: "B" },
+  slime: { W: "G" },
+  two: { W: "R" },
+  bat: { R: "D" },
+  robot: { R: "D", C: "M" },
+  cyber: { R: "M", C: "M" },
+  spider: { R: "K" },
+  alien: { W: "B" },
+  skeleton: { R: "K" },
+  mummy: { Y: "W" },
+  pirate: { K: "S" },
+  book: { Y: "R" },
+  zombie: { R: "W" },
+  wizard: { K: "S", O: "B" },
+  dragon: { Y: "G" },
+  octopus: { W: "P" },
+  snowman: { K: "W" },
+  cactus: { F: "G" },
+  pumpkin: { Y: "K" },
+  ufo: { Y: "D", B: "C" },
+  goblin: { R: "G" },
+  shark: { R: "S" },
+  king: { R: "P" },
+  ghost: { K: "W" },
+};
+export function drawSprite(cv, sp, pal, silhouette) {
+  const rows = sp
+    .trim()
+    .split("\n")
+    .map((r) => r.trim());
+  const h = rows.length,
+    w = Math.max(...rows.map((r) => r.length));
+  cv.width = w;
+  cv.height = h;
+  const x = cv.getContext("2d");
+  x.clearRect(0, 0, w, h);
+  rows.forEach((r, y) =>
+    [...r].forEach((ch, i) => {
+      if (ch !== "." && pal[ch]) {
+        x.fillStyle = silhouette ? "#c9d3e3" : pal[ch];
+        x.fillRect(i, y, 1, 1);
+      }
+    }),
+  );
 }

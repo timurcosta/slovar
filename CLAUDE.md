@@ -43,22 +43,22 @@ git worktree remove /tmp/base
 Без фреймворков и сборки. `index.html` — только разметка экранов (`<section id="s-...">`),
 стили в `css/style.css`, логика в `js/`.
 
-| Файл | Что внутри |
-|---|---|
-| `js/core/helpers.js` | `$`, `esc`, `show(id)` (переключение экранов), `toast`, даты `today()`, иконки монет и сердец |
-| `js/data/words.js` | Тема «словарные слова»: списки `W12`/`W34`, разбор формата `(а/о)`, пулы `PA`, `PB`, `PAB` |
-| `js/data/sprites.js` | Спрайты боссов строками символов + палитры `PALS`, `drawSprite()` |
-| `js/data/bosses.js` | Способности `AB`, кампания `CAMPAIGN`, лор, `towerBoss(floor)`, `drawBoss()` |
-| `js/data/items.js` | Костюмы, внешность (`LOOK_*`), слоты, предметы `ITEMS`, редкость, прокачка `UPGRADES`, ауры |
-| `js/hero.js` | Спрайты питомцев и `drawHero()` |
-| `js/core/profile.js` | localStorage, `settings`, профиль `P`, **миграции**, `save()`, `giftRalina()` |
-| `js/core/levels.js` | Формула уровней, титулы, `gear()` — итоговые статы героя |
-| `js/core/sound.js` | WebAudio: эффекты `sfx.*` и музыка |
-| `js/core/rewards.js` | `addCoins`, `addXP`, сундуки, задания дня, достижения `ACH`, трофеи |
-| `js/screens/home.js` | Главная, гардероб, внешность, достижения |
-| `js/game.js` | Бой: `startBoss`, `nextQ`, `resolve(ok)`, эффекты, `bossDown`, `endGame` |
-| `js/screens/teacher.js` | Раздел учителя: статистика слов, лимиты на день |
-| `js/main.js` | Обработчики кнопок, PIN, анимация героя, история, коды сохранения, старт игры |
+| Файл                    | Что внутри                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------- |
+| `js/core/helpers.js`    | `$`, `esc`, `show(id)` (переключение экранов), `toast`, даты `today()`, иконки монет и сердец |
+| `js/data/words.js`      | Тема «словарные слова»: списки `W12`/`W34`, разбор формата `(а/о)`, пулы `PA`, `PB`, `PAB`    |
+| `js/data/sprites.js`    | Спрайты боссов строками символов + палитры `PALS`, `drawSprite()`                             |
+| `js/data/bosses.js`     | Способности `AB`, кампания `CAMPAIGN`, лор, `towerBoss(floor)`, `drawBoss()`                  |
+| `js/data/items.js`      | Костюмы, внешность (`LOOK_*`), слоты, предметы `ITEMS`, редкость, прокачка `UPGRADES`, ауры   |
+| `js/hero.js`            | Спрайты питомцев и `drawHero()`                                                               |
+| `js/core/profile.js`    | localStorage, `settings`, профиль `P`, **миграции**, `save()`, `giftRalina()`                 |
+| `js/core/levels.js`     | Формула уровней, титулы, `gear()` — итоговые статы героя                                      |
+| `js/core/sound.js`      | WebAudio: эффекты `sfx.*` и музыка                                                            |
+| `js/core/rewards.js`    | `addCoins`, `addXP`, сундуки, задания дня, достижения `ACH`, трофеи                           |
+| `js/screens/home.js`    | Главная, гардероб, внешность, достижения                                                      |
+| `js/game.js`            | Бой: `startBoss`, `nextQ`, `resolve(ok)`, эффекты, `bossDown`, `endGame`                      |
+| `js/screens/teacher.js` | Раздел учителя: статистика слов, лимиты на день                                               |
+| `js/main.js`            | Обработчики кнопок, PIN, анимация героя, история, коды сохранения, старт игры                 |
 
 ### Главное правило про порядок файлов
 

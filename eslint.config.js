@@ -11,7 +11,7 @@ export default [
   },
   {
     files: ["scripts/**/*.{js,mjs}", "**/*.config.js", "eslint.config.js"],
-    languageOptions: { globals: { ...globals.node, ...globals.browser } },  // check.mjs also runs code inside the page
+    languageOptions: { globals: { ...globals.node, ...globals.browser } }, // check.mjs also runs code inside the page
   },
   {
     rules: {
