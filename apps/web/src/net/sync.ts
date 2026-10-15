@@ -15,9 +15,22 @@ const PUSH_DELAY = 30_000;
 
 export const linkedName = (): string | null => (LS.get<string | null>(K.token, null) ? LS.get(K.name, null) : null);
 
-/** Гость: играет без кода, прогресс только на этом устройстве. Войдёт по коду — прогресс уйдёт учителю. */
-export const isGuest = (): boolean => !linkedName() && LS.get(K.guest, false);
-export const setGuest = () => LS.set(K.guest, true);
+/** Гость: играет без кода, прогресс только на этом устройстве. Войдёт по коду — прогресс уйдёт учителю.
+ * Выбор живёт до закрытия игры (sessionStorage): устройство бывает общим, и при новом запуске снова
+ * спрашиваем «Кто играет?» — продолжить героя на устройстве или начать новым. */
+export const isGuest = (): boolean => {
+  try {
+    return !linkedName() && sessionStorage.getItem(K.guest) === "1";
+  } catch (e) {
+    return false;
+  }
+};
+export const setGuest = (on = true) => {
+  try {
+    if (on) sessionStorage.setItem(K.guest, "1");
+    else sessionStorage.removeItem(K.guest);
+  } catch (e) {}
+};
 
 /** Вызывается, когда данные пришли с сервера и экран надо перерисовать. */
 let onRemote = () => {};
@@ -120,7 +133,7 @@ export async function join(code: string): Promise<string> {
   const r = await api<JoinResponse>("POST", "/join", { code });
   LS.set(K.token, r.token);
   LS.set(K.name, r.name);
-  LS.set(K.guest, false);
+  setGuest(false);
   const me = await api<MeResponse>("GET", "/me");
   // на сервере уже есть прогресс побольше — продолжаем его, иначе отправляем свой
   const takeServer = !!me.profile && (me.profile.xp ?? 0) >= P.xp;

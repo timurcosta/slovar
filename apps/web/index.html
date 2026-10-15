@@ -132,10 +132,10 @@
           </p>
           <div class="modal-or"><span>или</span></div>
           <button class="btn" id="btn-guest" type="button">
-            Играть как гость<small
-              >Прогресс останется только на этом устройстве, учитель его не увидит, задания и слова учителя не придут.
-              Войдёшь по коду позже — прогресс перейдёт к учителю.</small
-            >
+            <span id="guest-t">Играть как гость</span><small id="guest-sub"></small>
+          </button>
+          <button class="btn" id="btn-guest-new" type="button" hidden>
+            <span id="guest-new-t"></span><small id="guest-new-sub"></small>
           </button>
           <a class="link modal-teacher" href="tutor.html">Я учитель: открыть кабинет</a>
         </div>
@@ -229,29 +229,31 @@
           <span class="coins" id="hud-coins"></span>
         </div>
         <div class="arena" id="arena">
-          <div class="bossname">
-            <h2 id="boss-name"></h2>
-            <small id="boss-num"></small>
-          </div>
-          <div class="abil" id="boss-abil"></div>
-          <div class="bar" aria-hidden="true"><i id="hp-fill"></i></div>
-          <div class="stage" id="stage">
-            <div class="fighter">
-              <canvas id="pet-cv" aria-label="Питомец" hidden></canvas>
-              <div class="bob slow">
-                <div id="hero-aura"><canvas id="hero-cv" aria-label="Твой боец"></canvas></div>
+          <div class="arena-in">
+            <div class="bossname">
+              <h2 id="boss-name"></h2>
+              <small id="boss-num"></small>
+            </div>
+            <div class="abil" id="boss-abil"></div>
+            <div class="bar" aria-hidden="true"><i id="hp-fill"></i></div>
+            <div class="stage" id="stage">
+              <div class="fighter">
+                <canvas id="pet-cv" aria-label="Питомец" hidden></canvas>
+                <div class="bob slow">
+                  <div id="hero-aura"><canvas id="hero-cv" aria-label="Твой боец"></canvas></div>
+                </div>
               </div>
+              <div class="fighter bob">
+                <div id="boss-wrap"><canvas id="boss-cv" aria-label="Босс"></canvas></div>
+                <div class="shields" id="boss-shields" aria-hidden="true"></div>
+              </div>
+              <div class="bubble" id="bubble"></div>
+              <div class="stchips" id="st-chips"></div>
             </div>
-            <div class="fighter bob">
-              <div id="boss-wrap"><canvas id="boss-cv" aria-label="Босс"></canvas></div>
-              <div class="shields" id="boss-shields" aria-hidden="true"></div>
+            <div id="rage-wrap">
+              <div class="bar-label"><span id="rage-label">Атака босса</span><span id="rage-sec"></span></div>
+              <div class="bar rage" aria-hidden="true"><i id="rage-fill" style="transform: scaleX(0)"></i></div>
             </div>
-            <div class="bubble" id="bubble"></div>
-            <div class="stchips" id="st-chips"></div>
-          </div>
-          <div id="rage-wrap">
-            <div class="bar-label"><span id="rage-label">Атака босса</span><span id="rage-sec"></span></div>
-            <div class="bar rage" aria-hidden="true"><i id="rage-fill" style="transform: scaleX(0)"></i></div>
           </div>
           <div class="overlay" id="boss-over" hidden></div>
         </div>
@@ -302,7 +304,7 @@
         <div class="mist loot" id="end-loot" hidden></div>
         <div class="mist" id="end-mist"></div>
         <p class="note">Сделай скриншот этого экрана и отправь учителю.</p>
-        <div class="row">
+        <div class="row backbar">
           <button class="btn primary" id="btn-again">Ещё раз</button>
           <button class="btn gold" id="btn-end-shop">Гардероб</button>
           <button class="link" id="btn-home">На главную</button>
@@ -346,7 +348,7 @@
           <div class="tabs" role="tablist" id="tabs"></div>
           <div class="items" id="items"></div>
         </div>
-        <div class="row"><button class="btn primary" id="btn-shop-back">Готово</button></div>
+        <div class="row backbar"><button class="btn primary" id="btn-shop-back">Готово</button></div>
       </section>
 
       <!-- AWARDS -->
@@ -360,7 +362,7 @@
         <h2>Достижения</h2>
         <p class="note" id="aw-count"></p>
         <div class="achs" id="achs"></div>
-        <div class="row"><button class="btn primary" id="btn-aw-back">Назад</button></div>
+        <div class="row backbar"><button class="btn primary" id="btn-aw-back">Назад</button></div>
       </section>
 
       <section class="screen" id="s-trophy" hidden>
@@ -370,7 +372,7 @@
         </div>
         <p class="note" id="tr-count"></p>
         <div class="trophies" id="trophies"></div>
-        <div class="row"><button class="btn primary" id="btn-tr-back">Назад</button></div>
+        <div class="row backbar"><button class="btn primary" id="btn-tr-back">Назад</button></div>
       </section>
     </main>
 

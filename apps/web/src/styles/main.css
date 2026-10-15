@@ -237,10 +237,11 @@ textarea:focus-visible {
 .hname {
   font-family: var(--font-body);
   font-weight: 900;
-  font-size: 26px;
+  font-size: clamp(20px, 6vw, 26px);
   line-height: 1.05;
   color: var(--ink);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .hname:empty {
   display: none;
@@ -525,15 +526,25 @@ textarea:focus-visible {
 }
 
 /* Arena */
+/* бой и окно поверх него (знакомство с боссом, победа) в одной ячейке сетки: длинное окно растит арену,
+   а не прячется за прокруткой внутри неё */
 .arena {
   position: relative;
   background: var(--card);
   border: 3px solid var(--ink);
+  display: grid;
+  overflow: hidden;
+}
+.arena > .arena-in,
+.arena > .overlay {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+.arena-in {
   padding: 12px 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow: hidden;
 }
 .bossname {
   display: flex;
@@ -1490,18 +1501,16 @@ textarea:focus-visible {
 }
 
 .overlay {
-  position: absolute;
-  inset: 0;
-  background: color-mix(in srgb, var(--card) 95%, transparent);
+  position: relative;
+  background: var(--card);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 6px;
+  gap: 8px;
   text-align: center;
-  padding: 14px;
+  padding: 18px 16px;
   z-index: 5;
-  overflow: auto;
 }
 .overlay canvas {
   width: 68px;
@@ -2039,7 +2048,7 @@ body.kb .feedback {
   font-size: 22px;
   min-height: 28px;
 }
-body.kb .arena {
+body.kb .arena-in {
   gap: 6px;
   padding: 8px 10px 10px;
 }
@@ -3392,6 +3401,10 @@ body.on-title .sheet::before {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
+}
+.topbar-r .coins {
+  height: 44px;
 }
 .icobtn {
   display: inline-grid;
@@ -3427,8 +3440,8 @@ body.on-title .sheet::before {
 }
 .share-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
 }
 .fight {
   display: flex;
@@ -3608,8 +3621,9 @@ body.on-title .sheet::before {
     width: auto;
   }
 }
-#s-home .hname {
-  padding-right: 48px;
+/* «Похвастаться» в углу карточки: верхние строки (имя, у гостя — уровень) не заходят под кнопку */
+#s-home .herocard .info > :is(.hname, .lvl) {
+  padding-right: 44px;
 }
 @media (min-width: 720px) {
   .tile .ico {
@@ -3621,5 +3635,100 @@ body.on-title .sheet::before {
   }
   .tile small {
     font-size: 12px;
+  }
+}
+
+/* «Готово» / «Назад» под длинными списками (гардероб, достижения, трофеи, итоги боя) всегда под рукой:
+   полоска прилипает к низу экрана, листать до конца не нужно */
+.backbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  /* до краёв экрана: поля body (8px) + отступ листа (16px); снизу — поверх нижнего отступа листа */
+  margin: 0 -24px -48px;
+  padding: 10px 24px calc(12px + env(safe-area-inset-bottom));
+  background: var(--card);
+  border-top: 3px solid var(--ink);
+  gap: 6px 10px;
+}
+/* короткий экран (мало вещей, большой монитор): тянем экран на высоту окна, чтобы полоска была внизу,
+   а не висела сразу под содержимым. 72px = поля body (8+8) + отступы листа (16+40), минус заход полоски */
+.screen:has(> .backbar) {
+  min-height: calc(100dvh - 72px);
+}
+.screen > .backbar {
+  margin-top: auto;
+}
+/* на компьютере гардероб — сетка: заголовок, колонки (забирают свободное место), полоска */
+.cols:has(> .backbar) {
+  grid-template-rows: auto 1fr auto;
+}
+.backbar .btn {
+  text-align: center;
+  white-space: nowrap;
+  font-size: 16px;
+  padding: 10px 12px;
+}
+.backbar .btn.primary:only-child {
+  min-width: 160px;
+}
+.backbar .link {
+  white-space: nowrap;
+}
+
+/* «Начать новым героем» во втором нажатии: стирает героя на устройстве */
+.modal-card .btn.danger {
+  color: var(--pen);
+  border-color: var(--pen);
+  box-shadow: 4px 4px 0 var(--pen);
+}
+
+/* ---------- телефоны: узкие (360px) и низкие (640px) экраны ---------- */
+.story .btn,
+#prefs .modal-card > .btn {
+  text-align: center;
+}
+.econ:not([open]) {
+  gap: 0;
+}
+@media (max-width: 719px) {
+  /* вкладки гардероба одной лентой: вещи видны сразу, а не после трёх рядов вкладок */
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -24px;
+    padding: 2px 24px 6px;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    flex: none;
+  }
+}
+@media (max-width: 380px) {
+  .herocard,
+  .preview {
+    gap: 10px;
+    padding: 10px;
+  }
+  .herocard canvas,
+  .preview canvas {
+    width: 104px;
+  }
+}
+/* низкий экран: бой целиком — арена ниже, герой и босс мельче */
+@media (max-width: 719px) and (max-height: 700px) {
+  #s-game {
+    gap: 10px;
+  }
+  .stage {
+    height: 150px;
+    padding-top: 16px !important;
+    --hw: 132px;
+  }
+  .word {
+    height: 56px;
   }
 }

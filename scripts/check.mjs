@@ -180,6 +180,10 @@ async function bigScreens(p, shot) {
   await p.click("#btn-shop");
   await tick(p);
   await shot("02-shop");
+  // короткий список: полоска «Готово» всё равно внизу окна, а не сразу под вещами
+  await p.click('#tabs .tab[data-s="aura"]');
+  await tick(p);
+  await shot("02b-shop-aura");
   await p.click("#btn-shop-back");
   await p.click("#btn-awards");
   await tick(p);
@@ -240,6 +244,10 @@ const SCENARIOS = [
       await p.click("#opt1");
       await tick(p, 2500);
       await shot("08-after-answer");
+      // не отвечаем: босс бьёт по таймеру, пока не кончатся сердца — экран итогов
+      for (let i = 0; i < 12 && (await p.locator("#s-end[hidden]").count()); i++) await tick(p, 5000);
+      await tick(p, 1500);
+      await shot("09-end");
     },
   },
   {
@@ -318,7 +326,7 @@ const SCENARIOS = [
     name: "legacy",
     moved: true,
     storage: { sb2_profile: LEGACY },
-    run: async (p, shot) => {
+    run: async (p, shot, { expect }) => {
       await tick(p, 500);
       await shot("00-moved");
       const arrived = p.waitForURL((u) => u.href.startsWith(GAME_URL) && !u.hash);
@@ -327,6 +335,8 @@ const SCENARIOS = [
       await p.evaluate(() => document.fonts.ready);
       await enter(p);
       await shot("01-login"); // герой со старого адреса уже здесь, кода пока нет — играем гостем
+      await p.click("#btn-guest-new"); // «Начать новым героем» спрашивает ещё раз, герой цел
+      await shot("01b-login-new-confirm");
       await p.click("#btn-guest");
       await tick(p, 2100);
       await shot("02-home");
@@ -334,6 +344,16 @@ const SCENARIOS = [
       await tick(p);
       await shot("03-opts-guest");
       await p.click("#btn-prefs-close");
+      // новый запуск игры (выбор гостя живёт до закрытия): снова «Кто играет?», герой на месте
+      await p.evaluate(() => sessionStorage.removeItem("sb_guest"));
+      await p.reload();
+      await p.evaluate(() => document.fonts.ready);
+      await enter(p);
+      expect(await p.locator("#login:not([hidden])").count(), "гость при новом запуске не спросили, кто играет");
+      await shot("04-relaunch-login");
+      await p.click("#btn-guest");
+      await tick(p, 2100);
+      expect((await p.textContent("#home-name")) === "Старичок", "гость при новом запуске потерял героя");
     },
   },
   {
@@ -391,6 +411,8 @@ const SCENARIOS = [
       await shot("02-chest-open");
     },
   },
+  // маленький телефон (iPhone SE и узкие Android): всё должно влезать по ширине
+  { name: "small", kid: { name: "Тест", profile: VETERAN }, viewport: { width: 360, height: 640 }, run: bigScreens },
   { name: "tablet", kid: { name: "Тест", profile: VETERAN }, viewport: { width: 820, height: 1180 }, run: bigScreens },
   { name: "laptop", kid: { name: "Тест", profile: VETERAN }, viewport: { width: 1024, height: 768 }, run: bigScreens },
   { name: "desktop", kid: { name: "Тест", profile: VETERAN }, viewport: { width: 1440, height: 900 }, run: bigScreens },
