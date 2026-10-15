@@ -35,6 +35,7 @@ import {
 } from "./effects.js";
 import * as vfx from "./vfx.js";
 import { diffMul } from "./difficulty.js";
+import { TASK_U, guardianGone, guardianLeaves, taskHit, taskMiss, taskNext } from "./task.js";
 
 export function clearRound() {
   if (!G) return;
@@ -441,7 +442,7 @@ function continueOrLose(next) {
 
 export function nextQ() {
   G.hpLag = 0; // все удары прошлого ответа уже показаны
-  {
+  if (G.kind !== "task") {
     const lr = limitReason();
     if (lr) {
       limitStop(lr);
@@ -457,7 +458,7 @@ export function nextQ() {
     return;
   }
   if (!G.queue.length) G.queue = shuffle(poolFor(G.boss));
-  const e = G.queue.shift();
+  const e = G.kind === "task" ? taskNext() : G.queue.shift();
   const slot = pick(e.slots);
   const s = e.segs[slot];
   G.cur = { e, slot, opts: shuffle([s.c, s.w]) };
@@ -1098,10 +1099,12 @@ function resolve(ok, timeout) {
       blocked = true;
     }
     stat(e.word, "right");
+    // в задании жизни — сердечки монстров: любой удар снимает ровно одно (TASK_U), числа урона те же
+    const lagK = G.kind === "task" && dmg ? TASK_U / dmg : 1;
     // урон делится: свою долю питомец наносит сам, своей атакой; полоска жизней падает в момент каждого удара
     const petPart = blocked || !g.petDmg ? 0 : Math.round((dmg * g.petDmg) / g.dmg),
       heroPart = dmg - petPart;
-    G.hpLag = dmg;
+    G.hpLag = dmg * lagK;
     // питомец ближнего боя подбегает после удара героя (герой его ждёт), стрелок стреляет со своего места
     const petRun = !blocked && petRunsIn();
     const delay = fx(g.fx, g.fxCol, petRun);
@@ -1127,17 +1130,18 @@ function resolve(ok, timeout) {
           quest("crits");
         } else pop(`-${shownDmg(heroPart)}`);
       }
-      G.hpLag = Math.max(0, G.hpLag - heroPart);
+      G.hpLag = Math.max(0, G.hpLag - heroPart * lagK);
       renderHUD();
     }, delay);
     if (petPart)
       later(() => {
         pop(`-${shownDmg(petPart)}`, "pet" + (crit ? " crit" : ""), "62%");
-        G.hpLag = Math.max(0, G.hpLag - petPart);
+        G.hpLag = Math.max(0, G.hpLag - petPart * lagK);
         renderHUD();
       }, petHit);
-    G.hp = Math.max(0, G.hp - dmg);
+    G.hp = Math.max(0, Math.round(G.hp - dmg * lagK));
     G.score += dmg;
+    if (G.kind === "task") taskHit(e, delay);
     // превращение: жизни упали ниже порога следующей формы
     const form = G.forms[G.formN];
     let formAt = 0;
@@ -1217,7 +1221,7 @@ function resolve(ok, timeout) {
       }
     }
     let volleyEnd = 0;
-    if (g.drone && !blocked && G.hp > 0) {
+    if (g.drone && !blocked && G.hp > 0 && G.kind !== "task") {
       G.droneN = (G.droneN || 0) + 1;
       if (G.droneN % 4 === 0) {
         const dd = heroBase * 2;
@@ -1325,7 +1329,8 @@ function resolve(ok, timeout) {
         say(pick(["Хе-хе, моё!", "Спасибо за монетки!", "Это я забираю!"]));
       }, hitAt + 650);
     }
-    if (g.spikes && G.hp > 0) {
+    if (G.kind === "task") taskMiss(e, hitAt);
+    else if (g.spikes && G.hp > 0) {
       G.hp = Math.max(1, G.hp - g.spikes);
       later(() => {
         pop(`Шипы! -${shownDmg(g.spikes)}`, "", "72%");
@@ -1335,7 +1340,7 @@ function resolve(ok, timeout) {
     addCharge();
     renderHUD();
     save();
-    later(() => continueOrLose(nextQ), 1900);
+    later(() => continueOrLose(guardianGone() ? guardianLeaves : nextQ), 1900);
   }
   save();
 }

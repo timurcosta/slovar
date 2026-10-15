@@ -72,6 +72,7 @@ export function freshProfile(): Profile {
     daily: null,
     days: { last: "", streak: 0 },
     best: 0,
+    tasks: {},
   };
 }
 

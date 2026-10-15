@@ -27,10 +27,12 @@ import { toast } from "../ui/toast.js";
 import { show } from "../ui/screens.js";
 import { confetti } from "../ui/confetti.js";
 import { heroCard, home } from "../ui/screens/home.js";
+import { monsters } from "../progress/taskrules.ts";
+import { taskDown } from "./task.js";
 
 const loreText = (t) => esc(t.replace(/\{name\}/g, P.name || "герой"));
 export let G = null;
-function newRun(kind) {
+export function newRun(kind) {
   touchDay();
   nextBattleTrack();
   const g = gear();
@@ -122,7 +124,7 @@ export const abilChips = (ab) =>
   ab.map((a) => `<span class="chip${a === "enrage" ? " red" : ""}" title="${esc(AB[a].d)}">${AB[a].n}</span>`).join("");
 const CHEST_PAL = { 1: PALS.chest, 2: PALS.chest2, 3: PALS.chest3 };
 /** Сундук на экране победы: трясётся, открывается, потом видно монеты и вещь в рамке её редкости. */
-function openChest(chest, tier, rewardHTML) {
+export function openChest(chest, tier, rewardHTML) {
   const pal = CHEST_PAL[tier] || PALS.chest;
   drawSprite($("chest-cv"), SPR.chest, pal);
   [0, 160, 320, 480].forEach((ms) => later(() => tone(190 + ms / 4, 0.06, "square", 0.03, 120), ms));
@@ -171,7 +173,7 @@ function bonusHTML() {
   if (x > 0 && it("helmet").xpMul) parts.push(`${it("helmet").name}: +${x} опыта`);
   return parts.length ? `<p class="note bonus">${esc(parts.join(" · "))}</p>` : "";
 }
-function startBoss(b) {
+export function startBoss(b) {
   clearRound();
   b = applyDiff(b);
   const g = gear();
@@ -179,7 +181,7 @@ function startBoss(b) {
   G.forms = b.forms || FORMS[b.name] || [];
   G.formN = 0;
   G.final = G.forms.length > 0 && b.pool === "b"; // у финальных боссов своя музыка
-  G.hp = b.hp;
+  G.hp = b.hp0 ?? b.hp;
   G.hpLag = 0;
   G.queue = shuffle(poolFor(b));
   G.shieldLeft = g.shield;
@@ -204,7 +206,13 @@ function startBoss(b) {
   drawFighters();
   $("boss-name").textContent = b.name;
   $("boss-num").textContent =
-    G.kind === "tower" ? `ЭТАЖ ${b.floor}` : G.kind === "training" ? "ТРЕНИРОВКА" : `${b.idx + 1}/${BOSSES.length}`;
+    G.kind === "tower"
+      ? `ЭТАЖ ${b.floor}`
+      : G.kind === "training"
+        ? "ТРЕНИРОВКА"
+        : G.kind === "task"
+          ? "ЗАДАНИЕ"
+          : `${b.idx + 1}/${BOSSES.length}`;
   $("boss-abil").innerHTML = abilChips(b.ab);
   renderCharge();
   $("word").innerHTML = "";
@@ -220,16 +228,18 @@ function startBoss(b) {
   ov.innerHTML = `<canvas id="intro-cv"></canvas><h2>${esc(b.name)}</h2>
     ${LORE[b.name] && G.kind !== "tower" ? `<p class="lore">${loreText(LORE[b.name])}</p>` : ""}
     ${b.training ? `<p class="lore">${b.training === "err" ? `Тренировка: ${G.trainPool.length} ${plural(G.trainPool.length, ["слово", "слова", "слов"])}, в которых ты ошибался. Каждый верный ответ стирает ошибку из памяти Тени.` : `Тренировка: ${G.trainPool.length} ${plural(G.trainPool.length, ["слово", "слова", "слов"])}, которые ты ещё не встречал. Запоминай!`}</p>` : ""}
+    ${b.intro || ""}
     ${b.diff ? `<p class="note"><b>${b.diff === "b" ? "Сложный" : "Средний"} режим:</b> босс злее обычного</p>` : ""}
-    ${b.ab.length ? `<ul>${b.ab.map((a) => `<li>${AB[a].n}: ${esc(AB[a].d)}</li>`).join("")}</ul>` : b.training ? "" : b.spr === "ralina" ? "<p>Добрая, но строгая. Разминка перед настоящими монстрами! Победишь, и она тебя чем-то угостит.</p>" : "<p>Разминка!</p>"}
-    <p class="note">Жизни ${shownDmg(b.hp)} · время ${Math.round((b.time + g.time) * (G.type ? 1.8 : 1))} с · слова: ${DIFF_NAME[settings.words] || "по боссам"}</p>
+    ${b.ab.length ? `<ul>${b.ab.map((a) => `<li>${AB[a].n}: ${esc(AB[a].d)}</li>`).join("")}</ul>` : b.training || b.task ? "" : b.spr === "ralina" ? "<p>Добрая, но строгая. Разминка перед настоящими монстрами! Победишь, и она тебя чем-то угостит.</p>" : "<p>Разминка!</p>"}
+    ${b.task ? "" : `<p class="note">Жизни ${shownDmg(b.hp)} · время ${Math.round((b.time + g.time) * (G.type ? 1.8 : 1))} с · слова: ${DIFF_NAME[settings.words] || "по боссам"}</p>`}
     <button class="btn primary" id="btn-fight">Бой!</button>`;
   drawBoss($("intro-cv"), b);
   $("intro-cv").style.filter = b.filter || "";
   $("opts").hidden = true;
   $("typer").hidden = true;
   $("btn-fight").onclick = () => {
-    const lr = limitReason();
+    // задание Ралины — домашка: открыто и после лимита дня (время и ответы всё равно считаются)
+    const lr = b.task ? null : limitReason();
     if (lr) {
       limitStop(lr);
       return;
@@ -252,6 +262,7 @@ function startBoss(b) {
   $("btn-fight").focus();
 }
 export function bossDown() {
+  if (G.kind === "task") return taskDown();
   clearRound();
   const b = G.boss,
     g = gear();
@@ -410,10 +421,21 @@ export function endGame(won) {
   P.best = Math.max(P.best, G.score);
   save();
   const tower = G.kind === "tower";
-  $("end-title").textContent = won ? "Кампания пройдена!" : tower ? `Башня: этаж ${G.floor}` : "Босс оказался сильнее";
+  const task = G.kind === "task";
+  $("end-title").textContent = won
+    ? "Кампания пройдена!"
+    : tower
+      ? `Башня: этаж ${G.floor}`
+      : task
+        ? G.guardian
+          ? "Хранитель устоял"
+          : "Монстры ещё ждут"
+        : "Босс оказался сильнее";
   let sub = won
     ? "Словарь спасён! Теперь попробуй Башню."
-    : "Монеты и опыт сохранились. Загляни в гардероб и попробуй ещё раз.";
+    : task
+      ? `Монстры запомнили свои сердечки, побеждено ${monsters(G.task, P.tasks?.[G.task.id]).beaten} из ${monsters(G.task, P.tasks?.[G.task.id]).total}. Отдохни и возвращайся!`
+      : "Монеты и опыт сохранились. Загляни в гардероб и попробуй ещё раз.";
   if (isRecord && G.score > 0) sub = `Новый рекорд очков! ${sub}`;
   $("end-sub").textContent = sub;
   heroCard("end");
@@ -424,6 +446,7 @@ export function endGame(won) {
     ["Лучшая серия", G.bestStreak],
   ];
   if (tower) cells.push(["Рекорд башни", `этаж ${P.towerBest}`]);
+  else if (task) cells.push(["Монстров побеждено", G.monstersDown || 0]);
   else cells.push(["Боссов побеждено", G.beaten]);
   cells.push(["Всего монет", P.coins]);
   $("end-stats").innerHTML = cells.map(([k, v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("");

@@ -73,7 +73,7 @@ async function site() {
  * Ученик, которого учитель уже завёл. С profile — он уже входил по коду и играл на этом устройстве:
  * возвращает его localStorage (прогресс, токен входа). Без profile — ещё не входил, localStorage пуст.
  */
-async function addKid(store, { name, code = "ABC234", profile = null, stats = null }) {
+async function addKid(store, { name, code = "ABC234", profile = null, stats = null, tasks = [] }) {
   const t = NOW.toISOString(),
     id = "kid-" + code;
   await store.createStudent({
@@ -82,6 +82,7 @@ async function addKid(store, { name, code = "ABC234", profile = null, stats = nu
     code,
     codeVersion: 1,
     settings: {},
+    tasks,
     profile,
     stats,
     rev: profile ? 1 : 0,
@@ -96,7 +97,42 @@ async function addKid(store, { name, code = "ABC234", profile = null, stats = nu
     sb_token: signToken({ role: "student", sid: id, cv: 1 }, SECRET),
     sb_tutor_name: name,
     sb_rev: 1,
+    sb_tasks: tasks,
   };
+}
+
+// задания Ралины: сегодня 2026-10-15
+const TASK_WORDS = ["кла(сс)", "а(лл)ея", "гру(пп)а", "ми(лл)ион", "ко(лл)екция"];
+const TASKS = [
+  {
+    id: "t-double",
+    title: "Удвоенные согласные",
+    words: TASK_WORDS,
+    from: "2026-10-15",
+    until: "2026-10-20",
+    coins: 150,
+    chest: true,
+    medal: true,
+    note: "Не торопись, читай слово целиком!",
+    congrats: "{имя}, ты справился! Удвоенные теперь твои.",
+    createdAt: "2026-10-14T10:00:00.000Z",
+  },
+  { id: "t-gift", title: "Подарок от Ралины", words: [], coins: 100, createdAt: "2026-10-14T10:00:00.000Z" },
+  // откроется завтра: сегодня его не видно
+  {
+    id: "t-later",
+    title: "Словарные на завтра",
+    words: ["м(о)локо"],
+    from: "2026-10-16",
+    coins: 150,
+    createdAt: "2026-10-14T10:00:00.000Z",
+  },
+];
+/** Ответить верно: во всех словах задания верная буква — удвоенная. */
+async function answerTask(p, right = true) {
+  const opts = await p.locator("#opts .opt span").allTextContents();
+  const i = opts.findIndex((o) => (o.length === 2) === right);
+  await p.click(`#opt${i < 0 ? 0 : i}`);
 }
 
 // «прокачанный» игрок: много вещей, кампания почти пройдена, башня открыта
@@ -483,6 +519,101 @@ const SCENARIOS = [
       await shot("08-deflect");
     },
   },
+  {
+    // задание от Ралины: записка при входе, подарок, логово, монстр теряет сердечки и оживает
+    name: "task",
+    kid: { name: "Тест", profile: VETERAN, tasks: TASKS },
+    run: async (p, shot, { expect }) => {
+      await enter(p);
+      await tick(p, 1100);
+      expect(await p.locator("#task-note:not([hidden])").count(), "нет записки о новом задании");
+      expect(!(await p.textContent("#note-body")).includes("на завтра"), "задание на завтра видно уже сегодня");
+      await shot("01-note");
+      await p.click("[data-gift='t-gift']");
+      await tick(p, 600);
+      await shot("02-note-gift");
+      await p.click("#btn-note-later");
+      await tick(p, 600);
+      await shot("03-home-card");
+      await p.click("[data-task='t-double']");
+      await tick(p);
+      await shot("04-lair");
+      await p.click("#btn-task-go");
+      await tick(p);
+      await shot("05-intro");
+      await p.click("#btn-fight");
+      await tick(p, 800);
+      await shot("06-monster");
+      for (let n = 0; n < 4; n++) {
+        await answerTask(p);
+        await tick(p, 2500);
+      }
+      await shot("07-after-hits");
+      await answerTask(p, false);
+      await tick(p, 1200);
+      await shot("08-monster-revived");
+      await tick(p, 1500);
+      await p.click("#btn-quit");
+      await tick(p, 600);
+      await p.click("[data-task='t-double']");
+      await tick(p);
+      await shot("09-lair-progress");
+      const pr = (await p.evaluate(() => JSON.parse(localStorage.getItem("sb2_profile")))).tasks;
+      expect(pr["t-double"]?.right === 4 && pr["t-gift"]?.done === "2026-10-15", "прогресс задания не сохранился");
+      expect(!pr["t-later"], "задание на завтра уже начато");
+    },
+  },
+  {
+    // все монстры побеждены: Хранитель, победа с поздравлением, сундуком и медалью
+    name: "task-guard",
+    kid: {
+      name: "Тест",
+      profile: {
+        ...VETERAN,
+        tasks: {
+          "t-double": {
+            title: "Удвоенные согласные",
+            hp: Object.fromEntries(TASK_WORDS.map((w) => [w.replace(/[()]/g, ""), 0])),
+            wrong: { класс: 2, миллион: 1 },
+            right: 21,
+            guard: 0,
+            seen: "2026-10-15",
+          },
+        },
+      },
+      tasks: TASKS.slice(0, 1),
+    },
+    run: async (p, shot, { expect }) => {
+      await enter(p);
+      await tick(p, 1100);
+      await shot("01-home-guard");
+      await p.click("[data-task='t-double']");
+      await tick(p);
+      await shot("02-lair-all-beaten");
+      await p.click("#btn-task-go");
+      await tick(p);
+      await shot("03-guard-intro");
+      await p.click("#btn-fight");
+      await tick(p, 800);
+      await shot("04-guard-fight");
+      for (let n = 0; n < 5 && !(await p.locator("#boss-cv.shattered").count()); n++) {
+        await answerTask(p);
+        await tick(p, 2500);
+      }
+      await tick(p, 1300);
+      await shot("05-task-done");
+      await tick(p, 1000);
+      await shot("06-task-chest");
+      await p.click("#btn-task-home");
+      await tick(p, 600);
+      await shot("07-home-medal");
+      await p.click("#btn-trophy");
+      await tick(p);
+      await shot("08-trophies-medal");
+      const pr = (await p.evaluate(() => JSON.parse(localStorage.getItem("sb2_profile")))).tasks["t-double"];
+      expect(pr?.done === "2026-10-15" && pr.medal === 1 && pr.guard === 1, "задание не засчитано после Хранителя");
+    },
+  },
   // маленький телефон (iPhone SE и узкие Android): всё должно влезать по ширине
   { name: "small", kid: { name: "Тест", profile: VETERAN }, viewport: { width: 360, height: 640 }, run: bigScreens },
   { name: "tablet", kid: { name: "Тест", profile: VETERAN }, viewport: { width: 820, height: 1180 }, run: bigScreens },
@@ -554,7 +685,10 @@ async function openPage(label, url, storage = {}, viewport = { width: 390, heigh
   return { ctx, p, shot, dump };
 }
 
-for (const sc of SCENARIOS) {
+// ONLY=task,online npm run check — только эти сценарии (при отладке)
+const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
+const wanted = (name) => !ONLY || ONLY.includes(name);
+for (const sc of SCENARIOS.filter((sc) => wanted(sc.name))) {
   const game = await site();
   const expect = (cond, what) => cond || errors.push(`[${sc.name}] ${what}`);
   const storage = { ...(sc.kid ? await addKid(game.store, sc.kid) : {}), ...sc.storage };
@@ -581,8 +715,8 @@ for (const sc of SCENARIOS) {
 }
 
 // ---------- online: репетитор заводит ученика, ученик входит по коду, прогресс и настройки ходят через API ----------
-const ran = SCENARIOS.length + 1;
-{
+const ran = SCENARIOS.filter((sc) => wanted(sc.name)).length + (wanted("online") ? 1 : 0);
+if (wanted("online")) {
   const online = await site(),
     store = online.store;
   const expect = (cond, what) => cond || errors.push(`[online] ${what}`);
@@ -673,8 +807,33 @@ const ran = SCENARIOS.length + 1;
     await t.waitForSelector("tr[data-id]");
     await tutor.shot("04-list");
     await t.click("tr[data-id]");
+    await t.waitForSelector(".ttabs");
+    await tutor.shot("05-student");
+    // задания: одно сразу (свои слова и слово из поиска по словарю), второе — с завтра
+    await t.click('.ttab[href$="/tasks"]');
+    await t.waitForSelector("#tform");
+    await t.fill("#t-title", "Удвоенные согласные");
+    await t.fill("#t-words", "кла(сс)\nгру(пп)а");
+    await t.fill("#t-find", "бер");
+    await t.waitForSelector("#t-suggest [data-raw]");
+    await tutor.shot("05b-task-form");
+    await t.click("#t-suggest [data-raw]");
+    await t.fill("#t-note", "Читай слово целиком!");
+    await t.click("#t-save");
+    await t.waitForSelector(".tcard-t");
+    await t.fill("#t-title", "Словарные на завтра");
+    await t.fill("#t-words", "м(о)локо");
+    await t.click('[name="t-when"][value="date"]');
+    await t.click("#t-save");
+    await t.waitForFunction(() => document.querySelectorAll(".tcard-t").length === 2);
+    await tutor.shot("05c-tasks");
+    const tasks = (await store.listStudents())[0].tasks;
+    expect(
+      tasks.length === 2 && tasks[0].words.length === 3 && tasks[1].from === "2026-10-16",
+      "задания из конструктора не дошли до сервера",
+    );
+    await t.click('.ttab[href$="/words"]');
     await t.waitForSelector("#settings");
-    await tutor.shot("05-student", ["#code"]);
     await t.click('label.mode:has(input[value="custom"])');
     await t.fill("#custom", "м(о)локо\nс(о)бака");
     await t.fill('[name="lim-min"]', "30");
@@ -687,13 +846,51 @@ const ran = SCENARIOS.length + 1;
     await pulled;
     await enter(k);
     await tick(k, 1100);
-    await kid.shot("06-home-after-settings");
+    await kid.shot("06-note");
+    expect(!(await k.textContent("#note-body")).includes("на завтра"), "задание на завтра видно уже сегодня");
+    await k.click("#note-body [data-lair]");
+    await tick(k);
+    await kid.shot("07-lair");
+    await k.click("#btn-task-go");
+    await tick(k);
+    await k.click("#btn-fight");
+    await tick(k, 800);
+    for (let n = 0; n < 3; n++) {
+      await answerTask(k);
+      await tick(k, 2500);
+    }
+    await kid.shot("08-lair-fight");
+    const taskPush = progress(k);
+    await tick(k, 30_000);
+    await taskPush;
+    await k.click("#btn-quit");
+    await tick(k, 600);
+    await kid.shot("09-home-after-settings");
+    await t.click('.ttab[href$="/tasks"]');
+    await t.waitForSelector(".tcard-t");
+    await tutor.shot("07-task-progress");
+    expect(
+      (await t.textContent(".tcard-t:last-child .tstate")).startsWith("в процессе"),
+      "в кабинете нет статуса задания",
+    );
+    await t.click('.ttab[href$="/login"]');
+    await t.waitForSelector("#copy");
+    await tutor.shot("08-login-tab", ["#code"]);
+    await t.goto(online.base + "tutor.html#/");
+    await t.waitForSelector("tr[data-id]");
+    await tutor.shot("09-list-task");
     const ls = await kid.dump("online-kid");
     expect(ls.sb_settings?.words === "custom", "ученик не получил режим слов от репетитора");
     expect(ls.sb_settings?.lim?.min === 30, "ученик не получил лимит минут");
     expect(ls.sb_custom === "м(о)локо\nс(о)бака", "ученик не получил свои слова репетитора");
     const { code: _c, id: _i, ...stable } = (await store.listStudents())[0];
     fs.writeFileSync(path.join(outDir, "online-server.json"), JSON.stringify(stable, null, 2));
+    // id заданий случайные: заменяем на порядковые, чтобы прогоны сравнивались побайтно
+    for (const f of ["online-server.json", "online-kid-storage.json"]) {
+      let text = fs.readFileSync(path.join(outDir, f), "utf8");
+      stable.tasks.forEach((x, i) => (text = text.replaceAll(x.id, `task-${i + 1}`)));
+      fs.writeFileSync(path.join(outDir, f), text);
+    }
   } catch (e) {
     errors.push(`[online] шаг упал: ${e.message.split("\n")[0]}`);
     await tutor.shot("FAILED");

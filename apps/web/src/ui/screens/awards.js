@@ -5,7 +5,8 @@ import { P } from "../../state/profile.ts";
 import { refreshCoins } from "../../progress/rewards.js";
 import { ACH } from "../../progress/achievements.js";
 import { questsHTML } from "./home.js";
-import { trophyIcon } from "./trophies.js";
+import { medalIcon, trophyIcon } from "./trophies.js";
+import { medals } from "../../progress/tasks.ts";
 
 // best earned trophy of each kind, shown under the hero like ribbons on a uniform
 export function badgesHTML() {
@@ -13,7 +14,12 @@ export function badgesHTML() {
   const best = {};
   for (const t of TROPHIES) if (P.troph[t.id]) best[t.spr + t.m] = t;
   const list = Object.values(best);
-  return list.length ? list.map((t) => trophyIcon(t)).join("") : "";
+  return (
+    list.map((t) => trophyIcon(t)).join("") +
+    medals()
+      .map((m) => medalIcon(m))
+      .join("")
+  );
 }
 export function renderAwards() {
   refreshCoins();

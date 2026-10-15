@@ -23,6 +23,7 @@ import { openShop } from "./shop.js";
 import { badgesHTML } from "./awards.js";
 import { paintTrophies } from "./trophies.js";
 import { paintIcons } from "../icons.js";
+import { maybeNote, renderTaskCards } from "./task.js";
 
 export function heroCard(prefix) {
   const { l, frac, need } = xpProgress(P.xp);
@@ -112,6 +113,8 @@ export function renderHome() {
   $("btn-tower").disabled = !towerOpen();
   $("tower-sub").textContent = towerOpen() ? (P.towerBest ? `этаж ${P.towerBest}` : "открыта!") : "с 6-го босса";
   $("awards-sub").textContent = `${Object.keys(P.ach).length} из ${ACH.length}`;
+  renderTaskCards();
+  setTimeout(maybeNote, 500); // записка от Ралины: новое задание или напоминание раз в день
   $("home-qstrip").innerHTML = questStrip();
   $("home-qstrip").onclick = () => $("btn-awards").click();
   const gl = goal();

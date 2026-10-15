@@ -55,6 +55,28 @@ export interface DayCounters {
   mistakes: number;
 }
 
+/** Прогресс по заданию репетитора (само задание приходит с сервера, Task в api.ts). */
+export interface TaskProgress {
+  /** Название: медаль остаётся, даже если задание удалят. */
+  title: string;
+  /** Сердечки монстров: слово → 0..3, 0 — монстр побеждён. Нет слова — у монстра все три. */
+  hp: Record<string, number>;
+  /** Ошибки по словам за всё задание. */
+  wrong: Record<string, number>;
+  /** Верных ответов за всё задание. */
+  right: number;
+  /** Сколько раз выходил против Хранителя. */
+  guard: number;
+  /** День, когда показана записка (YYYY-MM-DD). */
+  seen?: string;
+  /** День последнего напоминания. */
+  remind?: string;
+  /** День, когда задание выполнено. */
+  done?: string;
+  /** Получена именная медаль. */
+  medal?: number;
+}
+
 export interface Profile {
   name?: string;
   xp: number;
@@ -82,6 +104,8 @@ export interface Profile {
   /** Показать при запуске сообщение о подарках Ралины. */
   lepToast?: number;
   storySeen?: number;
+  /** Задания репетитора: id задания → прогресс. */
+  tasks?: Record<string, TaskProgress>;
   /** Версия раскладки боссов кампании. */
   rv: number;
   /** Версия формулы опыта. */

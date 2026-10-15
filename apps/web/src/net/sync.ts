@@ -8,6 +8,7 @@ import { migrateProfile } from "../state/migrations.ts";
 import { setStats, stats } from "../state/stats.ts";
 import { saveSettings, settings } from "../state/settings.ts";
 import { setCustomRaw } from "../topics/words/pools.js";
+import { TASKS_KEY } from "../progress/tasks.ts";
 
 const K = { token: "sb_token", rev: "sb_rev", dirty: "sb_dirty", name: "sb_tutor_name", guest: "sb_guest" };
 // не чаще раза в 30 с: бесплатный уровень Yandex Cloud — 100 тыс. запросов к API Gateway в месяц
@@ -45,11 +46,13 @@ function forget() {
   // код сменили или ученика удалили: прогресс на устройстве остаётся, просто больше не отправляется
   LS.set(K.token, null);
   LS.set(K.dirty, false);
+  LS.set(TASKS_KEY, []);
 }
 
 /** Берёт данные с сервера: прогресс, если он новее, и настройки репетитора. */
 function adopt(me: MeResponse, takeProgress: boolean) {
   LS.set(K.name, me.name);
+  LS.set(TASKS_KEY, me.tasks || []);
   const s = me.settings || {};
   if (s.words) settings.words = s.words;
   if (s.customWords !== undefined) {

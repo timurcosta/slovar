@@ -25,7 +25,7 @@ export function addCoins(n, useMul = true) {
   return n;
 }
 export function refreshCoins() {
-  ["home-coins", "hud-coins", "shop-coins", "aw-coins", "tr-coins"].forEach((id) => {
+  ["home-coins", "hud-coins", "shop-coins", "aw-coins", "tr-coins", "task-coins"].forEach((id) => {
     if ($(id)) $(id).innerHTML = coinsHTML(P.coins);
   });
 }

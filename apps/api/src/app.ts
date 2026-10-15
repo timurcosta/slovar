@@ -11,6 +11,8 @@ import type {
   MeResponse,
   ProgressRequest,
   Student,
+  Task,
+  TaskInput,
   TokenResponse,
   TutorMeResponse,
   TutorSettings,
@@ -47,7 +49,49 @@ const LIM_KEYS = ["min", "fresh", "correct", "battles", "mistakes"];
 
 const bad = (c: Context, error: string, status: 400 | 401 | 403 | 404 | 409 | 429 = 400) => c.json({ error }, status);
 
-const toStudent = ({ codeVersion: _cv, ...s }: StudentRecord): Student => s;
+const toStudent = ({ codeVersion: _cv, ...s }: StudentRecord): Student => ({ ...s, tasks: s.tasks ?? [] });
+
+const MAX_TASKS = 60;
+const MAX_TASK_WORDS = 40;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const isDate = (v: unknown): v is string => typeof v === "string" && DATE_RE.test(v) && !isNaN(Date.parse(v));
+const text = (v: unknown, max: number) =>
+  String(v ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+
+/** Задание из кабинета: обрезает лишнее, null — если что-то не так. Слова — в формате м(о)локо. */
+function cleanTask(v: unknown): TaskInput | null {
+  if (!v || typeof v !== "object") return null;
+  const t = v as Record<string, unknown>;
+  const title = text(t.title, 60);
+  if (!title || !Array.isArray(t.words) || t.words.length > MAX_TASK_WORDS) return null;
+  const words: string[] = [];
+  for (const w of t.words) {
+    const s = text(w, 60);
+    if (!/\([^()]+\)/.test(s)) return null;
+    if (!words.includes(s)) words.push(s);
+  }
+  const coins = Math.floor(Number(t.coins));
+  if (!(coins >= 0 && coins <= 1000)) return null;
+  const out: TaskInput = { title, words, coins };
+  for (const k of ["from", "until"] as const) {
+    if (t[k] === undefined || t[k] === null || t[k] === "") continue;
+    if (!isDate(t[k])) return null;
+    out[k] = t[k];
+  }
+  if (out.from && out.until && out.until < out.from) return null;
+  if (t.chest) out.chest = true;
+  if (t.medal) out.medal = true;
+  const note = text(t.note, 300),
+    congrats = text(t.congrats, 200);
+  if (note) out.note = note;
+  if (congrats) out.congrats = congrats;
+  // без слов задание — только подарок, в нём должно быть что дарить
+  if (!words.length && !coins && !out.chest && !out.medal) return null;
+  return out;
+}
 
 function cleanName(v: unknown): string | null {
   const s = String(v ?? "")
@@ -242,6 +286,43 @@ export function createApp(cfg: AppConfig) {
     return c.json(toStudent(rec));
   });
 
+  app.post("/tutor/students/:id/tasks", async (c) => {
+    const rec = await store.getStudent(c.req.param("id"));
+    if (!rec) return bad(c, "not found", 404);
+    const input = cleanTask(await readJson<TaskInput>(c));
+    if (!input) return bad(c, "bad task");
+    const tasks = rec.tasks ?? [];
+    if (tasks.length >= MAX_TASKS) return bad(c, "too many tasks");
+    const task: Task = { id: randomUUID().slice(0, 8), ...input, createdAt: now().toISOString() };
+    rec.tasks = [...tasks, task];
+    rec.updatedAt = task.createdAt;
+    await store.putStudent(rec);
+    return c.json(task, 201);
+  });
+
+  app.put("/tutor/students/:id/tasks/:taskId", async (c) => {
+    const rec = await store.getStudent(c.req.param("id"));
+    const old = rec?.tasks?.find((t) => t.id === c.req.param("taskId"));
+    if (!rec || !old) return bad(c, "not found", 404);
+    const input = cleanTask(await readJson<TaskInput>(c));
+    if (!input) return bad(c, "bad task");
+    const task: Task = { id: old.id, ...input, createdAt: old.createdAt };
+    rec.tasks = rec.tasks!.map((t) => (t.id === old.id ? task : t));
+    rec.updatedAt = now().toISOString();
+    await store.putStudent(rec);
+    return c.json(task);
+  });
+
+  app.delete("/tutor/students/:id/tasks/:taskId", async (c) => {
+    const rec = await store.getStudent(c.req.param("id"));
+    const id = c.req.param("taskId");
+    if (!rec || !rec.tasks?.some((t) => t.id === id)) return bad(c, "not found", 404);
+    rec.tasks = rec.tasks.filter((t) => t.id !== id);
+    rec.updatedAt = now().toISOString();
+    await store.putStudent(rec);
+    return c.body(null, 204);
+  });
+
   app.post("/tutor/students/:id/code", async (c) => {
     const rec = await store.getStudent(c.req.param("id"));
     if (!rec) return bad(c, "not found", 404);
@@ -283,6 +364,7 @@ export function createApp(cfg: AppConfig) {
   const meResponse = (r: StudentRecord): MeResponse => ({
     name: r.name,
     settings: r.settings,
+    tasks: r.tasks ?? [],
     profile: r.profile,
     stats: r.stats,
     rev: r.rev,

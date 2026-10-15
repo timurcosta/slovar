@@ -2,7 +2,7 @@
 import { $ } from "../lib/dom.js";
 import { screenMusic } from "../audio/music.js";
 
-const SCREENS = ["s-title", "s-trophy", "s-home", "s-game", "s-end", "s-shop", "s-awards", "s-story"];
+const SCREENS = ["s-title", "s-trophy", "s-home", "s-game", "s-end", "s-shop", "s-awards", "s-story", "s-task"];
 /** Экран, созданный из кода (меню разработчика), тоже участвует в переключении. */
 export const addScreen = (id) => SCREENS.push(id);
 export function show(id) {

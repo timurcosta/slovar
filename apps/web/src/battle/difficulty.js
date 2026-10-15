@@ -30,7 +30,7 @@ const EXTRA_AB = [
 ];
 export function applyDiff(b) {
   const d = DIFF_BOSS[settings.words];
-  if (!d || b.training) return b;
+  if (!d || b.training || b.task) return b;
   const ab = b.ab.filter((a) => a !== "enrage");
   shuffle(EXTRA_AB.filter((a) => !ab.includes(a)))
     .slice(0, d.extra)

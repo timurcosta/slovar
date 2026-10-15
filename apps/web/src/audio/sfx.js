@@ -47,6 +47,13 @@ export function noiseSweep(f0, f1, dur, vol, q = 1.2) {
   s.stop(t + dur + 0.02);
 }
 export const sfx = {
+  /** Записка от Ралины: шелест бумаги и «дзынь». */
+  note() {
+    noiseSweep(1800, 5200, 0.16, 0.05, 0.6);
+    noiseSweep(4200, 1600, 0.2, 0.04, 0.6);
+    tone(1568, 0.35, "triangle", 0.035, 0, 0.22);
+    tone(2093, 0.45, "triangle", 0.03, 0, 0.32);
+  },
   whoosh(heavy) {
     noiseSweep(heavy ? 250 : 600, heavy ? 1100 : 3200, heavy ? 0.26 : 0.2, heavy ? 0.35 : 0.28);
   },

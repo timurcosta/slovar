@@ -208,6 +208,66 @@ for (const [kind, makeStore] of factories) {
       });
     });
 
+    it("репетитор задаёт задания, ученик их получает", async () => {
+      const { call, tutor } = await setup();
+      const t = await tutor();
+      const st = (await call("POST", "/tutor/students", { name: "Петя" }, t)).body as Student;
+      expect(st.tasks).toEqual([]);
+      const url = `/tutor/students/${st.id}/tasks`;
+      const ok = { title: "  Удвоенные   согласные ", words: ["кла(сс)", "а(лл)ея", "кла(сс)"], coins: 150 };
+
+      for (const junk of [
+        { ...ok, title: "" },
+        { ...ok, words: ["класс"] },
+        { ...ok, words: Array.from({ length: 41 }, (_, i) => `с(о)${i}`) },
+        { ...ok, coins: 1001 },
+        { ...ok, coins: -1 },
+        { ...ok, from: "завтра" },
+        { ...ok, from: "2026-10-20", until: "2026-10-19" },
+        { title: "Пусто", words: [], coins: 0 },
+      ])
+        expect((await call("POST", url, junk, t)).status).toBe(400);
+
+      const a = await call(
+        "POST",
+        url,
+        { ...ok, from: "2026-10-16", chest: 1, medal: true, note: " Удачи! ", congrats: "", junk: 5 },
+        t,
+      );
+      expect(a.status).toBe(201);
+      expect(a.body).toEqual({
+        id: expect.any(String),
+        title: "Удвоенные согласные",
+        words: ["кла(сс)", "а(лл)ея"],
+        coins: 150,
+        from: "2026-10-16",
+        chest: true,
+        medal: true,
+        note: "Удачи!",
+        createdAt: "2026-10-15T10:00:00.000Z",
+      });
+      // подарок без слов
+      const gift = (await call("POST", url, { title: "Подарок от Ралины", words: [], coins: 100 }, t)).body;
+
+      const fixed = await call("PUT", `${url}/${a.body.id}`, { ...ok, title: "Удвоенные" }, t);
+      expect(fixed.body).toMatchObject({ id: a.body.id, title: "Удвоенные", createdAt: a.body.createdAt });
+      expect(fixed.body.from).toBeUndefined();
+      expect((await call("PUT", `${url}/nope`, ok, t)).status).toBe(404);
+
+      const k = (await call("POST", "/join", { code: st.code })).body.token;
+      expect((await call("POST", url, ok, k)).status).toBe(401);
+      let me = (await call("GET", "/me", undefined, k)).body as MeResponse;
+      expect(me.tasks.map((x) => x.title)).toEqual(["Удвоенные", "Подарок от Ралины"]);
+
+      // прогресс ученика не стирает задания
+      await call("PUT", "/me/progress", { profile: profile(10), stats: {}, baseRev: 0 }, k);
+      expect((await call("DELETE", `${url}/${gift.id}`, undefined, t)).status).toBe(204);
+      expect((await call("DELETE", `${url}/${gift.id}`, undefined, t)).status).toBe(404);
+      me = (await call("GET", "/me", undefined, k)).body as MeResponse;
+      expect(me.tasks.map((x) => x.title)).toEqual(["Удвоенные"]);
+      expect(me.profile?.xp).toBe(10);
+    });
+
     it("удаление ученика", async () => {
       const { call, tutor } = await setup();
       const t = await tutor();

@@ -108,6 +108,17 @@
       </div>
 
       <!-- ВХОД: кто играет (поверх заставки или главной) -->
+      <div class="modal" id="task-note" hidden>
+        <div class="modal-card notebook" role="dialog" aria-modal="true" aria-labelledby="note-h">
+          <button class="modal-x" id="btn-note-close" type="button" aria-label="Закрыть">×</button>
+          <div class="note-head">
+            <canvas id="note-ralina" aria-hidden="true"></canvas>
+            <h2 id="note-h"></h2>
+          </div>
+          <div id="note-body"></div>
+          <div class="row note-btns" id="note-btns"></div>
+        </div>
+      </div>
       <div class="modal" id="login" hidden>
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="login-h">
           <button class="modal-x" id="btn-login-close" type="button" aria-label="Закрыть">×</button>
@@ -173,6 +184,7 @@
               <span class="ico" data-ico="share"></span>
             </button>
           </div>
+          <div id="home-tasks"></div>
           <div class="fight">
             <button class="btn primary" id="btn-campaign">В бой!<small id="campaign-sub"></small></button>
             <div class="seg" role="radiogroup" aria-label="Режим игры">
@@ -366,12 +378,25 @@
         <div class="row backbar"><button class="btn primary" id="btn-aw-back">Назад</button></div>
       </section>
 
+      <section class="screen" id="s-task" hidden>
+        <div class="topbar">
+          <h1>Задание от Ралины</h1>
+          <span class="coins" id="task-coins"></span>
+        </div>
+        <h2 id="task-title"></h2>
+        <p class="note" id="task-sub"></p>
+        <div class="lair" id="lair"></div>
+        <div class="row backbar">
+          <button class="btn primary" id="btn-task-go"></button><button class="btn" id="btn-task-back">Назад</button>
+        </div>
+      </section>
       <section class="screen" id="s-trophy" hidden>
         <div class="topbar">
           <h1>Трофеи</h1>
           <span class="coins" id="tr-coins"></span>
         </div>
         <p class="note" id="tr-count"></p>
+        <div id="tr-medals" hidden></div>
         <div class="trophies" id="trophies"></div>
         <div class="row backbar"><button class="btn primary" id="btn-tr-back">Назад</button></div>
       </section>

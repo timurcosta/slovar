@@ -11,6 +11,34 @@ export interface TutorSettings {
   lim?: Record<string, number>;
 }
 
+/**
+ * Задание от репетитора: слова-монстры в логове и Хранитель. Открывается на устройстве ученика
+ * в день from (без from — сразу), после until тихо пропадает. Без слов — просто подарок.
+ */
+export interface Task {
+  id: string;
+  title: string;
+  /** Слова в формате м(о)локо. */
+  words: string[];
+  /** YYYY-MM-DD: с какого дня открыто. */
+  from?: string;
+  /** YYYY-MM-DD: последний день. */
+  until?: string;
+  /** Награда монетами, 0..1000. */
+  coins: number;
+  /** Большой сундук в награду. */
+  chest?: boolean;
+  /** Именная медаль с названием задания. */
+  medal?: boolean;
+  /** Напутствие на записке. */
+  note?: string;
+  /** Поздравление на экране победы; {имя} подставляется. */
+  congrats?: string;
+  createdAt: string;
+}
+/** Задание без id и даты создания — так его присылает кабинет. */
+export type TaskInput = Omit<Task, "id" | "createdAt">;
+
 /** Ученик глазами репетитора. */
 export interface Student {
   id: string;
@@ -18,6 +46,7 @@ export interface Student {
   /** Код входа для ученика. */
   code: string;
   settings: TutorSettings;
+  tasks: Task[];
   profile: Profile | null;
   stats: WordStats | null;
   /** Номер версии прогресса, растёт при каждом сохранении. */
@@ -61,6 +90,9 @@ export interface UpdateStudentRequest {
   name?: string;
   settings?: TutorSettings;
 }
+// POST /api/tutor/students/:id/tasks (TaskInput) → Task — новое задание
+// PUT /api/tutor/students/:id/tasks/:taskId (TaskInput) → Task — исправить задание
+// DELETE /api/tutor/students/:id/tasks/:taskId
 // POST /api/tutor/students/:id/code — новый код, старый и все входы по нему перестают работать
 // DELETE /api/tutor/students/:id
 
@@ -77,6 +109,7 @@ export interface JoinResponse {
 export interface MeResponse {
   name: string;
   settings: TutorSettings;
+  tasks: Task[];
   profile: Profile | null;
   stats: WordStats | null;
   rev: number;

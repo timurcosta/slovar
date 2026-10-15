@@ -1,6 +1,6 @@
 // Хранилище учеников. Сервер работает только через этот интерфейс, поэтому базу можно менять:
 // память (тесты), SQLite (разработка на компьютере), YDB (Yandex Cloud).
-import type { Profile, TutorSettings, WordStats } from "@repetitor/shared";
+import type { Profile, Task, TutorSettings, WordStats } from "@repetitor/shared";
 
 export interface StudentRecord {
   id: string;
@@ -9,6 +9,8 @@ export interface StudentRecord {
   /** Растёт при смене кода: старые токены ученика перестают действовать. */
   codeVersion: number;
   settings: TutorSettings;
+  /** Задания репетитора. У записей до заданий поля нет. */
+  tasks?: Task[];
   profile: Profile | null;
   stats: WordStats | null;
   rev: number;

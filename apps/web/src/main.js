@@ -39,6 +39,7 @@ import "./battle/run.js";
 import "./battle/round.js";
 import "./battle/effects.js";
 import "./battle/difficulty.js";
+import "./battle/task.js";
 import "./ui/icons.js";
 import "./ui/toast.js";
 import "./ui/screens.js";
@@ -65,6 +66,7 @@ import { TRACK_ORDER, battleTrack, pauseMusic, resumeMusic } from "./audio/music
 import { silentEl, unlockAudio } from "./audio/context.js";
 import { G, startCampaign, startTower, startTraining, stopGame } from "./battle/run.js";
 import { answer, trickKey, typed, wordPress } from "./battle/round.js";
+import { startTask } from "./battle/task.js";
 import { toast } from "./ui/toast.js";
 import { show } from "./ui/screens.js";
 import { home, renderHome } from "./ui/screens/home.js";
@@ -101,8 +103,10 @@ $("btn-train-new").onclick = () => {
 };
 $("btn-again").onclick = () => {
   const k = G && G.kind,
-    t = G && G.trainKind;
+    t = G && G.trainKind,
+    task = G && G.task;
   stopGame();
+  if (k === "task") return startTask(task.id) || home();
   if (blockedToday()) return;
   k === "tower" ? startTower() : k === "training" ? startTraining(t) : startCampaign(frontier());
 };

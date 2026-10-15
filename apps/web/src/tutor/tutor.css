@@ -102,3 +102,164 @@
 .tutor-form .btn {
   margin-top: 6px;
 }
+
+/* страница ученика: строка о нём и вкладки */
+.tline {
+  margin-top: -8px;
+}
+.ttabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 3px solid var(--ink);
+  margin-bottom: 14px;
+}
+.ttab {
+  padding: 8px 14px;
+  font-weight: 900;
+  color: var(--ink);
+  text-decoration: none;
+  border: 3px solid var(--ink);
+  border-bottom: 0;
+  background: var(--paper);
+  margin-bottom: -3px;
+}
+.ttab.on {
+  background: var(--card);
+  color: var(--pen);
+  padding-bottom: 11px;
+}
+.tutor-code {
+  font-size: 22px;
+  letter-spacing: 4px;
+  margin: 0;
+}
+
+/* задания: статусы, конструктор, карточки */
+.tstate {
+  font-size: 13px;
+  font-weight: 900;
+  padding: 1px 8px;
+  border: 2px solid var(--ink);
+  white-space: nowrap;
+}
+.tstate.open {
+  background: #fff3c4;
+}
+.tstate.planned {
+  background: #e6efff;
+}
+.tstate.done {
+  background: #d8f5df;
+  color: var(--ok);
+}
+.tstate.expired {
+  color: var(--ink-soft);
+  border-style: dashed;
+}
+.task-mini {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tcell.good {
+  color: var(--ok);
+  font-weight: 900;
+}
+.tcell.soft {
+  color: var(--ink-soft);
+}
+.tform {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tform label,
+.tlabel {
+  font-weight: 800;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tlabel {
+  flex-direction: row;
+  gap: 8px;
+  align-items: baseline;
+}
+.tlabel small {
+  color: var(--ok);
+}
+.tfield {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.tform input[type="text"],
+.tform input[type="search"],
+.tform input[type="number"],
+.tform input[type="date"],
+.tform textarea {
+  font: inherit;
+  font-size: 16px;
+  border: 2px solid var(--ink);
+  padding: 6px 8px;
+  border-radius: 0;
+  color: var(--ink);
+  background: var(--card);
+}
+.tform input[type="number"] {
+  width: 96px;
+}
+.tform label.tinline {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-weight: 700;
+}
+.tsearch input {
+  flex: 1;
+  min-width: 160px;
+}
+.tsuggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tsug {
+  cursor: pointer;
+  font-size: 14px;
+}
+.tcard-t {
+  border-top: 2px dashed var(--grid);
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tcard-t p {
+  margin: 0;
+}
+.tcard-head {
+  justify-content: space-between;
+  align-items: center;
+}
+.twords {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.treport {
+  font-size: 15px;
+}
+.tform label {
+  align-items: stretch;
+  text-align: left;
+}
+.tform label.tinline {
+  align-items: center;
+}

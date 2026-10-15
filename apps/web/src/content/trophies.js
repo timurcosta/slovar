@@ -35,6 +35,8 @@ MMMLMMM
 MMLLLMM
 .MMMMM.`,
 };
+/** Именная медаль за задание Ралины: золото на фиолетово-розовой ленте. */
+export const TASK_MEDAL_PAL = { M: "#f0a000", L: "#fff3a0", R: "#9b4dff", B: "#ff6fb5", D: "#6b4e31" };
 export const TIER = {
   bronze: { M: "#c87a3a", L: "#f0b07a" },
   silver: { M: "#9aa7bd", L: "#ffffff" },
