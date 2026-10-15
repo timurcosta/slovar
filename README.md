@@ -5,7 +5,16 @@
 
 **Играть:** https://timurcosta.github.io/slovar/
 
-Без сборки и зависимостей: откройте `index.html` в браузере. Прогресс хранится в браузере,
-перенести его на другое устройство можно кодом сохранения.
+Прогресс хранится в браузере, перенести его на другое устройство можно кодом сохранения.
 
-Для разработки: `npm i`, `npx playwright install chromium`, `npm run check`. Подробности — в [CLAUDE.md](CLAUDE.md).
+## Разработка
+
+```bash
+npm i
+npx playwright install chromium
+npm run dev      # http://localhost:5173
+npm test         # модульные тесты
+npm run check    # сборка и сценарии в браузере
+```
+
+Устройство кода, правила и формулы баланса — в [CLAUDE.md](CLAUDE.md).
