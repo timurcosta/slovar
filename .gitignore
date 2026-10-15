@@ -4,3 +4,6 @@ dist-online/
 shots/
 .DS_Store
 .data/
+.env
+.env.*
+!.env.example
