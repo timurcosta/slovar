@@ -2,7 +2,7 @@
 import { $, replay } from "../lib/dom.js";
 import { BREATH, PET_ATK } from "../content/pets.js";
 import { drawHero } from "../render/hero.js";
-import { P } from "../state/profile.js";
+import { P } from "../state/profile.ts";
 import { sfx, tone } from "../audio/sfx.js";
 import { bossCv, heroCv } from "./hud.js";
 import { G } from "./run.js";

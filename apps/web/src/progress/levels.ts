@@ -1,8 +1,8 @@
 // Уровни и титулы.
 
 export const MAXL = 50;
-const lvlXP = (n) => 50 * n * (n - 1) + n * n * n; // xp needed to reach level n (v2: late levels slower)
-export const levelOf = (xp) => {
+export const lvlXP = (n: number) => 50 * n * (n - 1) + n * n * n; // xp needed to reach level n (v2: late levels slower)
+export const levelOf = (xp: number) => {
   let l = 1;
   while (l < MAXL && xp >= lvlXP(l + 1)) l++;
   return l;
@@ -59,7 +59,7 @@ export const TITLES = [
   "Абсолют всего",
   "Владыка Слова",
 ];
-export function xpProgress(xp) {
+export function xpProgress(xp: number) {
   const l = levelOf(xp);
   if (l >= MAXL) return { l, frac: 1, need: 0 };
   const a = lvlXP(l),

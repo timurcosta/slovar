@@ -4,7 +4,7 @@ import { pick } from "../lib/random.js";
 import { ITEM } from "../content/items.js";
 import { drawHero } from "../render/hero.js";
 import { drawBoss } from "../render/sprite.js";
-import { P } from "../state/profile.js";
+import { P } from "../state/profile.ts";
 import { tone } from "../audio/sfx.js";
 import { bossCv, heroCv } from "../battle/hud.js";
 import { G } from "../battle/run.js";

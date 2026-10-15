@@ -6,7 +6,7 @@ async function load(storage) {
   localStorage.clear();
   for (const [k, v] of Object.entries(storage)) localStorage.setItem(k, JSON.stringify(v));
   vi.resetModules();
-  const m = await import("../src/state/profile.js");
+  const m = await import("../src/state/profile.ts");
   return { P: m.P, saved: JSON.parse(localStorage.getItem("sb2_profile")) };
 }
 

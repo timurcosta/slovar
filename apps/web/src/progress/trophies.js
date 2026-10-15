@@ -1,8 +1,8 @@
 // Трофеи: прогресс и выдача.
 import { TROPHIES } from "../content/trophies.js";
 import { PAB } from "../topics/words/pools.js";
-import { learnedCount } from "../state/stats.js";
-import { P, save } from "../state/profile.js";
+import { learnedCount } from "../state/stats.ts";
+import { P, save } from "../state/profile.ts";
 import { addCoins } from "./rewards.js";
 import { sfx } from "../audio/sfx.js";
 import { toast } from "../ui/toast.js";

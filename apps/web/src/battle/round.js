@@ -2,9 +2,9 @@
 import { $, esc, replay } from "../lib/dom.js";
 import { pick, shuffle } from "../lib/random.js";
 import { poolFor } from "../topics/words/pools.js";
-import { stat } from "../state/stats.js";
-import { P, save } from "../state/profile.js";
-import { settings } from "../state/settings.js";
+import { stat } from "../state/stats.ts";
+import { P, save } from "../state/profile.ts";
+import { settings } from "../state/settings.ts";
 import { gear } from "../progress/gear.js";
 import { quest } from "../progress/daily.js";
 import { limitReason } from "../progress/limits.js";

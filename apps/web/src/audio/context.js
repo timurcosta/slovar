@@ -1,5 +1,5 @@
 // AudioContext и разблокировка звука на iOS/Android.
-import { settings } from "../state/settings.js";
+import { settings } from "../state/settings.ts";
 
 export let ac = null,
   silentEl = null;

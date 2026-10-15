@@ -1,7 +1,7 @@
 // Экран достижений и значки на главной.
 import { $, esc } from "../../lib/dom.js";
 import { TROPHIES } from "../../content/trophies.js";
-import { P } from "../../state/profile.js";
+import { P } from "../../state/profile.ts";
 import { refreshCoins } from "../../progress/rewards.js";
 import { ACH } from "../../progress/achievements.js";
 import { questsHTML } from "./home.js";

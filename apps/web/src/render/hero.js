@@ -4,7 +4,7 @@ import { PET_CAP, PET_PAL, PET_SPR, PET_SPR2 } from "../content/pets.js";
 import { AURA_COL, AURA_GLOWC, EPIC_AURA } from "../content/auras.js";
 import { COSTUMES, COSTUME_KEY } from "../content/costumes.js";
 import { shadeHex } from "./color.js";
-import { heroLook } from "../state/profile.js";
+import { heroLook } from "../state/profile.ts";
 
 export function drawHero(cv, eq, wrap, fr = 0) {
   // 1px margin on every side so outlines at the edges (pet, wings, weapons) are never clipped
@@ -516,8 +516,10 @@ export function drawHero(cv, eq, wrap, fr = 0) {
         mplate(ox + 3, oy + 9, 3, 2, "#8a5a2b");
         M(ox + 3, oy + 8, 1, 1, "#e3e8f0");
         M(ox + 5, oy + 8, 1, 1, "#e3e8f0");
-        for (let k = 0; k < 4; k++)
-          (P(ox + 7 + k * 2, oy + 10 + k, "#5a3a1a"), P(ox + 8 + k * 2, oy + 10 + k, "#5a3a1a"));
+        for (let k = 0; k < 4; k++) {
+          P(ox + 7 + k * 2, oy + 10 + k, "#5a3a1a");
+          P(ox + 8 + k * 2, oy + 10 + k, "#5a3a1a");
+        }
         P(ox + 9, oy + 11, "#e3e8f0");
         break;
       case "steel":

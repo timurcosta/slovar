@@ -14,9 +14,9 @@ import {
 import { ITEM, ITEMS, RARITY, SLOTS, UPGRADES, upCost } from "../../content/items.js";
 import { COSTUMES, COSTUME_KEY } from "../../content/costumes.js";
 import { drawHero } from "../../render/hero.js";
-import { P, heroLook, save } from "../../state/profile.js";
+import { P, heroLook, save } from "../../state/profile.ts";
 import { gear } from "../../progress/gear.js";
-import { levelOf } from "../../progress/levels.js";
+import { levelOf } from "../../progress/levels.ts";
 import { refreshCoins } from "../../progress/rewards.js";
 import { itemLocked } from "../../progress/unlocks.js";
 import { checkAch } from "../../progress/achievements.js";

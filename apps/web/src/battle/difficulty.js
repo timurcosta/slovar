@@ -1,7 +1,7 @@
 // Сложность: множители наград и усиление боссов по выбранным словам.
 import { $ } from "../lib/dom.js";
 import { shuffle } from "../lib/random.js";
-import { settings } from "../state/settings.js";
+import { settings } from "../state/settings.ts";
 
 const DIFF_MUL = { ab: 1.5, b: 2 };
 const DIFF_BOSS = { ab: { hp: 1.3, time: 0.8, extra: 1 }, b: { hp: 1.7, time: 0.62, extra: 2 } };

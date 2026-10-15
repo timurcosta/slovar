@@ -1,15 +1,16 @@
 // Статистика по словам: {слово: {right, wrong}}.
-import { save } from "./profile.js";
-import { LS } from "./storage.js";
+import { save } from "./profile.ts";
+import { LS } from "./storage.ts";
 import { ensureDay } from "../progress/limits.js";
+import type { WordStats } from "./types.ts";
 
-export let stats = LS.get("sb_stats", {});
-export function setStats(v) {
+export let stats: WordStats = LS.get<WordStats>("sb_stats", {});
+export function setStats(v: WordStats) {
   stats = v;
 }
-export const LEARN_N = 3; // a word is "learned" after this many correct answers
+export const LEARN_N = 3; // слово считается выученным после стольких верных ответов
 export const learnedCount = () => Object.values(stats).filter((s) => s.right >= LEARN_N).length;
-export function stat(word, key) {
+export function stat(word: string, key: "right" | "wrong") {
   const s = stats[word] || (stats[word] = { wrong: 0, right: 0 }),
     d = ensureDay();
   if (key === "right") {

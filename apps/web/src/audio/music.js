@@ -1,6 +1,6 @@
 // Фоновая музыка: треки, секвенсор, приглушение.
 import { $ } from "../lib/dom.js";
-import { settings } from "../state/settings.js";
+import { settings } from "../state/settings.ts";
 import { ac, ensureAC } from "./context.js";
 import { G } from "../battle/run.js";
 

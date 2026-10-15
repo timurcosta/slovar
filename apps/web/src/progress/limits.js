@@ -2,8 +2,8 @@
 import { $ } from "../lib/dom.js";
 import { today } from "../lib/date.js";
 import { plural } from "../lib/text.js";
-import { P, save } from "../state/profile.js";
-import { settings } from "../state/settings.js";
+import { P, save } from "../state/profile.ts";
+import { settings } from "../state/settings.ts";
 import { G } from "../battle/run.js";
 import { toast } from "../ui/toast.js";
 import { renderHome } from "../ui/screens/home.js";

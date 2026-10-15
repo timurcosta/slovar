@@ -3,8 +3,8 @@ import { $, esc } from "../../lib/dom.js";
 import { TIER, TROPHIES, TROPHY_SPR } from "../../content/trophies.js";
 import { drawSprite } from "../../render/sprite.js";
 import { PAB } from "../../topics/words/pools.js";
-import { LEARN_N, learnedCount } from "../../state/stats.js";
-import { P } from "../../state/profile.js";
+import { LEARN_N, learnedCount } from "../../state/stats.ts";
+import { P } from "../../state/profile.ts";
 import { refreshCoins } from "../../progress/rewards.js";
 import { trophyGoal, trophyVal } from "../../progress/trophies.js";
 

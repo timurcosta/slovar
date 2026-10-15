@@ -1,9 +1,9 @@
 // Экран кода сохранения: показать, скопировать, загрузить.
 import { $ } from "../../lib/dom.js";
-import { P } from "../../state/profile.js";
-import { LS } from "../../state/storage.js";
-import { packSave, unpackSave } from "../../state/savecode.js";
-import { levelOf } from "../../progress/levels.js";
+import { P } from "../../state/profile.ts";
+import { LS } from "../../state/storage.ts";
+import { packSave, unpackSave } from "../../state/savecode.ts";
+import { levelOf } from "../../progress/levels.ts";
 import { show } from "../screens.js";
 import { renderHome } from "./home.js";
 import { askName } from "./intro.js";

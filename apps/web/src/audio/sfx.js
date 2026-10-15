@@ -1,5 +1,5 @@
 // Звуковые эффекты (синтез, без файлов).
-import { settings } from "../state/settings.js";
+import { settings } from "../state/settings.ts";
 import { ac, ensureAC, getAC } from "./context.js";
 
 export function tone(f, d, type = "square", vol = 0.05, slide = 0, delay = 0) {

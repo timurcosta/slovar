@@ -1,9 +1,9 @@
 // Наборы слов для боя: по классам, слова учителя, работа над ошибками, новые слова.
 import { W12, W34 } from "./lists.js";
-import { parseEntry, parseList } from "./parse.js";
-import { stats } from "../../state/stats.js";
-import { LS } from "../../state/storage.js";
-import { settings } from "../../state/settings.js";
+import { parseEntry, parseList } from "./parse.ts";
+import { stats } from "../../state/stats.ts";
+import { LS } from "../../state/storage.ts";
+import { settings } from "../../state/settings.ts";
 import { G } from "../../battle/run.js";
 
 export const PA = parseList(W12),

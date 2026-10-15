@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseEntry } from "../src/topics/words/parse.js";
+import { parseEntry } from "../src/topics/words/parse.ts";
 import { PA, PAB, PB } from "../src/topics/words/pools.js";
 
 describe("parseEntry", () => {

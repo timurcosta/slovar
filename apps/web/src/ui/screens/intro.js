@@ -3,7 +3,7 @@ import { $, esc } from "../../lib/dom.js";
 import { BOSSES } from "../../content/bosses.js";
 import { drawHero } from "../../render/hero.js";
 import { drawBoss } from "../../render/sprite.js";
-import { P, save } from "../../state/profile.js";
+import { P, save } from "../../state/profile.ts";
 import { sfx } from "../../audio/sfx.js";
 import { toast } from "../toast.js";
 import { show } from "../screens.js";

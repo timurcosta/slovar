@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BOSSES, towerBoss } from "../src/content/bosses.js";
 import { ITEMS, RARITY, UPGRADES, upCost } from "../src/content/items.js";
-import { MAXL, levelOf } from "../src/progress/levels.js";
+import { MAXL, levelOf } from "../src/progress/levels.ts";
 
 afterEach(() => vi.restoreAllMocks());
 

@@ -1,8 +1,8 @@
 // Панель боя: сердца, очки, жизни босса.
 import { $ } from "../lib/dom.js";
-import { P } from "../state/profile.js";
+import { P } from "../state/profile.ts";
 import { gear } from "../progress/gear.js";
-import { levelOf, xpProgress } from "../progress/levels.js";
+import { levelOf, xpProgress } from "../progress/levels.ts";
 import { refreshCoins } from "../progress/rewards.js";
 import { G } from "./run.js";
 import { heartSVG } from "../ui/icons.js";

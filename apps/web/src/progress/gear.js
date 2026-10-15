@@ -1,7 +1,7 @@
 // gear(): итоговые статы героя из экипировки, прокачки и настроек.
 import { ITEM } from "../content/items.js";
-import { P } from "../state/profile.js";
-import { settings } from "../state/settings.js";
+import { P } from "../state/profile.ts";
+import { settings } from "../state/settings.ts";
 
 export function gear(eq = P.equip) {
   const w = ITEM[eq.weapon],

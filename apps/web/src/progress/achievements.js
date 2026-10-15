@@ -1,9 +1,9 @@
 // Достижения: условия, награды, проверка.
 import { ITEM, ITEMS } from "../content/items.js";
 import { BOSSES } from "../content/bosses.js";
-import { learnedCount } from "../state/stats.js";
-import { P, save } from "../state/profile.js";
-import { levelOf } from "./levels.js";
+import { learnedCount } from "../state/stats.ts";
+import { P, save } from "../state/profile.ts";
+import { levelOf } from "./levels.ts";
 import { addCoins } from "./rewards.js";
 import { checkTrophies } from "./trophies.js";
 import { sfx } from "../audio/sfx.js";

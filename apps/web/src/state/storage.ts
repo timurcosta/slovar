@@ -1,7 +1,7 @@
 // Обёртка над localStorage, которая не падает (приватный режим, переполнение).
 
 export const LS = {
-  get(k, d) {
+  get<T>(k: string, d: T): T {
     try {
       const v = localStorage.getItem(k);
       return v == null ? d : JSON.parse(v);
@@ -9,7 +9,7 @@ export const LS = {
       return d;
     }
   },
-  set(k, v) {
+  set(k: string, v: unknown): void {
     try {
       localStorage.setItem(k, JSON.stringify(v));
     } catch (e) {}

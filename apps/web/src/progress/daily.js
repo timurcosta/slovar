@@ -1,7 +1,7 @@
 // Задания дня и бонус за вход подряд.
 import { today, yesterday } from "../lib/date.js";
 import { hash, rng } from "../lib/random.js";
-import { P, save } from "../state/profile.js";
+import { P, save } from "../state/profile.ts";
 import { addCoins, grantChest } from "./rewards.js";
 import { towerOpen } from "./unlocks.js";
 import { checkAch } from "./achievements.js";
