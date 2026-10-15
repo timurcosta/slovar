@@ -12,7 +12,8 @@ import { setCustomRaw } from "../topics/words/pools.js";
 export const BACKEND = import.meta.env.VITE_BACKEND === "1";
 
 const K = { token: "sb_token", rev: "sb_rev", dirty: "sb_dirty", name: "sb_tutor_name" };
-const PUSH_DELAY = 3000;
+// не чаще раза в 30 с: бесплатный уровень Yandex Cloud — 100 тыс. запросов к API Gateway в месяц
+const PUSH_DELAY = 30_000;
 
 export const linkedName = (): string | null =>
   BACKEND && LS.get<string | null>(K.token, null) ? LS.get(K.name, null) : null;
@@ -89,8 +90,12 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 function schedule() {
   if (!linkedName()) return;
   LS.set(K.dirty, true);
-  clearTimeout(timer);
-  timer = setTimeout(() => push(), PUSH_DELAY);
+  // таймер не сдвигается при новых изменениях: во время боя прогресс уходит раз в PUSH_DELAY, а не после боя
+  if (timer === undefined)
+    timer = setTimeout(() => {
+      timer = undefined;
+      push();
+    }, PUSH_DELAY);
 }
 
 /** При запуске: забрать свежие данные и отправить то, что не успело уйти. */
@@ -135,6 +140,7 @@ if (BACKEND) {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       clearTimeout(timer);
+      timer = undefined;
       push(true);
     }
   });

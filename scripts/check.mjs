@@ -334,7 +334,7 @@ if (fs.existsSync(path.join(onlineRoot, "index.html"))) {
       await tick(k, 2500);
     }
     const battlePush = progress(k);
-    await tick(k, 3500);
+    await tick(k, 30_000);
     await battlePush;
     const rec = (await store.listStudents())[0];
     expect(rec?.profile?.name === "Маша", "на сервере нет профиля Маши");
