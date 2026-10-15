@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`словарь > списки слов на месте 1`] = `
+{
+  "a": 94,
+  "ab": 224,
+  "b": 130,
+}
+`;

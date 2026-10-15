@@ -6,7 +6,7 @@ export default [
   { ignores: ["**/dist/", "shots/"] },
   js.configs.recommended,
   {
-    files: ["apps/web/src/**/*.js"],
+    files: ["apps/web/src/**/*.js", "apps/web/test/**/*.js"],
     languageOptions: { globals: globals.browser },
   },
   {
