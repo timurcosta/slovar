@@ -1,17 +1,26 @@
 // Прогон игры в Chromium: несколько сценариев, скриншоты и итоговый профиль в папку shots/.
 // Падает, если в консоли есть ошибки. Всё детерминировано (фиксированные время и Math.random),
 // поэтому два прогона можно сравнить побайтно:
-//   npm run check                          → проверить ./index.html, результат в shots/
-//   node scripts/check.mjs other.html out/ → прогнать другой файл в другую папку
+//   npm run check                                  → собрать и проверить apps/web/dist, результат в shots/
+//   node scripts/check.mjs other/index.html out/   → прогнать другую сборку в другую папку
+// Страница отдаётся маленьким локальным сервером: ES-модули не грузятся по file://.
 import { chromium } from "playwright";
 import fs from "fs";
+import http from "http";
 import path from "path";
-import { pathToFileURL } from "url";
 
-const page_ = path.resolve(process.argv[2] || "index.html");
+const page_ = path.resolve(process.argv[2] || "apps/web/dist/index.html");
 const outDir = path.resolve(process.argv[3] || "shots");
 fs.mkdirSync(outDir, { recursive: true });
-const URL_ = pathToFileURL(page_).href;
+const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".svg": "image/svg+xml", ".json": "application/json" };
+const docRoot = path.dirname(page_);
+const server = http.createServer((req, res) => {
+  const f = path.join(docRoot, decodeURIComponent(new URL(req.url, "http://x").pathname));
+  if (!f.startsWith(docRoot) || !fs.existsSync(f) || fs.statSync(f).isDirectory()){ res.writeHead(404); res.end(); return; }
+  res.writeHead(200, { "content-type": TYPES[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res);
+});
+await new Promise(r => server.listen(0, "127.0.0.1", r));
+const URL_ = `http://127.0.0.1:${server.address().port}/${path.basename(page_)}`;
 const NOW = new Date("2026-10-15T10:00:00");
 
 // «прокачанный» игрок: много вещей, кампания почти пройдена, башня открыта
@@ -85,6 +94,7 @@ for (const sc of SCENARIOS){
   await ctx.close();
 }
 await browser.close();
+server.close();
 
 if (errors.length){ console.error("Ошибки:\n" + errors.join("\n")); process.exit(1); }
 console.log(`OK: ${SCENARIOS.length} сценария, скриншоты в ${path.relative(process.cwd(), outDir) || "."}`);

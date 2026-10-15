@@ -1,7 +1,7 @@
-"use strict";
 // Гардероб: костюмы, внешность, слоты, предметы, цены, прокачка, ауры.
+import { P } from "../core/profile.js";
 
-const COSTUMES = {
+export const COSTUMES = {
   school:{skin:"#f2c09a",hair:"#5a3a22",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#3a6fd8",pants:"#1d2f5c",shoe:"#3b2a20"},
   ninja:{skin:"#f2c09a",hair:"#1e1e28",eye:"#1d2f5c",mouth:"#1e1e28",shirt:"#2a2a36",pants:"#1e1e28",shoe:"#111111"},
   space:{skin:"#f2c09a",hair:"#5a3a22",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#eef2f8",pants:"#c9d3e3",shoe:"#6f7d93"},
@@ -13,36 +13,36 @@ const COSTUMES = {
   gold:{skin:"#f2c09a",hair:"#ffd84a",eye:"#1d2f5c",mouth:"#b5485a",shirt:"#f0a000",pants:"#b07800",shoe:"#7a5200"}
 };
 /* appearance: free to change, applied on top of the costume */
-const LOOK_HAIR = {auto:["Как у костюма",null], brown:["Каштановые","#5a3a22"], black:["Чёрные","#1e1e28"], light:["Русые","#9a6a3a"], blond:["Светлые","#e8c35a"],
+export const LOOK_HAIR = {auto:["Как у костюма",null], brown:["Каштановые","#5a3a22"], black:["Чёрные","#1e1e28"], light:["Русые","#9a6a3a"], blond:["Светлые","#e8c35a"],
   ginger:["Рыжие","#c8541e"], red:["Красные","#c0283a"], silver:["Серебряные","#c9d3e3"], blue:["Синие","#3a6fd8"], mint:["Мятные","#3fbf9a"], purple:["Фиолетовые","#7a4fd6"]};
-const LOOK_SKIN = {auto:["Как у костюма",null], s1:["Светлая","#f8dcc4"], s2:["Обычная","#f2c09a"], s3:["Смуглая","#d9a27a"], s4:["Тёмная","#a8714f"], s5:["Очень тёмная","#85563a"]};
-const LOOK_EYE = {auto:["Как у костюма",null], blue:["Синие","#1d2f5c"], brown:["Карие","#5a3a22"], green:["Зелёные","#2b7a3a"], grey:["Серые","#4a5670"]};
-const LOOK_STYLE = {classic:"Классика", spiky:"Ёжик", bangs:"Чёлка", long:"Длинные", mohawk:"Ирокез"};
-const LOOK_MASKED = ["robot","alien","skeleton","spaceknight","shadow"];   // face fully covered by the costume
-const LOOK_NOSKIN = ["ice"];                                               // stylised skin stays
+export const LOOK_SKIN = {auto:["Как у костюма",null], s1:["Светлая","#f8dcc4"], s2:["Обычная","#f2c09a"], s3:["Смуглая","#d9a27a"], s4:["Тёмная","#a8714f"], s5:["Очень тёмная","#85563a"]};
+export const LOOK_EYE = {auto:["Как у костюма",null], blue:["Синие","#1d2f5c"], brown:["Карие","#5a3a22"], green:["Зелёные","#2b7a3a"], grey:["Серые","#4a5670"]};
+export const LOOK_STYLE = {classic:"Классика", spiky:"Ёжик", bangs:"Чёлка", long:"Длинные", mohawk:"Ирокез"};
+export const LOOK_MASKED = ["robot","alien","skeleton","spaceknight","shadow"];   // face fully covered by the costume
+export const LOOK_NOSKIN = ["ice"];                                               // stylised skin stays
 // which hair colours suit which outfit: costume first, armor narrows it down
 const HAIR_FOR = {school:["brown","black","light","blond","ginger"], ninja:["black","red","silver"], space:["blond","brown","ginger","light"], fire:["ginger","red","black"],
   ice:["silver","blond","blue"], gold:["blond","brown","ginger"], cyberninja:["black","blue","mint"], dragonknight:["brown","ginger","black"], galaxy:["purple","silver","blue"],
   cyborg:["black","silver","red"], tatar:["black","brown","light"], wordlord:["blond","purple","silver"]};
 const HAIR_ARMOR = {pads:["brown","black","ginger","light"], steel:["black","brown","silver","blond"], spikearmor:["black","red","silver"], cyber:["black","blue","mint"], goldarmor:["blond","brown","ginger"],
   dragonarmor:["ginger","brown","black"], mech:["ginger","black","silver"], titan:["black","red","silver"], stararmor:["purple","silver","blue"], supernova:["blond","ginger","silver"]};
-function hairMatches(eq){
+export function hairMatches(eq){
   const base = HAIR_FOR[COSTUME_KEY[eq.costume] || "school"] || [];
   const arm = HAIR_ARMOR[eq.armor];
   if (!arm) return base;
   const both = base.filter(h => arm.includes(h));
   return both.length ? both : base;
 }
-const LOOK_FULLHELM = ["knight","horns","dragonhelm","spacehelm","tubeteika"];          // cover the top of the head
-const shadeHex = (hex, f) => "#" + [1,3,5].map(i => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i+2), 16) * f))).toString(16).padStart(2, "0")).join("");
-const heroLook = () => Object.assign({hair:"auto", skin:"auto", eye:"auto", style:"classic"}, (typeof P === "object" && P && P.look) || {});
+export const LOOK_FULLHELM = ["knight","horns","dragonhelm","spacehelm","tubeteika"];          // cover the top of the head
+export const shadeHex = (hex, f) => "#" + [1,3,5].map(i => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i+2), 16) * f))).toString(16).padStart(2, "0")).join("");
+export const heroLook = () => Object.assign({hair:"auto", skin:"auto", eye:"auto", style:"classic"}, (typeof P === "object" && P && P.look) || {});
 
-const SLOTS = [
+export const SLOTS = [
   ["weapon","Оружие"],["armor","Броня"],["helmet","Шлем"],["back","Спина"],["pet","Питомец"],["aura","Аура"],["costume","Костюм"]
 ];
 /* Prices follow one ladder (see RARITY): ОБЫЧНЫЙ < 400, РЕДКИЙ 400–1499, ЭПИК 1500–4999, ЛЕГЕНДА 5000–14999, МИФ 15000+.
    Rough income: 15 minutes a day gives about 150–250 coins. */
-const ITEMS = [
+export const ITEMS = [
   // weapons: school stuff → melee → guns → energy → mythic tech
   {id:"pencil",slot:"weapon",name:"Карандаш",price:0,lvl:1,dmg:10,fx:"slash",col:"#e0a800",perk:"Урон 10"},
   {id:"ruler",slot:"weapon",name:"Линейка-меч",price:60,lvl:1,dmg:11,fx:"slash",col:"#c9a227",perk:"Урон 11"},
@@ -134,9 +134,9 @@ const ITEMS = [
   {id:"wordlord",slot:"costume",name:"Владыка Слова",price:100000,lvl:42,floor:100,perk:"Самый легендарный скин в игре"},
   {id:"tatarc",slot:"costume",name:"Татарский костюм",price:0,gift:true,lvl:1,perk:"Подарок Ралины: вышитая рубаха, бархатный камзол и ичиги"}
 ];
-const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
-const RARITY = p => p >= 40000 ? ["УЛЬТРА","#ff4fd8"] : p >= 15000 ? ["МИФ","#d62839"] : p >= 5000 ? ["ЛЕГЕНДА","#c98500"] : p >= 1500 ? ["ЭПИК","#7a4fd6"] : p >= 400 ? ["РЕДКИЙ","#2f55c8"] : ["ОБЫЧНЫЙ","#5d6f93"];
-const COSTUME_KEY = {school:"school",ninja:"ninja",space:"space",robotc:"robot",firec:"fire",icec:"ice",shadowc:"shadow",goldc:"gold",
+export const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+export const RARITY = p => p >= 40000 ? ["УЛЬТРА","#ff4fd8"] : p >= 15000 ? ["МИФ","#d62839"] : p >= 5000 ? ["ЛЕГЕНДА","#c98500"] : p >= 1500 ? ["ЭПИК","#7a4fd6"] : p >= 400 ? ["РЕДКИЙ","#2f55c8"] : ["ОБЫЧНЫЙ","#5d6f93"];
+export const COSTUME_KEY = {school:"school",ninja:"ninja",space:"space",robotc:"robot",firec:"fire",icec:"ice",shadowc:"shadow",goldc:"gold",
   cyberninja:"cyberninja",dragonknight:"dragonknight",alienc:"alien",skeletonc:"skeleton",galaxyc:"galaxy",cyborg:"cyborg",spaceknight:"spaceknight",wordlord:"wordlord",tatarc:"tatar"};
 Object.assign(COSTUMES, {
   cyberninja:{skin:"#f2c09a",hair:"#1e1e28",eye:"#45d1e6",mouth:"#1e1e28",shirt:"#1f2440",pants:"#1e1e28",shoe:"#111111"},
@@ -148,17 +148,17 @@ Object.assign(COSTUMES, {
   spaceknight:{skin:"#2a2f4a",hair:"#2a2f4a",eye:"#45d1e6",mouth:"#2a2f4a",shirt:"#2a2f4a",pants:"#1f2440",shoe:"#14182b"},
   wordlord:{skin:"#f2c09a",hair:"#ffd84a",eye:"#7a4fd6",mouth:"#b5485a",shirt:"#7a4fd6",pants:"#3d2a6b",shoe:"#f0a000"}
 });
-const UPGRADES = [
+export const UPGRADES = [
   {id:"str", name:"Сила", d:"+1 к урону за уровень", max:99, base:100, k:1.28},
   {id:"hp", name:"Живучесть", d:"+1 сердце за уровень", max:10, base:200, k:1.6},
   {id:"time", name:"Выдержка", d:"+0.5 секунды на ответ", max:10, base:150, k:1.45},
   {id:"gold", name:"Богатство", d:"+10% монет", max:10, base:200, k:1.5}
 ];
-const upCost = (u, n) => Math.round(u.base * Math.pow(u.k, n) / 10) * 10;
-const itemLocked = i => (i.floor && P.towerBest < i.floor);
-const DEFAULT_EQUIP = {weapon:"pencil",armor:"noarmor",helmet:"nohelmet",back:"noback",pet:"nopet",aura:"noaura",costume:"school"};
+export const upCost = (u, n) => Math.round(u.base * Math.pow(u.k, n) / 10) * 10;
+export const itemLocked = i => (i.floor && P.towerBest < i.floor);
+export const DEFAULT_EQUIP = {weapon:"pencil",armor:"noarmor",helmet:"nohelmet",back:"noback",pet:"nopet",aura:"noaura",costume:"school"};
 
-const AURA_COL = {
+export const AURA_COL = {
   sparks:["#ffd84a","#fff3a0"], fireaura:["#ff7a1a","#ffd23f","#d62839"],
   storm:["#45d1e6","#a8f0ff","#7a4fd6"], rainbow:["#ff3b3b","#ff7a1a","#ffd23f","#5cc95c","#45d1e6","#7a4fd6"],
   galaxy:["#c77dff","#ffffff","#7a4fd6","#45d1e6"], dragonfire:["#ff3b3b","#ff7a1a","#ffd23f","#2b9348"], godbolt:["#ffffff","#45d1e6","#ffd23f","#a8f0ff"],
@@ -166,10 +166,10 @@ const AURA_COL = {
 };
 const AURA_GLOW = {sparks:"drop-shadow(0 0 5px #ffd84a)", fireaura:"drop-shadow(0 0 6px #ff7a1a)", storm:"drop-shadow(0 0 6px #45d1e6)",
   galaxy:"drop-shadow(0 0 7px #7a4fd6) drop-shadow(0 0 2px #c77dff)", dragonfire:"drop-shadow(0 0 8px #ff3b3b) drop-shadow(0 0 3px #ffd23f)", godbolt:"drop-shadow(0 0 10px #45d1e6) drop-shadow(0 0 4px #ffffff)"};
-const EPIC_AURA = {galaxy:1, dragonfire:1, godbolt:1, supernovaaura:1};
-const AURA_GLOWC = {sparks:"#ffd84a", fireaura:"#ff7a1a", storm:"#45d1e6", galaxy:"#9a6bff", dragonfire:"#ff3b3b", godbolt:"#45d1e6", supernovaaura:"#ffb84a"};
+export const EPIC_AURA = {galaxy:1, dragonfire:1, godbolt:1, supernovaaura:1};
+export const AURA_GLOWC = {sparks:"#ffd84a", fireaura:"#ff7a1a", storm:"#45d1e6", galaxy:"#9a6bff", dragonfire:"#ff3b3b", godbolt:"#45d1e6", supernovaaura:"#ffb84a"};
 // second animation frame for each pet: blink, tail wag, wing flap, propellers
-const PET_SPR2 = {
+export const PET_SPR2 = {
 cat:`
 ..E.....E...
 ..EE...EE...

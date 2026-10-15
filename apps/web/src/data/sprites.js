@@ -1,7 +1,6 @@
-"use strict";
 // Пиксельные спрайты боссов (строки символов + палитры) и drawSprite().
 
-const SPR = {
+export const SPR = {
 angelika:`
 .......YYYYYY.......
 ......Y......Y......
@@ -452,7 +451,7 @@ BBBBBBBBBBBB
 BYYYYYYYYYYB
 BBBBBBBBBBBB`
 };
-const PALS = {
+export const PALS = {
   lep:{B:"#e0a050",D:"#a8642a",W:"#fff7e0",C:"#f0dcb0"},
   angelika:{Y:"#ffd23f",H:"#c98a3a",S:"#f2c7a5",W:"#ffffff",E:"#1b1b1b",R:"#f29aa8",M:"#d6476b",T:"#bcd4ff",O:"#5f7fb8",L:"#eef4ff",G:"#d9a400"},
   olesya:{H:"#241612",S:"#f2c7a5",G:"#3a2a5a",W:"#ffffff",E:"#1b1b1b",R:"#f29aa8",M:"#d6476b",P:"#7a4fd6",T:"#ffffff",B:"#c0283a",D:"#fff7e0",K:"#2a2238",L:"#5a2a3a"},
@@ -485,10 +484,10 @@ const PALS = {
   chest:{B:"#8a5a2b",Y:"#f0a000",G:"#ffd84a"}
 };
 // per-boss "blink" frame: which palette keys get swapped (eyes close, lights flicker)
-const BLINK = {angelika:{E:"S",W:"S"}, olesya:{E:"W"}, krakoz:{W:"F",K:"F"}, ralina:{E:"S",W:"S"}, blot:{W:"B"}, slime:{W:"G"}, two:{W:"R"}, bat:{R:"D"}, robot:{R:"D",C:"M"}, cyber:{R:"M",C:"M"}, spider:{R:"K"}, alien:{W:"B"},
+export const BLINK = {angelika:{E:"S",W:"S"}, olesya:{E:"W"}, krakoz:{W:"F",K:"F"}, ralina:{E:"S",W:"S"}, blot:{W:"B"}, slime:{W:"G"}, two:{W:"R"}, bat:{R:"D"}, robot:{R:"D",C:"M"}, cyber:{R:"M",C:"M"}, spider:{R:"K"}, alien:{W:"B"},
   skeleton:{R:"K"}, mummy:{Y:"W"}, pirate:{K:"S"}, book:{Y:"R"}, zombie:{R:"W"}, wizard:{K:"S",O:"B"}, dragon:{Y:"G"}, octopus:{W:"P"},
   snowman:{K:"W"}, cactus:{F:"G"}, pumpkin:{Y:"K"}, ufo:{Y:"D",B:"C"}, goblin:{R:"G"}, shark:{R:"S"}, king:{R:"P"}, ghost:{K:"W"}};
-function drawSprite(cv, sp, pal, silhouette){
+export function drawSprite(cv, sp, pal, silhouette){
   const rows = sp.trim().split("\n").map(r => r.trim());
   const h = rows.length, w = Math.max(...rows.map(r => r.length));
   cv.width = w; cv.height = h;

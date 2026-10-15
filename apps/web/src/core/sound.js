@@ -1,7 +1,9 @@
-"use strict";
 // Звук: WebAudio-эффекты sfx и фоновая музыка.
+import { $, pick } from "./helpers.js";
+import { settings } from "./profile.js";
+import { G } from "../game.js";
 
-let ac = null, silentEl = null;
+export let ac = null, silentEl = null;
 /* iPhone: Web Audio is muted by the silent switch and stays suspended until a tap.
    On every tap: ask for the "playback" audio session, resume the context, and keep a silent
    looping <audio> running, which moves iOS into media playback so game sounds are heard. */
@@ -13,7 +15,7 @@ function silentWav(){
   let bin = ""; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i++) bin += String.fromCharCode(u[i]);
   return "data:audio/wav;base64," + btoa(bin);
 }
-function unlockAudio(){
+export function unlockAudio(){
   if (settings.muted) return;
   try{ if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback"; }catch(e){}
   try{
@@ -28,7 +30,7 @@ function unlockAudio(){
 }
 ["touchend","pointerdown","click","keydown"].forEach(ev => document.addEventListener(ev, unlockAudio, {passive:true, capture:true}));
 document.addEventListener("visibilitychange", () => { if (document.hidden && silentEl) silentEl.pause(); });
-function tone(f, d, type="square", vol=.05, slide=0, delay=0){
+export function tone(f, d, type="square", vol=.05, slide=0, delay=0){
   if (settings.muted) return;
   try{
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
@@ -45,7 +47,7 @@ function tone(f, d, type="square", vol=.05, slide=0, delay=0){
 const midi = n => 440 * Math.pow(2, (n - 69) / 12);
 const QUAL = {m:[0,3,7], M:[0,4,7]};
 const flatMel = bars => { const m = {}; bars.forEach((bar, b) => { let p = b * 16; bar.forEach(([n, l]) => { if (n) m[p] = [n, l]; p += l; }); }); return m; };
-const TRACKS = {
+export const TRACKS = {
   calm: {name:"Спокойная", bpm:88, style:"calm",
     roots:[41,40,38,36,41,40,38,36], q:["M","m","m","M","M","m","m","M"],
     chords:[[53,57,60,64],[52,55,59,62],[50,53,57,60],[48,52,55,59],[53,57,60,64],[52,55,59,62],[50,53,57,60],[48,52,55,59]],
@@ -113,7 +115,7 @@ const TRACKS = {
       [[80,4],[76,4],[71,4],[68,4]]
     ])}
 };
-const TRACK_ORDER = ["calm","arena","mega","adv","rock"];
+export const TRACK_ORDER = ["calm","arena","mega","adv","rock"];
 let music = {on:false, timer:null, t:0, step:0, out:null, dry:null, echo:null, dist:null, noise:null};
 function buildMusicGraph(){
   if (!music.noise){ const nb = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.5), ac.sampleRate), d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random()*2 - 1; music.noise = nb; }
@@ -216,7 +218,7 @@ function scheduleMusic(until){
   while (music.t < until){ musicStep(tr, music.step % 128, music.t, sd, fast); music.t += sd; music.step++; }
 }
 function musicTick(){ if (music.on && ac) scheduleMusic(ac.currentTime + 0.2); }
-function startMusic(){
+export function startMusic(){
   if (!settings.music || settings.muted || music.on) return;
   try{
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
@@ -226,12 +228,12 @@ function startMusic(){
     music.timer = setInterval(musicTick, 50); musicTick();
   }catch(e){}
 }
-function duckMusic(ms){
+export function duckMusic(ms){
   if (!music.on || !music.out || !ac) return;
   try{ const g = music.out.gain, now = ac.currentTime; g.cancelScheduledValues(now); g.setValueAtTime(Math.max(g.value, .0002), now);
     g.exponentialRampToValueAtTime(0.015, now + .2); g.setValueAtTime(0.015, now + ms/1000); g.exponentialRampToValueAtTime(0.09, now + ms/1000 + 1); }catch(e){}
 }
-function confetti(n, dur){
+export function confetti(n, dur){
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const cv = document.createElement("canvas"); cv.className = "confetti"; document.body.appendChild(cv);
   const W = innerWidth, H = innerHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -247,7 +249,7 @@ function confetti(n, dur){
     if (t < dur) requestAnimationFrame(frame); else cv.remove();
   })(t0);
 }
-function stopMusic(){
+export function stopMusic(){
   if (!music.on) return;
   music.on = false; clearInterval(music.timer); music.timer = null;
   try{
@@ -268,7 +270,7 @@ function noiseSweep(f0, f1, dur, vol, q = 1.2){
   g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + dur * 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   s.connect(f).connect(g).connect(c.destination); s.start(t); s.stop(t + dur + 0.02);
 }
-const sfx = {
+export const sfx = {
   whoosh(heavy){ noiseSweep(heavy ? 250 : 600, heavy ? 1100 : 3200, heavy ? 0.26 : 0.2, heavy ? 0.35 : 0.28); },
   clang(){ tone(1800,.1,"triangle",.04); tone(2700,.08,"triangle",.025); tone(160,.12,"sine",.08,60); },
   thud(){ tone(130,.3,"sine",.12,38); noiseSweep(400, 150, .25, .3, .7); },

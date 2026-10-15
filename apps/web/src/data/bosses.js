@@ -1,7 +1,9 @@
-"use strict";
 // Способности боссов, кампания, лор, генератор этажей башни.
+import { esc, pick, shuffle } from "../core/helpers.js";
+import { BLINK, PALS, SPR, drawSprite } from "./sprites.js";
+import { P } from "../core/profile.js";
 
-const AB = {
+export const AB = {
   glitch:{n:"Кракозябры", d:"превращает буквы в закорючки, подожди секунду, и они вернутся"},
   cloud:{n:"Облачко", d:"прячет слово за облаком, тапни по облаку, чтобы сдуть"},
   lens:{n:"Зоркие очки", d:"слово еле видно, чётко только под линзой, которая ползает по слову"},
@@ -85,7 +87,7 @@ const CAMPAIGN = [
   ["Король Ошибок","king","king",false,["armor","ink","flip","steal","double","enrage"],"b"]
 ];
 
-const LORE = {
+export const LORE = {
   "Репетитор Ралина": "Хранительница последней уцелевшей страницы Словаря. Прежде чем отпустить тебя в поход, она проверит, готов ли ты. Не поддавайся, она тоже не будет!",
   "Клякса": "Первый монстр из разорванного Словаря. Сидит в тетрадях и пачкает всё, до чего дотянется.",
   "Слизняк Опечатка": "Ползёт за Кляксой и оставляет опечатки. Пока ты думаешь, он залечивает раны.",
@@ -115,7 +117,7 @@ const LORE = {
   "Словарный дракон": "Сторожит сокровищницу, где лежат почти все страницы Словаря.",
   "Король Ошибок": "Тот, кто разорвал Великий Словарь. Победи его, и все буквы вернутся на свои места!"
 };
-const WIN_LORE = {
+export const WIN_LORE = {
   "Репетитор Ралина": "Ралина: Ты готов, {name}! Держи в дорогу лепёшку с каймаком и наш татарский костюм с тюбетейкой, чтобы голову не напекло. Найди страницы Словаря. И если встретишь мою подругу Ангелику и сестру Олесю, помоги им, их заколдовал Король.",
   "Кракозябра": "Кракозябра пискнула и вернула стёртые страницы. Оказалось, она не злая, ей просто было скучно.",
   "Призрак Пропуска": "Над облаками виднеется Облачная библиотека. Там ждёт Ангелика.",
@@ -125,21 +127,21 @@ const WIN_LORE = {
   "Маг Безграмот": "Колдун повержен, чары Безграмотности слабеют. Осталось совсем немного!",
   "Король Ошибок": "Великий Словарь собран! Все буквы вернулись на места. Ралина, Ангелика и Олеся гордятся тобой, {name}!"
 };
-const loreText = t => esc(t.replace(/\{name\}/g, P.name || "герой"));
-const BOSSES = CAMPAIGN.map(([name,spr,pal,f,ab,pool],i) => ({
+export const loreText = t => esc(t.replace(/\{name\}/g, P.name || "герой"));
+export const BOSSES = CAMPAIGN.map(([name,spr,pal,f,ab,pool],i) => ({
   name, spr, pal, f, ab, pool, idx:i,
   hp: 90 + i*20, time: Math.max(5, 13 - i*0.35), taunts: TAUNTS[pal]
 }));
 const TOWER_PREFIX = ["Злой","Огненный","Ледяной","Теневой","Мега","Ржавый","Кислотный","Звёздный"];
 const TOWER_FILTER = ["hue-rotate(0deg) saturate(1.4)","hue-rotate(320deg) saturate(1.6)","hue-rotate(180deg)","brightness(.55) saturate(.6)","hue-rotate(90deg) saturate(1.5)","sepia(.7) saturate(1.4)","hue-rotate(60deg) saturate(2)","hue-rotate(240deg) saturate(1.6)"];
-function towerBoss(floor){
+export function towerBoss(floor){
   const base = pick(BOSSES), k = Math.random()*TOWER_PREFIX.length|0;
   const pool = shuffle(["regen","armor","haste","double","swap","fog","flip","ink","shake","freeze","steal","tiny","mirror","dark","web","rush","vampire","glitch","cloud","lens"]);
   const ab = [pool[0]]; if (floor >= 6) ab.push(pool[1]); if (floor >= 15) ab.push(pool[2]); if (floor >= 3) ab.push("enrage");
   return {name: `${TOWER_PREFIX[k]} ${base.name.split(" ")[0]}`, spr:base.spr, pal:base.pal, f:false, ab, pool:"tower", filter:TOWER_FILTER[k],
     hp: Math.round(110 + floor*22 + floor*floor*0.35), time: Math.max(4.5, 12 - floor*0.3), taunts: base.taunts, floor};
 }
-const drawBoss = (cv, b, sil, blink, angry) => {
+export const drawBoss = (cv, b, sil, blink, angry) => {
   let pal = PALS[b.pal];
   if (angry && BLINK[b.pal]){ pal = {...pal}; Object.keys(BLINK[b.pal]).forEach(k => { pal[k] = b.pal === "two" ? "#ffd23f" : "#ff2a2a"; }); }
   else if (blink && BLINK[b.pal]){ pal = {...pal}; Object.entries(BLINK[b.pal]).forEach(([k,v]) => { if (pal[v]) pal[k] = pal[v]; }); }

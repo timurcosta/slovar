@@ -1,13 +1,22 @@
-"use strict";
 // Награды: монеты, опыт, сундуки, задания дня, достижения, трофеи.
+import { $, coinsHTML, esc, pick, replay, toast, today, towerOpen, yesterday } from "./helpers.js";
+import { PAB } from "../data/words.js";
+import { drawSprite } from "../data/sprites.js";
+import { BOSSES } from "../data/bosses.js";
+import { ITEM, ITEMS } from "../data/items.js";
+import { drawHero } from "../hero.js";
+import { P, save, stats } from "./profile.js";
+import { TITLES, gear, levelOf } from "./levels.js";
+import { sfx } from "./sound.js";
+import { G } from "../game.js";
 
-function addCoins(n, useMul = true){
+export function addCoins(n, useMul = true){
   if (useMul) n = Math.max(1, Math.round(n * gear().coinMul));
   P.coins += n; if (G) G.coinsGot += n; save(); refreshCoins();
   return n;
 }
-function refreshCoins(){ ["home-coins","hud-coins","shop-coins","aw-coins","tr-coins"].forEach(id => { if ($(id)) $(id).innerHTML = coinsHTML(P.coins); }); }
-function addXP(n){
+export function refreshCoins(){ ["home-coins","hud-coins","shop-coins","aw-coins","tr-coins"].forEach(id => { if ($(id)) $(id).innerHTML = coinsHTML(P.coins); }); }
+export function addXP(n){
   n = Math.round(n * gear().xpMul);
   const before = levelOf(P.xp);
   P.xp += n; if (G) G.xpGot += n; save();
@@ -29,7 +38,7 @@ function addXP(n){
   }
   checkAch();
 }
-function grantChest(tier, title, noItem){
+export function grantChest(tier, title, noItem){
   const lvl = levelOf(P.xp);
   const coins = addCoins(25 + tier*18 + Math.floor(Math.random()*(25 + tier*18)), false);
   let item = null;
@@ -40,7 +49,7 @@ function grantChest(tier, title, noItem){
   if (title) toast(`${title}: +${coins} монет${item ? `, ${item.name}!` : ""}`, "quest");
   return {coins, item};
 }
-const QUESTS = {
+export const QUESTS = {
   correct:{label:n => `Ответь правильно ${n} раз`, ns:[20,30,40]},
   bosses:{label:n => n === 1 ? "Победи босса" : `Победи боссов: ${n}`, ns:[1,2,3]},
   streak:{label:n => `Сделай серию из ${n} подряд`, ns:[8,10,12], max:true},
@@ -49,9 +58,9 @@ const QUESTS = {
   crits:{label:n => `Нанеси ${n} критов`, ns:[8,12,16]},
   tower:{label:n => `Пройди этажей башни: ${n}`, ns:[2,4,6], needTower:true}
 };
-function hash(s){ let h = 2166136261; for (const c of s){ h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+export function hash(s){ let h = 2166136261; for (const c of s){ h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function rng(seed){ let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-function ensureDaily(){
+export function ensureDaily(){
   const d = today();
   if (P.daily && P.daily.date === d) return;
   const r = rng(hash(d));
@@ -61,7 +70,7 @@ function ensureDaily(){
   P.daily = {date:d, bonus:false, q:picked.map(t => { const ni = r()*QUESTS[t].ns.length|0; return {t, n:QUESTS[t].ns[ni], p:0, done:false, reward:90 + ni*45}; })};
   save();
 }
-function quest(t, v = 1){
+export function quest(t, v = 1){
   ensureDaily();
   for (const q of P.daily.q){
     if (q.t !== t || q.done) continue;
@@ -71,7 +80,7 @@ function quest(t, v = 1){
   if (!P.daily.bonus && P.daily.q.every(q => q.done)){ P.daily.bonus = true; save(); grantChest(3, "Все задания дня! Большой сундук"); }
   save();
 }
-function touchDay(){
+export function touchDay(){
   const d = today();
   if (P.days.last === d) return;
   P.days.streak = P.days.last === yesterday() ? P.days.streak + 1 : 1;
@@ -81,7 +90,7 @@ function touchDay(){
   toast(P.days.streak > 1 ? `${P.days.streak} дня подряд! Бонус +${bonus} монет` : `Бонус за вход сегодня: +${bonus} монет`, "quest");
   checkAch();
 }
-const ACH = [
+export const ACH = [
   {id:"first", n:"Первая победа", d:"Победи любого босса", c:() => P.tot.bosses >= 1, r:30},
   {id:"b5", n:"Охотник", d:"Пройди 5 боссов кампании", c:() => P.beaten.length >= 5, r:60},
   {id:"b10", n:"Гроза монстров", d:"Пройди 10 боссов кампании", c:() => P.beaten.length >= 10, r:100},
@@ -134,8 +143,8 @@ const ACH = [
   {id:"d30", n:"Месяц без пропусков", d:"Играй 30 дней подряд", c:() => P.days.streak >= 30, r:2000},
   {id:"words100", n:"Знаток словаря", d:"Выучи 100 слов", c:() => learnedCount() >= 100, r:1500}
 ];
-const LEARN_N = 3;   // a word is "learned" after this many correct answers
-const learnedCount = () => Object.values(stats).filter(s => s.right >= LEARN_N).length;
+export const LEARN_N = 3;   // a word is "learned" after this many correct answers
+export const learnedCount = () => Object.values(stats).filter(s => s.right >= LEARN_N).length;
 const TROPHY_SPR = {
 medal:`
 .RR.BB.
@@ -172,7 +181,7 @@ MMLLLMM
 .MMMMM.`
 };
 const TIER = {bronze:{M:"#c87a3a",L:"#f0b07a"}, silver:{M:"#9aa7bd",L:"#ffffff"}, gold:{M:"#f0a000",L:"#fff3a0"}, diamond:{M:"#45d1e6",L:"#ffffff"}};
-const TROPHIES = [
+export const TROPHIES = [
   {id:"m10", spr:"medal", tier:"bronze", n:10, m:"learned", name:"Бронзовая медаль", d:"Выучи 10 слов", r:300},
   {id:"m25", spr:"medal", tier:"silver", n:25, m:"learned", name:"Серебряная медаль", d:"Выучи 25 слов", r:700},
   {id:"m50", spr:"medal", tier:"gold", n:50, m:"learned", name:"Золотая медаль", d:"Выучи 50 слов", r:1500},
@@ -198,16 +207,16 @@ function checkTrophies(){
   }
 }
 const trophyIcon = (t, cls = "") => `<canvas class="ticon ${cls}" data-tspr="${t.spr}" data-tier="${t.tier}"></canvas>`;
-function paintTrophies(root){ root.querySelectorAll("canvas[data-tspr]").forEach(c => drawSprite(c, TROPHY_SPR[c.dataset.tspr], TIER[c.dataset.tier] && {...TIER[c.dataset.tier], R:"#d62839", B:"#2f55c8", D:"#6b4e31"}, c.classList.contains("off"))); }
+export function paintTrophies(root){ root.querySelectorAll("canvas[data-tspr]").forEach(c => drawSprite(c, TROPHY_SPR[c.dataset.tspr], TIER[c.dataset.tier] && {...TIER[c.dataset.tier], R:"#d62839", B:"#2f55c8", D:"#6b4e31"}, c.classList.contains("off"))); }
 // best earned trophy of each kind, shown under the hero like ribbons on a uniform
-function badgesHTML(){
+export function badgesHTML(){
   P.troph = P.troph || {};
   const best = {};
   for (const t of TROPHIES) if (P.troph[t.id]) best[t.spr + t.m] = t;
   const list = Object.values(best);
   return list.length ? list.map(t => trophyIcon(t)).join("") : "";
 }
-function renderTrophies(){
+export function renderTrophies(){
   refreshCoins();
   P.troph = P.troph || {};
   const got = TROPHIES.filter(t => P.troph[t.id]).length;
@@ -219,7 +228,7 @@ function renderTrophies(){
   }).join("");
   paintTrophies($("trophies"));
 }
-function checkAch(){
+export function checkAch(){
   checkTrophies();
   for (const a of ACH){
     if (P.ach[a.id] || !a.c()) continue;

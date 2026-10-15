@@ -1,5 +1,5 @@
-"use strict";
 // Питомцы (спрайты) и drawHero(): отрисовка бойца на canvas.
+import { AURA_COL, AURA_GLOWC, COSTUMES, COSTUME_KEY, EPIC_AURA, LOOK_EYE, LOOK_FULLHELM, LOOK_HAIR, LOOK_MASKED, LOOK_NOSKIN, LOOK_SKIN, PET_SPR2, heroLook, shadeHex } from "./data/items.js";
 
 const PET_SPR = {
 cat:`
@@ -126,7 +126,7 @@ const PET_CAP = {
   cat:[[3,2,5],[3,2,5]], robodog:[[10,2,5],[10,2,5]], minidragon:[[13,2,4],[13,1,4]], darkdragon:[[13,2,4],[13,1,4]], stardragon:[[13,2,4],[13,1,4]],
   drone:[[6,1,5],[6,1,5]], cyberwolf:[[7,2,5],[7,2,5]], phoenixpet:[[9,0,4],[9,0,4]]
 };
-function drawHero(cv, eq, wrap, fr = 0){
+export function drawHero(cv, eq, wrap, fr = 0){
   // 1px margin on every side so outlines at the edges (pet, wings, weapons) are never clipped
   const W = 30, H = 27, TOP = 4, PETW = 10, LX = 1 + PETW, CW = W + 2 + PETW, CH = H + 1 + TOP; cv.width = CW; cv.height = CH;  // TOP: room for raised weapons + breathing
   const x = cv.getContext("2d"); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,CW,CH); x.setTransform(1,0,0,1,LX,TOP);

@@ -1,5 +1,14 @@
-"use strict";
 // Раздел учителя: статистика, лимиты на день.
+import { $, esc, toast, today } from "../core/helpers.js";
+import { PAB } from "../data/words.js";
+import { BOSSES } from "../data/bosses.js";
+import { LS, P, customRaw, resetProfile, save, setStats, settings, stats } from "../core/profile.js";
+import { TITLES, levelOf } from "../core/levels.js";
+import { sfx } from "../core/sound.js";
+import { LEARN_N, learnedCount } from "../core/rewards.js";
+import { renderHome } from "./home.js";
+import { G, home, stopGame } from "../game.js";
+import { askName, getPin } from "../main.js";
 
 let resetArm = false, resetT = 0, heroArm = false, heroT = 0;
 let teacherTab = "pupil";
@@ -9,7 +18,7 @@ function showTeacherTab(t){
   document.querySelectorAll("#s-teacher [data-tp]").forEach(p => p.hidden = p.dataset.tp !== t);
 }
 document.querySelectorAll("#ttabs .tab").forEach(b => b.onclick = () => showTeacherTab(b.dataset.tt));
-function renderTeacher(){
+export function renderTeacher(){
   showTeacherTab(teacherTab); renderLimits();
   const ln = learnedCount();
   $("learned-note").innerHTML = `Выучено <b>${ln}</b> из ${PAB.length} словарных слов (слово считается выученным после ${LEARN_N} верных ответов). Встречалось: ${Object.keys(stats).length}. Сегодня новых слов: ${(ensureDay(), P.day.fresh)}.`;
@@ -29,22 +38,22 @@ function renderTeacher(){
   resetArm = false; $("btn-reset").textContent = "Стереть статистику";
   heroArm = false; $("btn-reset-hero").textContent = "Начать бойца заново";
 }
-const saveSettings = () => LS.set("sb_settings", settings);
-const plural = (n, f) => { const a = Math.abs(n) % 100, b = a % 10; return f[a > 10 && a < 20 ? 2 : b === 1 ? 0 : b >= 2 && b <= 4 ? 1 : 2]; };
+export const saveSettings = () => LS.set("sb_settings", settings);
+export const plural = (n, f) => { const a = Math.abs(n) % 100, b = a % 10; return f[a > 10 && a < 20 ? 2 : b === 1 ? 0 : b >= 2 && b <= 4 ? 1 : 2]; };
 const LIM_KEYS = [["min",["минута игры","минуты игры","минут игры"]],["fresh",["новое слово","новых слова","новых слов"]],["correct",["верный ответ","верных ответа","верных ответов"]],["battles",["бой","боя","боёв"]],["mistakes",["ошибка","ошибки","ошибок"]]];
-function ensureDay(){
+export function ensureDay(){
   const d = today();
   if (!P.day || P.day.date !== d){ P.day = {date:d, sec:0, fresh:0, correct:0, battles:0, mistakes:0}; save(); }
   return P.day;
 }
 const lims = () => Object.assign({min:0, fresh:0, correct:0, battles:0, mistakes:0}, settings.lim || {});
 const dayVal = k => { const d = ensureDay(); return k === "min" ? Math.floor(d.sec / 60) : d[k]; };
-function limitReason(){
+export function limitReason(){
   const L = lims();
   for (const [k, n] of LIM_KEYS) if (L[k] > 0 && (k === "min" ? ensureDay().sec >= L.min * 60 : dayVal(k) >= L[k])) return `${L[k]} ${plural(L[k], n)}`;
   return null;
 }
-function todayHTML(){
+export function todayHTML(){
   const L = lims(), act = LIM_KEYS.filter(([k]) => L[k] > 0);
   if (!act.length) return "";
   const parts = act.map(([k, n]) => `${Math.min(dayVal(k), L[k])} / ${L[k]} ${plural(L[k], n)}`);
@@ -61,11 +70,11 @@ $("btn-lim-save").onclick = () => {
   saveSettings(); renderLimits(); $("lim-msg").className = "msg okm"; $("lim-msg").textContent = "Лимиты сохранены.";
 };
 $("btn-lim-reset").onclick = () => { P.day = null; ensureDay(); renderLimits(); $("lim-msg").className = "msg okm"; $("lim-msg").textContent = "Счётчики обнулены, можно играть дальше."; };
-function blockedToday(){
+export function blockedToday(){
   const r = limitReason(); if (!r) return false;
   toast(`На сегодня всё: лимит ${r}. Монеты и опыт сохранились, возвращайся завтра!`, "quest"); renderHome(); return true;
 }
-function limitStop(r){
+export function limitStop(r){
   stopGame(false);
   const ov = $("boss-over"); ov.hidden = false; $("opts").hidden = true; $("typer").hidden = true;
   ov.innerHTML = `<div class="victory"><b>НА СЕГОДНЯ ВСЁ!</b><span>${P.name ? esc(P.name) + ", ты" : "Ты"} отлично поработал</span></div>
@@ -77,3 +86,11 @@ setInterval(() => {   // play time: only while actually fighting
   if (!G || $("s-game").hidden || document.hidden || !$("boss-over").hidden) return;
   const d = ensureDay(); d.sec++; if (d.sec % 10 === 0) save();
 }, 1000);
+$("btn-reset").onclick = () => {
+  if (!resetArm){ resetArm = true; $("btn-reset").textContent = "Точно стереть? Нажмите ещё раз"; clearTimeout(resetT); resetT = setTimeout(() => { resetArm = false; $("btn-reset").textContent = "Стереть статистику"; }, 3000); return; }
+  setStats({}); LS.set("sb_stats", stats); renderTeacher();
+};
+$("btn-reset-hero").onclick = () => {
+  if (!heroArm){ heroArm = true; $("btn-reset-hero").textContent = "Точно? Уровень, монеты и предметы обнулятся"; clearTimeout(heroT); heroT = setTimeout(() => { heroArm = false; $("btn-reset-hero").textContent = "Начать бойца заново"; }, 3000); return; }
+  resetProfile(); save(); renderTeacher(); askName();
+};

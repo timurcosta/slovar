@@ -1,21 +1,22 @@
-"use strict";
 // localStorage, настройки, профиль P и миграции старых сохранений.
+import { BOSSES } from "../data/bosses.js";
+import { DEFAULT_EQUIP, ITEM, ITEMS } from "../data/items.js";
 
-const LS = {
+export const LS = {
   get(k,d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
   set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
-let settings = Object.assign({timer:true, words:"auto", muted:false, play:"pick", music:true, track:"calm"}, LS.get("sb_settings", {}));
+export let settings = Object.assign({timer:true, words:"auto", muted:false, play:"pick", music:true, track:"calm"}, LS.get("sb_settings", {}));
 if (settings.mode === "custom" && !LS.get("sb_settings", {}).words) settings.words = "custom";
 if (settings.musicV !== 2){ settings.track = "calm"; settings.musicV = 2; LS.set("sb_settings", settings); }
-let customRaw = LS.get("sb_custom", "");
-let stats = LS.get("sb_stats", {});
+export let customRaw = LS.get("sb_custom", "");
+export let stats = LS.get("sb_stats", {});
 function freshProfile(){
   const owned = {}; ITEMS.filter(i => i.price === 0 && !i.gift).forEach(i => owned[i.id] = 1);
   return {xp:0, coins:0, owned, equip:{...DEFAULT_EQUIP}, up:{str:0,hp:0,time:0,gold:0}, unlocked:0, beaten:[], towerBest:0, rv:2, xpv:2,
     tot:{correct:0, typed:0, bosses:0, flawless:0, bought:0, crits:0}, bestStreak:0, ach:{}, daily:null, days:{last:"", streak:0}, best:0};
 }
-let P = Object.assign(freshProfile(), LS.get("sb2_profile", {}));
+export let P = Object.assign(freshProfile(), LS.get("sb2_profile", {}));
 (() => { const old = LS.get("sb_hero", null); if (old && old.xp && !LS.get("sb2_profile", null)){ P.xp = old.xp; P.coins = Math.floor(old.xp / 4); } })();
 ITEMS.filter(i => i.price === 0 && !i.gift).forEach(i => P.owned[i.id] = 1);
 P.equip = Object.assign({...DEFAULT_EQUIP}, P.equip);
@@ -43,9 +44,12 @@ Object.keys(DEFAULT_EQUIP).forEach(sl => { const it = ITEM[P.equip[sl]]; if (!it
 P.unlocked = Math.min(P.unlocked || 0, BOSSES.length - 1);
 P.tot = Object.assign(freshProfile().tot, P.tot);
 P.up = Object.assign({str:0,hp:0,time:0,gold:0}, P.up);
-const save = () => LS.set("sb2_profile", P);
+export const save = () => LS.set("sb2_profile", P);
+export function resetProfile(){ P = freshProfile(); }
+export function setStats(v){ stats = v; }
+export function setCustomRaw(v){ customRaw = v; }
 // подарки Ралины за победу над первым боссом (вызывается и при загрузке профиля, поэтому живёт здесь)
-function giftRalina(wear){
+export function giftRalina(wear){
   P.lep = 1; P.owned.tubeteika = 1; P.owned.tatarc = 1;
   if (wear || P.equip.helmet === "nohelmet" || P.equip.helmet === "band") P.equip.helmet = "tubeteika";
   if (wear || P.equip.costume === "school") P.equip.costume = "tatarc";

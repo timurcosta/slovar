@@ -1,9 +1,35 @@
-"use strict";
 // Подключение кнопок, PIN, анимация героя, история, коды сохранения, старт.
+import "./styles/main.css";
+import "./core/helpers.js";
+import "./data/words.js";
+import "./data/sprites.js";
+import "./data/bosses.js";
+import "./data/items.js";
+import "./hero.js";
+import "./core/profile.js";
+import "./core/levels.js";
+import "./core/sound.js";
+import "./core/rewards.js";
+import "./screens/home.js";
+import "./game.js";
+import "./screens/teacher.js";
+
+import { $, esc, pick, show, toast, towerOpen } from "./core/helpers.js";
+import { parseEntry } from "./data/words.js";
+import { BOSSES, drawBoss } from "./data/bosses.js";
+import { ITEM } from "./data/items.js";
+import { drawHero } from "./hero.js";
+import { LS, P, customRaw, save, setCustomRaw, settings, stats } from "./core/profile.js";
+import { levelOf } from "./core/levels.js";
+import { TRACKS, TRACK_ORDER, sfx, silentEl, startMusic, stopMusic, tone, unlockAudio } from "./core/sound.js";
+import { checkAch, hash, renderTrophies } from "./core/rewards.js";
+import { frontier, openShop, renderAwards, renderHome, tryOn } from "./screens/home.js";
+import { G, answer, bossCv, customPool, heroCv, home, rel, say, startCampaign, startTower, startTraining, stopGame, syncDiff, typed } from "./game.js";
+import { blockedToday, renderTeacher, saveSettings } from "./screens/teacher.js";
 
 $("btn-campaign").onclick = () => { if (!blockedToday()) startCampaign(frontier()); };
 $("btn-tower").onclick = () => { if (towerOpen() && !blockedToday()) startTower(); };
-$("btn-shop").onclick = $("btn-end-shop").onclick = () => { tryOn = null; renderShop(); show("s-shop"); };
+$("btn-shop").onclick = $("btn-end-shop").onclick = openShop;
 $("btn-shop-back").onclick = home;
 $("btn-awards").onclick = () => { renderAwards(); show("s-awards"); };
 $("btn-aw-back").onclick = home;
@@ -16,7 +42,7 @@ $("btn-home").onclick = home;
 $("btn-quit").onclick = home;
 $("btn-back").onclick = home;
 const pinHash = v => String(hash("sb-pin:" + v));
-const getPin = () => LS.get("sb_pin", "");
+export const getPin = () => LS.get("sb_pin", "");
 function openTeacher(){
   if (getPin()){ $("pin-in").value = ""; $("pin-msg").textContent = ""; show("s-pin"); setTimeout(() => { try{ $("pin-in").focus(); }catch(e){} }, 50); }
   else { renderTeacher(); show("s-teacher"); }
@@ -75,18 +101,10 @@ $("btn-gift").onclick = () => {
 $("btn-save").onclick = () => {
   const lines = $("custom").value.split(/\n|,/).map(s => s.trim()).filter(Boolean);
   const bad = lines.filter(l => !parseEntry(l));
-  customRaw = $("custom").value; LS.set("sb_custom", customRaw);
+  setCustomRaw($("custom").value); LS.set("sb_custom", customRaw);
   const n = lines.length - bad.length, msg = $("save-msg");
   if (bad.length){ msg.className = "msg err"; msg.textContent = `Сохранено слов: ${n}. Не понял: ${bad.slice(0,4).join(", ")}${bad.length > 4 ? "…" : ""}. Нужны скобки, например м(о)локо.`; }
   else { msg.className = "msg okm"; msg.textContent = `Сохранено слов: ${n}`; }
-};
-$("btn-reset").onclick = () => {
-  if (!resetArm){ resetArm = true; $("btn-reset").textContent = "Точно стереть? Нажмите ещё раз"; clearTimeout(resetT); resetT = setTimeout(() => { resetArm = false; $("btn-reset").textContent = "Стереть статистику"; }, 3000); return; }
-  stats = {}; LS.set("sb_stats", stats); renderTeacher();
-};
-$("btn-reset-hero").onclick = () => {
-  if (!heroArm){ heroArm = true; $("btn-reset-hero").textContent = "Точно? Уровень, монеты и предметы обнулятся"; clearTimeout(heroT); heroT = setTimeout(() => { heroArm = false; $("btn-reset-hero").textContent = "Начать бойца заново"; }, 3000); return; }
-  P = freshProfile(); save(); renderTeacher(); askName();
 };
 document.addEventListener("keydown", e => {
   if ($("s-game").hidden || !G) return;
@@ -103,7 +121,7 @@ const HERO_ANIM = [
   {cv: $("end-hero"), wrap: $("end-aura"), eq: () => P.equip},
   {cv: $("shop-hero"), wrap: $("shop-aura"), eq: () => tryOn ? {...P.equip, [ITEM[tryOn].slot]: tryOn} : P.equip}
 ];
-let heroFrame = 0;
+export let heroFrame = 0;
 if (!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)){
   setInterval(() => {
     if (document.hidden) return;
@@ -195,7 +213,7 @@ $("btn-load-code").onclick = async () => {
   setTimeout(() => location.reload(), 700);
 };
 function cleanName(v){ return String(v || "").replace(/\s+/g, " ").trim().slice(0, 16); }
-function askName(){
+export function askName(){
   drawHero($("name-hero"), P.equip);
   $("name-in").value = ""; $("name-msg").textContent = "";
   show("s-name"); setTimeout(() => { try{ $("name-in").focus(); }catch(e){} }, 60);

@@ -1,9 +1,21 @@
-"use strict";
 // Бой: подбор слов, сложность, раунды, ответы, эффекты, победа/поражение.
+import { $, TOUCH, defeatedWord, esc, heartSVG, pick, replay, show, shuffle, toast } from "./core/helpers.js";
+import { PA, PAB, PB, parseEntry } from "./data/words.js";
+import { PALS, SPR, drawSprite } from "./data/sprites.js";
+import { AB, BOSSES, LORE, WIN_LORE, drawBoss, loreText, towerBoss } from "./data/bosses.js";
+import { ITEMS } from "./data/items.js";
+import { drawHero } from "./hero.js";
+import { LS, P, customRaw, giftRalina, save, settings, stats } from "./core/profile.js";
+import { gear, levelOf, xpProgress } from "./core/levels.js";
+import { confetti, duckMusic, sfx, startMusic, stopMusic, tone } from "./core/sound.js";
+import { addCoins, addXP, checkAch, grantChest, quest, refreshCoins, touchDay } from "./core/rewards.js";
+import { heroCard, renderHome } from "./screens/home.js";
+import { blockedToday, ensureDay, limitReason, limitStop, plural } from "./screens/teacher.js";
+import { heroFrame } from "./main.js";
 
-let G = null;
-const bossCv = $("boss-cv"), heroCv = $("hero-cv");
-const customPool = () => customRaw.split(/\n|,/).map(parseEntry).filter(Boolean);
+export let G = null;
+export const bossCv = $("boss-cv"), heroCv = $("hero-cv");
+export const customPool = () => customRaw.split(/\n|,/).map(parseEntry).filter(Boolean);
 function poolFor(b){
   if (b.pool === "train" && G && G.trainPool) return G.trainPool;
   if (settings.words === "custom"){ const c = customPool(); if (c.length) return c; }
@@ -24,7 +36,7 @@ function applyDiff(b){
 }
 const diffMul = () => DIFF_MUL[settings.words] || 1;
 const DIFF_NAME = {auto:"по боссам", a:"лёгкие (1–2 класс)", ab:"все вперемешку", b:"сложные (3–4 класс)", custom:"слова учителя"};
-function syncDiff(){
+export function syncDiff(){
   const cust = settings.words === "custom";
   $("diff-modes").hidden = cust; $("diff-custom").hidden = !cust;
   document.querySelectorAll('input[name="diff"]').forEach(r => r.checked = r.value === settings.words);
@@ -40,17 +52,17 @@ function newRun(kind){
   show("s-game");
 }
 // words the pupil got wrong most (weighted: mistakes count more than later correct answers)
-function errWords(){
+export function errWords(){
   const all = PAB.concat(settings.words === "custom" ? customPool() : []);
   const byWord = new Map(all.map(e => [e.word, e]));
   return Object.entries(stats).filter(([w, s]) => s.wrong > 0 && byWord.has(w) && s.wrong * 2 > s.right)
     .sort((a, b) => (b[1].wrong * 2 - b[1].right) - (a[1].wrong * 2 - a[1].right)).slice(0, 25).map(([w]) => byWord.get(w));
 }
-function newWords(){
+export function newWords(){
   const base = settings.words === "custom" && customPool().length ? customPool() : settings.words === "a" ? PA : settings.words === "b" ? PB : PAB;
   return base.filter(e => !stats[e.word]);
 }
-function startTraining(kind){
+export function startTraining(kind){
   const pool = kind === "err" ? errWords() : newWords().slice(0, 20);
   if (!pool.length){ toast(kind === "err" ? "Слов с ошибками нет. Отлично!" : "Новых слов не осталось: все уже встречались!", "quest"); return; }
   newRun("training"); G.trainKind = kind; G.trainPool = pool;
@@ -62,8 +74,8 @@ function startTraining(kind){
   b.time = 12; b.training = kind;
   startBoss(b);
 }
-function startCampaign(idx){ newRun("campaign"); G.bossIdx = idx; startBoss(BOSSES[idx]); }
-function startTower(){ newRun("tower"); G.floor = 1; startBoss(towerBoss(1)); }
+export function startCampaign(idx){ newRun("campaign"); G.bossIdx = idx; startBoss(BOSSES[idx]); }
+export function startTower(){ newRun("tower"); G.floor = 1; startBoss(towerBoss(1)); }
 function startBoss(b){
   clearRound();
   b = applyDiff(b);
@@ -274,7 +286,7 @@ function pop(text, cls="", left="72%"){
   const el = document.createElement("div"); el.className = "pop " + cls; el.textContent = text; el.style.left = left;
   $("arena").appendChild(el); setTimeout(() => el.remove(), 1000);
 }
-function say(text){
+export function say(text){
   const b = $("bubble"); b.textContent = text; b.classList.add("show");
   clearTimeout(say.t); say.t = setTimeout(() => b.classList.remove("show"), 1700);
 }
@@ -284,7 +296,7 @@ function stat(word, key){
   s[key]++; LS.set("sb_stats", stats); save();
 }
 
-function rel(el){ const a = $("arena").getBoundingClientRect(), r = el.getBoundingClientRect(); return {x:r.left - a.left, y:r.top - a.top, w:r.width, h:r.height}; }
+export function rel(el){ const a = $("arena").getBoundingClientRect(), r = el.getBoundingClientRect(); return {x:r.left - a.left, y:r.top - a.top, w:r.width, h:r.height}; }
 // cut the weapon pixels out of the hero sprite, so the weapon itself can be swung around the hand
 function weaponLayer(){
   const a = document.createElement("canvas"), b = document.createElement("canvas");
@@ -431,7 +443,7 @@ function fx(kind, col){
   return 330;
 }
 
-function answer(i){
+export function answer(i){
   if (!G || G.locked || !$("boss-over").hidden) return;
   if (G.type){ typed(i === null ? null : $("type-in").value); return; }
   G.locked = true; clearRound();
@@ -442,7 +454,7 @@ function answer(i){
   renderWord(chosen);
   resolve(chosen === correct, i === null);
 }
-function typed(text){
+export function typed(text){
   if (!G || G.locked || !$("boss-over").hidden) return;
   if (text !== null && !text.trim()) return;
   G.locked = true; clearRound();
@@ -642,10 +654,10 @@ function endGame(won){
     : `<h2>Ни одной ошибки!</h2>`;
   show("s-end");
 }
-function stopGame(drop = true){
+export function stopGame(drop = true){
   document.body.classList.remove("kb");
   stopMusic();
   if (G){ clearRound(); G.timers.forEach(clearTimeout); G.timers = []; }
   if (drop) G = null;
 }
-function home(){ stopGame(); renderHome(); show("s-home"); }
+export function home(){ stopGame(); renderHome(); show("s-home"); }

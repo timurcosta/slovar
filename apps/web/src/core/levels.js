@@ -1,21 +1,22 @@
-"use strict";
 // Уровни, титулы, итоговые статы героя gear().
+import { ITEM } from "../data/items.js";
+import { P, settings } from "./profile.js";
 
-const MAXL = 50;
+export const MAXL = 50;
 const lvlXP = n => 50 * n * (n - 1) + n * n * n;   // xp needed to reach level n (v2: late levels slower)
-const levelOf = xp => { let l = 1; while (l < MAXL && xp >= lvlXP(l + 1)) l++; return l; };
-const TITLES = ["Новичок","Ученик","Знаток","Отличник","Рыцарь пера","Страж словаря","Мастер грамоты","Охотник на ошибки","Чемпион","Легенда класса",
+export const levelOf = xp => { let l = 1; while (l < MAXL && xp >= lvlXP(l + 1)) l++; return l; };
+export const TITLES = ["Новичок","Ученик","Знаток","Отличник","Рыцарь пера","Страж словаря","Мастер грамоты","Охотник на ошибки","Чемпион","Легенда класса",
   "Гроза двоек","Повелитель букв","Магистр словаря","Титан грамоты","Звезда школы","Супергерой","Мега-герой","Ультра-герой","Бессмертный","Король грамоты",
   "Повелитель драконов","Космический рыцарь","Хранитель башни","Император слов","Галактический герой","Властелин орфографии","Мифический воин","Полубог грамоты","Бог словаря","Абсолют",
   "Звёздный странник","Покоритель комет","Страж галактики","Повелитель сверхновых","Хранитель вселенной","Титан космоса","Властелин чёрных дыр","Звёздный император","Легенда легенд","Бесконечность",
   "Архимаг слова","Космический гений","Сверхразум","Владыка вселенной","Создатель звёзд","Вечный герой","Непобедимый","Космический бог","Абсолют всего","Владыка Слова"];
-function xpProgress(xp){
+export function xpProgress(xp){
   const l = levelOf(xp);
   if (l >= MAXL) return {l, frac:1, need:0};
   const a = lvlXP(l), b = lvlXP(l + 1);
   return {l, frac:(xp - a)/(b - a), need:b - xp};
 }
-function gear(eq = P.equip){
+export function gear(eq = P.equip){
   const w = ITEM[eq.weapon], a = ITEM[eq.armor], h = ITEM[eq.helmet], b = ITEM[eq.back], p = ITEM[eq.pet];
   const up = P.up || {};
   return {

@@ -1,7 +1,16 @@
-"use strict";
 // Экраны: главная, гардероб (магазин), внешность, награды.
+import { $, esc, pick, show, toast, towerOpen } from "../core/helpers.js";
+import { BOSSES, drawBoss } from "../data/bosses.js";
+import { COSTUMES, COSTUME_KEY, ITEM, ITEMS, LOOK_EYE, LOOK_FULLHELM, LOOK_HAIR, LOOK_MASKED, LOOK_NOSKIN, LOOK_SKIN, LOOK_STYLE, RARITY, SLOTS, UPGRADES, hairMatches, heroLook, itemLocked, upCost } from "../data/items.js";
+import { drawHero } from "../hero.js";
+import { P, save, settings } from "../core/profile.js";
+import { MAXL, TITLES, gear, levelOf, xpProgress } from "../core/levels.js";
+import { sfx } from "../core/sound.js";
+import { ACH, QUESTS, TROPHIES, badgesHTML, checkAch, ensureDaily, learnedCount, paintTrophies, refreshCoins } from "../core/rewards.js";
+import { errWords, newWords, startCampaign, syncDiff } from "../game.js";
+import { blockedToday, limitReason, todayHTML } from "./teacher.js";
 
-function heroCard(prefix){
+export function heroCard(prefix){
   const {l, frac, need} = xpProgress(P.xp);
   drawHero($(prefix+"-hero"), P.equip, $(prefix+"-aura"));
   $(prefix+"-lvl").textContent = `УРОВЕНЬ ${l}`;
@@ -32,8 +41,8 @@ function questsHTML(){
   const streak = P.days.streak > 1 ? `<span class="days">Дней подряд: ${P.days.streak}</span>` : "";
   return `<div class="row" style="justify-content:space-between"><h2>Задания дня</h2>${streak}</div>${rows}<p class="note">${P.daily.bonus ? "Все задания выполнены! Завтра будут новые." : "Выполни все три и получи большой сундук."}</p>`;
 }
-function frontier(){ for (let i = 0; i <= P.unlocked; i++) if (!P.beaten.includes(i)) return i; return P.unlocked; }
-function renderHome(){
+export function frontier(){ for (let i = 0; i <= P.unlocked; i++) if (!P.beaten.includes(i)) return i; return P.unlocked; }
+export function renderHome(){
   ensureDaily();
   refreshCoins();
   heroCard("home");
@@ -62,7 +71,8 @@ function renderHome(){
   syncDiff();
 }
 
-let shopTab = "weapon", tryOn = null;
+export let shopTab = "weapon", tryOn = null;
+export function openShop(){ tryOn = null; renderShop(); show("s-shop"); }
 function renderShop(){
   refreshCoins();
   $("tabs").innerHTML = SLOTS.concat([["look","Внешность"],["forge","Кузница"]]).map(([s,n]) => `<button class="tab" role="tab" aria-selected="${s === shopTab}" data-s="${s}">${n}</button>`).join("");
@@ -143,7 +153,7 @@ function renderLook(){
   };
   $("look-reset").onclick = () => { P.look = {hair:"auto", skin:"auto", eye:"auto", style:L.style}; save(); sfx.block(); renderShop(); };
 }
-function renderAwards(){
+export function renderAwards(){
   refreshCoins();
   $("aw-quests").innerHTML = questsHTML();
   $("aw-count").textContent = `Получено ${Object.keys(P.ach).length} из ${ACH.length}. За каждое дают монеты.`;
