@@ -7,7 +7,7 @@
     "hash-password": "node --disable-warning=ExperimentalWarning src/hash-password.ts",
     "test": "vitest run",
     "typecheck": "tsc -p .",
-    "build": "esbuild src/cloud.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/index.js --legal-comments=none --log-level=warning && node -e \"require('fs').writeFileSync('dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\""
+    "build": "esbuild src/cloud.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/index.js --legal-comments=none --log-level=warning && esbuild src/killswitch.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist-killswitch/index.js --log-level=warning && node -e \"for (const d of ['dist', 'dist-killswitch']) require('fs').writeFileSync(d + '/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\""
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",

@@ -8,6 +8,7 @@
 //   функция repetitor-api          — API, не больше 2 копий на зону
 //   API Gateway repetitor          — один адрес: /api/* → функция, остальное → файлы из бакета
 //   сервисные аккаунты: repetitor-api (только база), repetitor-gateway (вызов функции и чтение бакета)
+//   функция repetitor-killswitch + триггер на бюджет «Страховка» — удаляет шлюз при 100% бюджета
 import { execFileSync } from "child_process";
 import crypto from "crypto";
 import fs from "fs";
@@ -274,4 +275,91 @@ const gw = ycTry("serverless", "api-gateway", "get", GW)
   ? yc("serverless", "api-gateway", "update", GW, "--spec", specFile)
   : yc("serverless", "api-gateway", "create", "--name", GW, "--spec", specFile);
 fs.rmSync(specFile);
+// ---------- аварийное выключение ----------
+step("Аварийное выключение по бюджету");
+const KILL = "repetitor-killswitch";
+const saKill = ensureSa(KILL, "Удаляет API Gateway игры, если расходы за месяц дошли до бюджета «Страховка»");
+bind(
+  `${KILL} → api-gateway.editor на каталоге`,
+  "resource-manager",
+  "folder",
+  "add-access-binding",
+  folderId,
+  "--role",
+  "api-gateway.editor",
+  "--service-account-id",
+  saKill.id,
+);
+const killZip = path.join(os.tmpdir(), `repetitor-killswitch-${Date.now()}.zip`);
+run("zip", ["-j", "-q", killZip, "apps/api/dist-killswitch/index.js", "apps/api/dist-killswitch/package.json"]);
+const killFn = ycTry("serverless", "function", "get", KILL) ?? yc("serverless", "function", "create", "--name", KILL);
+yc(
+  "serverless",
+  "function",
+  "version",
+  "create",
+  "--function-id",
+  killFn.id,
+  "--runtime",
+  "nodejs22",
+  "--entrypoint",
+  "index.handler",
+  "--memory",
+  "128m",
+  "--execution-timeout",
+  "30s",
+  "--service-account-id",
+  saKill.id,
+  "--source-path",
+  killZip,
+  "--environment",
+  `FOLDER_ID=${folderId},GATEWAY_NAME=${GW}`,
+);
+fs.rmSync(killZip);
+bind(
+  `${KILL} → functions.functionInvoker на ${KILL}`,
+  "serverless",
+  "function",
+  "add-access-binding",
+  killFn.id,
+  "--role",
+  "functions.functionInvoker",
+  "--service-account-id",
+  saKill.id,
+);
+const TRIGGER = "repetitor-budget-stop";
+if (ycTry("serverless", "trigger", "get", TRIGGER)) console.log(`  триггер ${TRIGGER} уже есть`);
+else {
+  const token = run("yc", ["iam", "create-token"]).trim();
+  const billing = async (p) =>
+    (
+      await fetch(`https://billing.api.cloud.yandex.net/billing/v1/${p}`, {
+        headers: { authorization: `Bearer ${token}` },
+      })
+    ).json();
+  const account = (await billing("billingAccounts")).billingAccounts?.[0];
+  const budget =
+    account && (await billing(`budgets?billingAccountId=${account.id}`)).budgets?.find((b) => b.name === "Страховка");
+  if (!budget) console.log("  ⚠ Не нашёл бюджет «Страховка» в биллинге — триггер не создан, выключателя нет");
+  else {
+    yc(
+      "serverless",
+      "trigger",
+      "create",
+      "billing-budget",
+      "--name",
+      TRIGGER,
+      "--billing-account-id",
+      account.id,
+      "--budget-id",
+      budget.id,
+      "--invoke-function-id",
+      killFn.id,
+      "--invoke-function-service-account-id",
+      saKill.id,
+    );
+    console.log(`  триггер на бюджет «${budget.name}»: при 100% шлюз удаляется`);
+  }
+}
+
 console.log(`\n✓ Готово: https://${gw.domain}/  ·  кабинет: https://${gw.domain}/tutor.html`);
