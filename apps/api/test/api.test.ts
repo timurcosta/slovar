@@ -1,24 +1,55 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, describe, expect, it } from "vitest";
 import type { MeResponse, Profile, Student } from "@repetitor/shared";
 import { createApp } from "../src/app.ts";
 import { hashPassword } from "../src/auth.ts";
 import { MemoryStore } from "../src/store/memory.ts";
 import { SqliteStore } from "../src/store/sqlite.ts";
 import type { Store } from "../src/store/types.ts";
+import { YdbStore } from "../src/store/ydb.ts";
+import { AccessTokenCredentialsProvider } from "@ydbjs/auth/access-token";
 
 const HASH = hashPassword("secret");
 const profile = (xp: number) => ({ xp, beaten: [0], coins: 1 }) as unknown as Profile;
 
-for (const [kind, makeStore] of [
-  ["memory", () => new MemoryStore()],
-  ["sqlite", () => new SqliteStore(":memory:")],
-] as [string, () => Store][]) {
+// Против настоящей YDB — только если заданы YDB_CONNECTION_STRING и YDB_ACCESS_TOKEN
+// (scripts/cloud/test-ydb.sh). Пишет во временную таблицу и удаляет её в конце.
+const factories: [string, () => Promise<Store>][] = [
+  ["memory", async () => new MemoryStore()],
+  ["sqlite", async () => new SqliteStore(":memory:")],
+];
+if (process.env.YDB_CONNECTION_STRING && process.env.YDB_ACCESS_TOKEN) {
+  const ydb = new YdbStore(
+    process.env.YDB_CONNECTION_STRING,
+    new AccessTokenCredentialsProvider({ token: process.env.YDB_ACCESS_TOKEN }),
+    `students_test_${Date.now()}`,
+  );
+  let ready: Promise<void> | null = null;
+  factories.push([
+    "ydb",
+    async () => {
+      await (ready ??= ydb.ensureSchema());
+      await ydb._clear();
+      return ydb;
+    },
+  ]);
+  afterAll(async () => {
+    if (ready) await ydb._drop();
+    ydb.driver.close();
+  });
+}
+
+for (const [kind, makeStore] of factories) {
   describe(`API (${kind})`, () => {
     let clock = Date.parse("2026-10-15T10:00:00Z");
     afterEach(() => (clock = Date.parse("2026-10-15T10:00:00Z")));
 
-    function setup() {
-      const app = createApp({ store: makeStore(), secret: "s", tutorPasswordHash: HASH, now: () => new Date(clock) });
+    async function setup() {
+      const app = createApp({
+        store: await makeStore(),
+        secret: "s",
+        tutorPasswordHash: HASH,
+        now: () => new Date(clock),
+      });
       const call = async (method: string, path: string, body?: unknown, token?: string) => {
         const res = await app.request(`/api${path}`, {
           method,
@@ -33,14 +64,14 @@ for (const [kind, makeStore] of [
     }
 
     it("пускает репетитора только с верным паролем", async () => {
-      const { call } = setup();
+      const { call } = await setup();
       expect((await call("POST", "/tutor/login", { password: "nope" })).status).toBe(401);
       expect((await call("GET", "/tutor/students")).status).toBe(401);
       expect((await call("POST", "/tutor/login", { password: "secret" })).status).toBe(200);
     });
 
     it("блокирует перебор пароля на минуту", async () => {
-      const { call } = setup();
+      const { call } = await setup();
       for (let i = 0; i < 5; i++) await call("POST", "/tutor/login", { password: "x" });
       expect((await call("POST", "/tutor/login", { password: "secret" })).status).toBe(429);
       clock += 61_000;
@@ -48,14 +79,14 @@ for (const [kind, makeStore] of [
     });
 
     it("токен репетитора истекает через 30 дней", async () => {
-      const { call, tutor } = setup();
+      const { call, tutor } = await setup();
       const t = await tutor();
       clock += 31 * 24 * 3600 * 1000;
       expect((await call("GET", "/tutor/students", undefined, t)).status).toBe(401);
     });
 
     it("ученик входит по коду, сохраняет и читает прогресс", async () => {
-      const { call, tutor } = setup();
+      const { call, tutor } = await setup();
       const t = await tutor();
       const st = (await call("POST", "/tutor/students", { name: "  Маша  " }, t)).body as Student;
       expect(st.name).toBe("Маша");
@@ -80,7 +111,7 @@ for (const [kind, makeStore] of [
     });
 
     it("при устаревшем rev отвечает 409 с данными сервера", async () => {
-      const { call, tutor } = setup();
+      const { call, tutor } = await setup();
       const t = await tutor();
       const st = (await call("POST", "/tutor/students", { name: "Петя" }, t)).body as Student;
       const k = (await call("POST", "/join", { code: st.code })).body.token;
@@ -91,7 +122,7 @@ for (const [kind, makeStore] of [
     });
 
     it("не принимает мусор вместо прогресса", async () => {
-      const { call, tutor } = setup();
+      const { call, tutor } = await setup();
       const t = await tutor();
       const st = (await call("POST", "/tutor/students", { name: "Петя" }, t)).body as Student;
       const k = (await call("POST", "/join", { code: st.code })).body.token;
@@ -100,7 +131,7 @@ for (const [kind, makeStore] of [
     });
 
     it("новый код отключает старый вход", async () => {
-      const { call, tutor } = setup();
+      const { call, tutor } = await setup();
       const t = await tutor();
       const st = (await call("POST", "/tutor/students", { name: "Петя" }, t)).body as Student;
       const k = (await call("POST", "/join", { code: st.code })).body.token;
@@ -112,7 +143,7 @@ for (const [kind, makeStore] of [
     });
 
     it("репетитор задаёт настройки, ученик их получает", async () => {
-      const { call, tutor } = setup();
+      const { call, tutor } = await setup();
       const t = await tutor();
       const st = (await call("POST", "/tutor/students", { name: "Петя" }, t)).body as Student;
       expect((await call("PATCH", `/tutor/students/${st.id}`, { settings: { words: "zzz" } }, t)).status).toBe(400);
@@ -136,7 +167,7 @@ for (const [kind, makeStore] of [
     });
 
     it("удаление ученика", async () => {
-      const { call, tutor } = setup();
+      const { call, tutor } = await setup();
       const t = await tutor();
       const st = (await call("POST", "/tutor/students", { name: "Петя" }, t)).body as Student;
       const k = (await call("POST", "/join", { code: st.code })).body.token;
@@ -146,7 +177,7 @@ for (const [kind, makeStore] of [
     });
 
     it("токен ученика не открывает кабинет репетитора", async () => {
-      const { call, tutor } = setup();
+      const { call, tutor } = await setup();
       const t = await tutor();
       const st = (await call("POST", "/tutor/students", { name: "Петя" }, t)).body as Student;
       const k = (await call("POST", "/join", { code: st.code })).body.token;

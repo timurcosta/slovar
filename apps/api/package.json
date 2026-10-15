@@ -6,15 +6,21 @@
     "dev": "node --watch --disable-warning=ExperimentalWarning src/dev.ts",
     "hash-password": "node --disable-warning=ExperimentalWarning src/hash-password.ts",
     "test": "vitest run",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "build": "esbuild src/cloud.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/index.js --legal-comments=none --log-level=warning && node -e \"require('fs').writeFileSync('dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\""
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",
     "@repetitor/shared": "*",
+    "@ydbjs/auth": "^6.3.1",
+    "@ydbjs/core": "^6.3.1",
+    "@ydbjs/query": "^6.3.0",
+    "@ydbjs/value": "^6.0.8",
     "hono": "^4.13.13"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "esbuild": "^0.28.2",
     "vitest": "^5.0.4"
   }
 }

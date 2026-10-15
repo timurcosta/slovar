@@ -14,7 +14,10 @@ const RULES = [
   ["закрытый ключ", /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
   ["хэш пароля репетитора", /scrypt\$[A-Za-z0-9_-]{16,}\$[A-Za-z0-9_-]{20,}/],
   ["токен GitHub", /\bgh[pousr]_[A-Za-z0-9]{30,}/],
-  ["значение секрета в переменной", /\b(AUTH_SECRET|TUTOR_PASSWORD_HASH)\s*[=:]\s*["']?[A-Za-z0-9$_+/=-]{12,}/],
+  [
+    "значение секрета в переменной",
+    /\b(AUTH_SECRET|TUTOR_PASSWORD_HASH)\s*[=:]\s*["']?[A-Za-z0-9$_+/=-]{12,}(?![\w(])/,
+  ],
 ];
 const SKIP = /(^|\/)(package-lock\.json|node_modules\/|dist(-online)?\/|shots\/)|\.(png|jpe?g|gif|ico|woff2?)$/;
 

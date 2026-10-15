@@ -19,7 +19,10 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev:offline": "npm run dev -w @repetitor/web",
     "build:online": "VITE_BACKEND=1 OUT_DIR=dist-online npm run build -w @repetitor/web",
-    "secrets": "node scripts/no-secrets.mjs"
+    "secrets": "node scripts/no-secrets.mjs",
+    "cloud:password": "node --disable-warning=ExperimentalWarning scripts/cloud/set-password.mjs",
+    "cloud:deploy": "node --disable-warning=ExperimentalWarning scripts/cloud/deploy.mjs",
+    "cloud:test-ydb": "scripts/cloud/test-ydb.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
