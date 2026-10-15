@@ -13,6 +13,7 @@ const SCREENS = [
   "s-name",
   "s-story",
   "s-save",
+  "s-join",
 ];
 export function show(id) {
   SCREENS.forEach((s) => ($(s).hidden = s !== id));

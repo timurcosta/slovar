@@ -255,6 +255,14 @@ textarea:focus-visible {
   width: min(220px, 100%);
   letter-spacing: 0.02em;
 }
+#join-in {
+  width: min(220px, 100%);
+  text-transform: uppercase;
+}
+#join-in::placeholder {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
 .title {
   font-weight: 900;
   font-size: 20px;

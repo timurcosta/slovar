@@ -10,12 +10,25 @@ export const heroLook = (): Look =>
   );
 
 export let P: Profile = migrateProfile(LS.get<Partial<Profile> | null>("sb2_profile", null), LS.get("sb_hero", null));
-export const save = () => LS.set("sb2_profile", P);
+
+const listeners: (() => void)[] = [];
+/** Подписка на каждое сохранение прогресса (так синхронизация узнаёт об изменениях). */
+export const onSave = (fn: () => void) => listeners.push(fn);
+
+export const save = () => {
+  LS.set("sb2_profile", P);
+  listeners.forEach((fn) => fn());
+};
 export function resetProfile() {
   P = freshProfile();
+}
+/** Подменяет профиль пришедшим с сервера. Слушателей не зовёт: это не новое изменение игрока. */
+export function replaceProfile(p: Profile) {
+  P = p;
+  LS.set("sb2_profile", P);
 }
 export function giftRalina(wear: boolean) {
   applyRalinaGift(P, wear);
   save();
 }
-save();
+LS.set("sb2_profile", P);

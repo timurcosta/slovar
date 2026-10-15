@@ -4,7 +4,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["**/dist/", "shots/"] },
+  { ignores: ["**/dist/", "**/dist-online/", "shots/", "**/.data/"] },
   js.configs.recommended,
   tseslint.configs.recommended,
   {
@@ -12,13 +12,16 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ["scripts/**/*.{js,mjs}", "**/*.config.js"],
+    files: ["scripts/**/*.{js,mjs}", "**/*.config.js", "apps/api/**/*.ts"],
     languageOptions: { globals: { ...globals.node, ...globals.browser } }, // check.mjs also runs code inside the page
   },
   {
     rules: {
       "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["error", { caughtErrors: "none", argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { caughtErrors: "none", argsIgnorePattern: "^_", ignoreRestSiblings: true },
+      ],
       "no-empty": ["error", { allowEmptyCatch: true }],
       "@typescript-eslint/no-unused-expressions": ["error", { allowTernary: true, allowShortCircuit: true }],
     },

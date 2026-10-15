@@ -1,0 +1,45 @@
+/* Кабинет учителя: поверх стилей игры */
+.tutor-top {
+  justify-content: space-between;
+  align-items: baseline;
+}
+.tutor-scroll {
+  overflow-x: auto;
+}
+.tutor-table tbody tr {
+  cursor: pointer;
+}
+.tutor-table tbody tr:hover,
+.tutor-table tbody tr:focus-visible {
+  background: #eef4ff;
+  outline: none;
+}
+.tutor-code {
+  font-family: var(--font-pixel);
+  font-size: 28px;
+  letter-spacing: 6px;
+  margin: 8px 0 12px;
+  color: var(--pen);
+}
+.tutor-lims {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+.tutor-lims label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#settings textarea {
+  width: 100%;
+  font: inherit;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+.sheet .pinrow input:not(#pass) {
+  width: min(320px, 100%);
+  letter-spacing: 0.02em;
+  font-size: 20px;
+}

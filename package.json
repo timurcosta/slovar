@@ -8,18 +8,21 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @repetitor/web",
+    "dev": "concurrently -k -n web,api -c blue,green \"VITE_BACKEND=1 npm run dev -w @repetitor/web\" \"npm run dev -w @repetitor/api\"",
     "build": "npm run build -w @repetitor/web",
-    "check": "npm run build && node scripts/check.mjs",
+    "check": "npm run build && npm run build:online && node --disable-warning=ExperimentalWarning scripts/check.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "simple-git-hooks",
-    "test": "npm test -w @repetitor/web",
-    "typecheck": "npm run typecheck -w @repetitor/web"
+    "test": "npm test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev:offline": "npm run dev -w @repetitor/web",
+    "build:online": "VITE_BACKEND=1 OUT_DIR=dist-online npm run build -w @repetitor/web"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "concurrently": "^10.0.6",
     "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",

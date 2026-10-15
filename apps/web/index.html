@@ -35,6 +35,7 @@
             </form>
             <p class="msg err" id="name-msg"></p>
             <button class="link" id="btn-name-load" type="button">Уже играл? Загрузить по коду</button>
+            <button class="link" id="btn-name-join" type="button" hidden>У меня есть код от учителя</button>
           </div>
         </div>
       </section>
@@ -44,6 +45,29 @@
         <div class="cast" id="story-cast"></div>
         <div id="story-text"></div>
         <button class="btn primary" id="btn-story-go">В поход!</button>
+      </section>
+
+      <section class="screen" id="s-join" hidden>
+        <h1>Код от учителя</h1>
+        <p class="lead" id="join-lead">
+          Учитель даст тебе короткий код. После входа прогресс сохраняется у учителя: его не страшно потерять, и можно
+          продолжать с любого устройства.
+        </p>
+        <form class="pinrow" id="join-form">
+          <input
+            id="join-in"
+            type="text"
+            maxlength="12"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            placeholder="Код"
+            aria-label="Код от учителя"
+          />
+          <button class="btn primary" type="submit">Войти</button>
+        </form>
+        <p class="msg" id="join-msg"></p>
+        <button class="btn" id="btn-join-back">Назад</button>
       </section>
 
       <section class="screen" id="s-save" hidden>
@@ -155,7 +179,8 @@
           <span class="row"
             ><button class="link" id="btn-teacher-1">Для учителя</button
             ><button class="link" id="btn-story">История</button
-            ><button class="link" id="btn-save">Сохранить прогресс</button></span
+            ><button class="link" id="btn-save">Сохранить прогресс</button
+            ><button class="link" id="btn-join" hidden>Код учителя</button></span
           ><span class="row"
             ><button class="link" id="btn-music-home">Музыка: вкл</button
             ><button class="link" id="btn-mute-home">Звук: вкл</button></span

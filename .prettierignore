@@ -1,3 +1,5 @@
 dist/
+dist-online/
 shots/
 package-lock.json
+.data/

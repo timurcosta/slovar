@@ -70,6 +70,8 @@ import { openShop } from "./ui/screens/shop.js";
 import { askName, showStory } from "./ui/screens/intro.js";
 import { renderAwards } from "./ui/screens/awards.js";
 import { renderTrophies } from "./ui/screens/trophies.js";
+import { pull, setOnRemote } from "./net/sync.ts";
+import { syncJoinButtons } from "./ui/screens/join.js";
 
 $("btn-campaign").onclick = () => {
   if (!blockedToday()) startCampaign(frontier());
@@ -182,6 +184,11 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "1" || e.key === "ArrowLeft") answer(0);
   if (e.key === "2" || e.key === "ArrowRight") answer(1);
 });
+syncJoinButtons();
+setOnRemote(() => {
+  syncJoinButtons();
+  if (!$("s-home").hidden) renderHome();
+});
 if (P.name) {
   renderHome();
   if (!P.storySeen) showStory();
@@ -202,3 +209,4 @@ if (P.lepToast) {
     1500,
   );
 }
+pull();

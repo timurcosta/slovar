@@ -1,4 +1,6 @@
 node_modules/
 dist/
+dist-online/
 shots/
 .DS_Store
+.data/
