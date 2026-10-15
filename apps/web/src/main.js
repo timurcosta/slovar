@@ -61,7 +61,7 @@ import { blockedToday } from "./progress/limits.js";
 import { frontier, towerOpen } from "./progress/unlocks.js";
 import { checkAch } from "./progress/achievements.js";
 import { sfx } from "./audio/sfx.js";
-import { TRACKS, TRACK_ORDER, startMusic, stopMusic } from "./audio/music.js";
+import { TRACK_ORDER, battleTrack, pauseMusic, resumeMusic } from "./audio/music.js";
 import { silentEl, unlockAudio } from "./audio/context.js";
 import { G, startCampaign, startTower, startTraining, stopGame } from "./battle/run.js";
 import { answer, hitIce, typed, wordPress } from "./battle/round.js";
@@ -124,7 +124,7 @@ $("type-go").addEventListener("mousedown", (e) => e.preventDefault());
 const muteLabel = () => {
   ["btn-mute", "btn-mute-home"].forEach((id) => ($(id).textContent = "Звук: " + (settings.muted ? "выкл" : "вкл")));
   ["btn-music", "btn-music-home"].forEach(
-    (id) => ($(id).textContent = "Музыка: " + (settings.music ? (TRACKS[settings.track] || TRACKS.calm).name : "выкл")),
+    (id) => ($(id).textContent = "Музыка: " + (settings.music ? battleTrack().name : "выкл")),
   );
   $("btn-title-music").textContent = "Музыка: " + (settings.music && !settings.muted ? "вкл" : "выкл");
 };
@@ -134,10 +134,10 @@ $("btn-title-music").onclick = () => {
   if (on) settings.muted = false;
   saveSettings();
   muteLabel();
-  stopMusic();
-  if (on && $("s-title").classList.contains("started")) {
+  pauseMusic();
+  if (on) {
     unlockAudio();
-    setTimeout(() => startMusic("title"), 450);
+    setTimeout(resumeMusic, 450);
   }
 };
 $("btn-mute").onclick = $("btn-mute-home").onclick = () => {
@@ -145,16 +145,17 @@ $("btn-mute").onclick = $("btn-mute-home").onclick = () => {
   saveSettings();
   muteLabel();
   if (settings.muted) {
-    stopMusic();
+    pauseMusic();
     if (silentEl) silentEl.pause();
   } else {
     unlockAudio();
     sfx.coin();
-    if (G && !$("s-game").hidden) startMusic();
+    resumeMusic();
   }
 };
 $("btn-music").onclick = $("btn-music-home").onclick = () => {
-  // cycle: track 1 → track 2 → track 3 → off → track 1
+  // боевые треки по кругу, потом «выкл»; вне боя играет музыка экрана, её кнопка только включает и выключает
+  if (G) G.final = false; // перелистнул сам — играет выбранный, даже у финального босса
   if (!settings.music) {
     settings.music = true;
     settings.track = TRACK_ORDER[0];
@@ -165,13 +166,15 @@ $("btn-music").onclick = $("btn-music-home").onclick = () => {
   }
   saveSettings();
   muteLabel();
-  stopMusic();
-  if (settings.music && G && !$("s-game").hidden) {
+  if (!settings.music) pauseMusic();
+  else {
     unlockAudio();
-    setTimeout(startMusic, 450);
+    if (G && !$("s-game").hidden) pauseMusic();
+    setTimeout(resumeMusic, 450);
   }
 };
 muteLabel();
+window.addEventListener("musicchange", muteLabel);
 document.querySelectorAll('input[name="play"]').forEach(
   (r) =>
     (r.onchange = () => {

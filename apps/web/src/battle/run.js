@@ -3,7 +3,7 @@ import { $, TOUCH, esc } from "../lib/dom.js";
 import { plural } from "../lib/text.js";
 import { pick, shuffle } from "../lib/random.js";
 import { ITEM, ITEMS, RARITY, showcaseEquip } from "../content/items.js";
-import { AB, BOSSES, LORE, WIN_LORE, defeatedWord, towerBoss } from "../content/bosses.js";
+import { AB, BOSSES, FORM2, LORE, WIN_LORE, defeatedWord, towerBoss } from "../content/bosses.js";
 import { PALS, SPR } from "../content/sprites.js";
 import { shownDmg } from "../content/rules.ts";
 import { drawHero } from "../render/hero.js";
@@ -17,7 +17,7 @@ import { blockedToday, ensureDay, limitReason } from "../progress/limits.js";
 import { addCoins, addXP, grantChest } from "../progress/rewards.js";
 import { checkAch } from "../progress/achievements.js";
 import { sfx, tone } from "../audio/sfx.js";
-import { duckMusic, stopMusic } from "../audio/music.js";
+import { duckMusic, nextBattleTrack, stopMusic } from "../audio/music.js";
 import { bossCv, drawFighters, heroCv, renderHUD } from "./hud.js";
 import { clearRound, later, nextQ } from "./round.js";
 import { DIFF_NAME, applyDiff, diffMul } from "./difficulty.js";
@@ -30,6 +30,7 @@ const loreText = (t) => esc(t.replace(/\{name\}/g, P.name || "герой"));
 export let G = null;
 function newRun(kind) {
   touchDay();
+  nextBattleTrack();
   const g = gear();
   G = {
     kind,
@@ -171,6 +172,7 @@ function startBoss(b) {
   b = applyDiff(b);
   const g = gear();
   G.boss = b;
+  G.final = !!FORM2[b.name]; // у финальных боссов своя музыка
   G.hp = b.hp;
   G.hpLag = 0;
   G.queue = shuffle(poolFor(b));

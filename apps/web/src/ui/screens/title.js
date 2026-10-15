@@ -11,7 +11,7 @@ import { settings } from "../../state/settings.ts";
 import { TITLES, levelOf } from "../../progress/levels.ts";
 import { frontier } from "../../progress/unlocks.js";
 import { sfx } from "../../audio/sfx.js";
-import { startMusic, stopMusic } from "../../audio/music.js";
+import { SCREEN_MUSIC, startMusic } from "../../audio/music.js";
 import { unlockAudio } from "../../audio/context.js";
 import { isGuest, linkedName } from "../../net/sync.ts";
 import { show } from "../screens.js";
@@ -111,7 +111,7 @@ export function showTitle() {
   drawHero($("title-hero"), P.equip, $("title-aura"));
   $("title-hero-spot").classList.toggle("nopet", !PET_SPR[P.equip.pet]);
   if (!raf) raf = requestAnimationFrame(frame);
-  if (started) startMusic("title");
+  if (started) startMusic(SCREEN_MUSIC["s-title"]);
 }
 
 function start(byKey) {
@@ -119,8 +119,8 @@ function start(byKey) {
   started = true;
   $("s-title").classList.add("started");
   unlockAudio();
-  if (settings.music && !settings.muted) startMusic("title");
-  else sfx.coin();
+  startMusic(SCREEN_MUSIC["s-title"]); // и при выключенной музыке: запомнит трек на случай, если её включат
+  if (!settings.music || settings.muted) sfx.coin();
   if (byKey) $("btn-title-play").focus();
   // ещё не вошёл и не гость: сразу спрашиваем, кто играет (меню остаётся под окном)
   if (!canEnter()) setTimeout(openLogin, 350);
@@ -128,7 +128,6 @@ function start(byKey) {
 
 /** С заставки в игру: история для нового героя, иначе главная. */
 export function enterGame() {
-  stopMusic();
   renderHome();
   if (P.storySeen) show("s-home");
   else showStory();
@@ -164,6 +163,3 @@ if (window.ResizeObserver) {
   ro.observe($("title-hero-spot"));
   ro.observe($("title-boss-spot"));
 }
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && visible() && started) startMusic("title");
-});
