@@ -26,6 +26,14 @@ html,
 body {
   min-height: 100%;
 }
+/* Двойной тап на iPhone приближает страницу, а дети быстро жмут в одно место (паутина, лёд, двойки).
+   manipulation отключает только это, щипок пальцами по-прежнему увеличивает. */
+html,
+body,
+button,
+.trick {
+  touch-action: manipulation;
+}
 body {
   background-color: var(--paper);
   background-image:
@@ -3730,5 +3738,241 @@ body.on-title .sheet::before {
   }
   .word {
     height: 56px;
+  }
+}
+
+/* ---------- атаки боссов, формы, супер-удар ---------- */
+.cast {
+  animation: cast 0.45s ease-in-out;
+}
+@keyframes cast {
+  30% {
+    transform: translateX(8px) scale(1.06) rotate(3deg);
+  }
+  60% {
+    transform: translateX(-10px) scale(0.98) rotate(-3deg);
+  }
+}
+/* уклон: герой подпрыгивает, удар пролетает под ним */
+.dodge {
+  animation: dodge 0.42s ease-out;
+}
+@keyframes dodge {
+  40% {
+    transform: translate(-10%, -38%) rotate(-8deg);
+  }
+}
+#boss-wrap.morphing {
+  animation: morph 0.7s linear;
+}
+@keyframes morph {
+  0%,
+  100% {
+    transform: none;
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px) scale(1.04);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px) scale(0.97);
+  }
+}
+#boss-wrap.charging #boss-cv {
+  animation: chargeglow 0.22s ease-in-out infinite alternate;
+}
+@keyframes chargeglow {
+  from {
+    filter: drop-shadow(0 0 3px #ff7a1a);
+  }
+  to {
+    filter: drop-shadow(0 0 10px #d62839) brightness(1.3);
+  }
+}
+#boss-cv.shattered {
+  visibility: hidden;
+}
+/* шкала заряда супер-удара над боссом */
+.charge {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--ink);
+  pointer-events: none;
+}
+.charge[hidden] {
+  display: none;
+}
+.charge i {
+  width: 14px;
+  height: 8px;
+  background: #3a2a4a;
+}
+.charge i.on {
+  background: linear-gradient(#ffd23f, #ff7a1a);
+}
+.charge.full i {
+  animation: chargefull 0.25s steps(2) infinite;
+}
+@keyframes chargefull {
+  50% {
+    background: #fff3a0;
+  }
+}
+/* шар супер-удара: большая цель для пальца, сам шар рисует vfx */
+.orbhit {
+  position: absolute;
+  z-index: 6;
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.orbhit::after {
+  content: "ЖМИ!";
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  transform: translateX(-50%);
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-size: 14px;
+  color: #fff;
+  text-shadow:
+    1px 1px 0 var(--ink),
+    -1px -1px 0 var(--ink),
+    1px -1px 0 var(--ink),
+    -1px 1px 0 var(--ink);
+  animation: wiggle 0.35s infinite;
+}
+/* миньоны прилетают сверху и садятся на кнопку или поле ввода */
+.minion {
+  position: absolute;
+  z-index: 3;
+  top: 18%;
+  width: 40px;
+  pointer-events: auto;
+  animation: minionin 0.45s ease-out both;
+}
+.typer .minion {
+  top: 6px;
+}
+.minion canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  animation: minionbob 0.5s ease-in-out infinite alternate;
+}
+.minion.blobby {
+  height: 30px;
+  border-radius: 50% 50% 40% 40%;
+  background:
+    radial-gradient(circle at 35% 40%, #fff 0 10%, transparent 11%),
+    radial-gradient(circle at 65% 40%, #fff 0 10%, transparent 11%), #2a3f8a;
+  border: 3px solid var(--ink);
+}
+.minion.popped {
+  animation: minionpop 0.25s forwards;
+}
+@keyframes minionin {
+  from {
+    transform: translate(var(--fx, 0), -140px) rotate(-20deg);
+    opacity: 0;
+  }
+  70% {
+    opacity: 1;
+  }
+}
+@keyframes minionbob {
+  to {
+    transform: translateY(-3px) rotate(4deg);
+  }
+}
+@keyframes minionpop {
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+/* напёрстки: стаканчик закрывает букву, нажатие поднимает его */
+.cupcover {
+  position: absolute;
+  inset: -3px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border: 3px solid var(--ink);
+}
+.cupcover canvas {
+  height: 70%;
+  width: auto;
+  image-rendering: pixelated;
+}
+.cupcover:not(:has(canvas)) {
+  background: repeating-linear-gradient(90deg, #d62839 0 12px, #fff 12px 24px);
+}
+.cupcover.lifted {
+  animation: cuplift 0.3s ease-in forwards;
+}
+@keyframes cuplift {
+  to {
+    transform: translateY(-90%) rotate(-12deg);
+    opacity: 0;
+  }
+}
+/* пузырь: кнопка или поле ввода всплывает в пузыре */
+.bubbled {
+  animation: bubblefloat 1.6s ease-in-out infinite alternate;
+  z-index: 4;
+}
+@keyframes bubblefloat {
+  from {
+    transform: translateY(-14px) rotate(-3deg);
+  }
+  to {
+    transform: translateY(-34px) rotate(3deg);
+  }
+}
+.bubblecover {
+  position: absolute;
+  inset: -12px;
+  z-index: 3;
+  border-radius: 50%;
+  border: 3px solid #45d1e6;
+  background:
+    radial-gradient(circle at 30% 28%, #fff 0 9%, transparent 10%),
+    radial-gradient(circle, rgba(168, 240, 255, 0.15) 55%, rgba(69, 209, 230, 0.45));
+}
+.typer .bubblecover {
+  border-radius: 40%;
+}
+.bubblecover.popped {
+  animation: minionpop 0.25s forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cast,
+  .dodge,
+  #boss-wrap.morphing,
+  .bubbled,
+  .minion canvas {
+    animation: none !important;
   }
 }

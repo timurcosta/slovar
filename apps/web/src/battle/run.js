@@ -3,7 +3,7 @@ import { $, TOUCH, esc } from "../lib/dom.js";
 import { plural } from "../lib/text.js";
 import { pick, shuffle } from "../lib/random.js";
 import { ITEM, ITEMS, RARITY, showcaseEquip } from "../content/items.js";
-import { AB, BOSSES, FORM2, LORE, WIN_LORE, defeatedWord, towerBoss } from "../content/bosses.js";
+import { AB, BOSSES, FORMS, LORE, WIN_LORE, defeatedWord, towerBoss } from "../content/bosses.js";
 import { PALS, SPR } from "../content/sprites.js";
 import { shownDmg } from "../content/rules.ts";
 import { drawHero } from "../render/hero.js";
@@ -19,7 +19,9 @@ import { checkAch } from "../progress/achievements.js";
 import { sfx, tone } from "../audio/sfx.js";
 import { duckMusic, nextBattleTrack, stopMusic } from "../audio/music.js";
 import { bossCv, drawFighters, heroCv, renderHUD } from "./hud.js";
-import { clearRound, later, nextQ } from "./round.js";
+import { clearRound, later, nextQ, renderCharge } from "./round.js";
+import { rel } from "./effects.js";
+import * as vfx from "./vfx.js";
 import { DIFF_NAME, applyDiff, diffMul } from "./difficulty.js";
 import { toast } from "../ui/toast.js";
 import { show } from "../ui/screens.js";
@@ -79,6 +81,7 @@ export function startTraining(kind) {
           ab: [],
           pool: "train",
           idx: lvlIdx,
+          lvl: BOSSES[lvlIdx].lvl,
           filter: "brightness(.6) saturate(1.6) hue-rotate(200deg)",
           taunts: ["Я помню все твои ошибки!", "Опять эта буква?", "Ну-ка, вспомни правило!"],
         }
@@ -90,6 +93,7 @@ export function startTraining(kind) {
           ab: [],
           pool: "train",
           idx: lvlIdx,
+          lvl: BOSSES[lvlIdx].lvl,
           filter: "hue-rotate(160deg) saturate(1.3)",
           taunts: ["Новое слово! Запоминай!", "Читай внимательно!", "Это слово ты ещё не встречал!"],
         };
@@ -172,7 +176,9 @@ function startBoss(b) {
   b = applyDiff(b);
   const g = gear();
   G.boss = b;
-  G.final = !!FORM2[b.name]; // у финальных боссов своя музыка
+  G.forms = b.forms || FORMS[b.name] || [];
+  G.formN = 0;
+  G.final = G.forms.length > 0 && b.pool === "b"; // у финальных боссов своя музыка
   G.hp = b.hp;
   G.hpLag = 0;
   G.queue = shuffle(poolFor(b));
@@ -182,7 +188,9 @@ function startBoss(b) {
   G.firstHit = false;
   G.q = 0;
   G.enraged = false;
-  G.form2 = false;
+  G.charge = 0;
+  G.orb = null;
+  G.mobs = {};
   G.stolen = 0;
   G.bonus0 = { c: G.coinsBonus, x: G.xpBonus };
   G.bossMistakes = 0;
@@ -198,6 +206,7 @@ function startBoss(b) {
   $("boss-num").textContent =
     G.kind === "tower" ? `ЭТАЖ ${b.floor}` : G.kind === "training" ? "ТРЕНИРОВКА" : `${b.idx + 1}/${BOSSES.length}`;
   $("boss-abil").innerHTML = abilChips(b.ab);
+  renderCharge();
   $("word").innerHTML = "";
   $("feedback").textContent = "";
   [0, 1].forEach((i) => {
@@ -282,12 +291,15 @@ export function bossDown() {
   }
   save();
   $("boss-wrap").classList.remove("angry");
-  bossCv.className = "dead";
+  // босс рассыпается на свои пиксели
+  vfx.shatter(bossCv, rel(bossCv), $("boss-wrap").style.filter);
+  bossCv.className = "shattered";
+  $("boss-charge").hidden = true;
   sfx.fanfare(G.kind === "campaign" && b.idx === BOSSES.length - 1);
   duckMusic(2600);
   G.score += 50;
-  const bossCoins = addCoins(Math.round((G.kind === "tower" ? 30 + b.floor * 9 : 30 + b.idx * 9) * diffMul()));
-  addXP(Math.round((G.kind === "tower" ? 30 + b.floor * 4 : 30 + b.idx * 5) * diffMul()));
+  const bossCoins = addCoins(Math.round((G.kind === "tower" ? 30 + b.floor * 9 : 30 + b.lvl * 9) * diffMul()));
+  addXP(Math.round((G.kind === "tower" ? 30 + b.floor * 4 : 30 + b.lvl * 5) * diffMul()));
   const tier = G.kind === "tower" ? (b.floor % 5 === 0 ? 3 : 1) : unlockedNew ? 2 : 1;
   const chest = grantChest(tier, null);
   // Воришка побеждён: всё украденное возвращается

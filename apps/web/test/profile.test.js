@@ -35,14 +35,33 @@ describe("профиль", () => {
     expect(P.equip.armor).toBe("noarmor");
   });
 
-  it("rv 1 → 2: индексы боссов переносятся по именам", async () => {
+  it("rv 1 → 3: индексы боссов переносятся по именам", async () => {
     const { P } = await load({ sb2_profile: { rv: 1, xpv: 2, unlocked: 5, beaten: [0, 1, 2, 3, 4] } });
     expect({ rv: P.rv, unlocked: P.unlocked, beaten: P.beaten }).toMatchSnapshot();
   });
 
-  it("rv 0 → 2: ещё без Ралины", async () => {
+  it("rv 0 → 3: ещё без Ралины", async () => {
     const { P } = await load({ sb2_profile: { unlocked: 3, beaten: [0, 1, 2], xpv: 2 } });
     expect({ rv: P.rv, unlocked: P.unlocked, beaten: P.beaten }).toMatchSnapshot();
+  });
+
+  it("rv 2 → 3: новые боссы вставлены, победы остаются за теми же боссами", async () => {
+    const all = Array.from({ length: 28 }, (_, i) => i);
+    const { P } = await load({ sb2_profile: { rv: 2, xpv: 2, unlocked: 27, beaten: all } });
+    const { BOSSES } = await import("../src/content/bosses.js");
+    const names = P.beaten.map((i) => BOSSES[i].name);
+    expect(names).toContain("Король Ошибок");
+    expect(names).toContain("Олеся Отличница");
+    expect(names).not.toContain("Ластик Стиратель");
+    // за Королём открыта Тень, вставленные раньше боссы тоже открыты
+    expect(BOSSES[P.unlocked].name).toBe("Тень Короля");
+    expect(P.rv).toBe(3);
+  });
+
+  it("rv 2 → 3: повторный прогон ничего не меняет", async () => {
+    const { migrateProfile } = await import("../src/state/migrations.ts");
+    const once = migrateProfile({ rv: 2, xpv: 2, unlocked: 6, beaten: [0, 1, 2, 3, 4, 5] });
+    expect(migrateProfile(once)).toEqual(once);
   });
 
   it("xpv 2: опыт поднимается, чтобы уровень не упал", async () => {

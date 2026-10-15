@@ -64,7 +64,7 @@ import { sfx } from "./audio/sfx.js";
 import { TRACK_ORDER, battleTrack, pauseMusic, resumeMusic } from "./audio/music.js";
 import { silentEl, unlockAudio } from "./audio/context.js";
 import { G, startCampaign, startTower, startTraining, stopGame } from "./battle/run.js";
-import { answer, hitIce, typed, wordPress } from "./battle/round.js";
+import { answer, trickKey, typed, wordPress } from "./battle/round.js";
 import { toast } from "./ui/toast.js";
 import { show } from "./ui/screens.js";
 import { home, renderHome } from "./ui/screens/home.js";
@@ -201,10 +201,9 @@ document.addEventListener("keydown", (e) => {
     }
     return;
   }
-  // лёд: любая клавиша бьёт по льду (на компьютере не надо тянуться к мышке)
-  if (G.ice && !G.locked && !e.repeat && !["Shift", "Control", "Alt", "Meta", "Tab"].includes(e.key)) {
+  // лёд, супер-удар, миньоны и пузырь на поле ввода: любая клавиша (на компьютере не надо тянуться к мышке)
+  if (trickKey(e)) {
     e.preventDefault();
-    hitIce();
     return;
   }
   if (G.type) return;

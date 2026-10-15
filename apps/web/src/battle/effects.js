@@ -1,6 +1,7 @@
 // Визуальные эффекты боя: удары, оружие, питомцы, всплывающие надписи.
 import { $, replay } from "../lib/dom.js";
 import { BREATH, PET_ATK } from "../content/pets.js";
+import { ATTACK } from "../content/bosses.js";
 import { drawHero, petMouth } from "../render/hero.js";
 import { P } from "../state/profile.ts";
 import { sfx, tone } from "../audio/sfx.js";
@@ -337,4 +338,171 @@ export function fx(kind, col, petRun = false) {
     }
   }, 300);
   return 330;
+}
+
+/** Рывок босса к герою и обратно (укус). */
+function bossDash(dx) {
+  if (REDUCED) return;
+  bossCv.animate(
+    [
+      { transform: "none" },
+      { transform: "translateX(8px) rotate(4deg)", offset: 0.2 },
+      { transform: `translateX(${-dx}px) rotate(-6deg)`, offset: 0.45 },
+      { transform: `translateX(${-dx}px) rotate(3deg)`, offset: 0.6 },
+      { transform: "none" },
+    ],
+    { duration: 560, easing: "ease-in-out" },
+  );
+}
+const DEF_ATK = { k: "spell", c: ["#ffffff", "#ffd0f4", "#c77dff"] };
+/**
+ * Ответная атака босса на ошибку: у каждого свой удар (ATTACK по палитре, во второй форме G.boss.atk).
+ * outcome: "hit" — попал, "block" — отбил щит героя, "dodge" — герой увернулся (снаряд пролетает ниже).
+ * Возвращает, через сколько мс удар доходит до героя: тогда сердце и «ой».
+ */
+export function bossAttack(outcome = "hit") {
+  if (!G) return 0;
+  const atk = G.boss.atk || ATTACK[G.boss.pal] || DEF_ATK,
+    c = atk.c || DEF_ATK.c,
+    n = atk.n || 1;
+  const h = rel(heroCv),
+    b = rel(bossCv);
+  const mouth = [b.x + b.w * 0.22, b.y + b.h * 0.45],
+    body = [h.x + h.w * 0.6, h.y + h.h * 0.5];
+  const to =
+    outcome === "block" ? [h.x + h.w * 0.92, body[1]] : outcome === "dodge" ? [h.x + h.w * 0.2, h.y + h.h * 0.9] : body;
+  const cast = () => replay(bossCv, "cast");
+  let t;
+  switch (atk.k) {
+    case "splat":
+      cast();
+      sfx.whoosh(false);
+      t = vfx.splat(mouth, to, c);
+      setTimeout(() => sfx.splat(), t);
+      break;
+    case "stamp":
+      cast();
+      tone(700, 0.25, "square", 0.025, 200);
+      t = vfx.stampDrop(to, c);
+      setTimeout(() => sfx.thud(), t);
+      break;
+    case "needles":
+      cast();
+      sfx.whoosh(false);
+      t = vfx.needles(mouth, to, c, n > 1 ? n : 5);
+      setTimeout(() => sfx.scratch(2), t);
+      break;
+    case "zap":
+      cast();
+      sfx.beep();
+      setTimeout(() => sfx.laser(), 160);
+      t = vfx.zap(mouth, to, c);
+      break;
+    case "spell":
+      cast();
+      sfx.spell();
+      t = vfx.spell(mouth, to, c, n);
+      setTimeout(() => sfx.zap(), t);
+      break;
+    case "bone":
+      cast();
+      sfx.whoosh(false);
+      t = vfx.bone(mouth, to, c);
+      setTimeout(() => sfx.clang(), t);
+      break;
+    case "shuriken":
+      cast();
+      sfx.whoosh(false);
+      setTimeout(() => sfx.whoosh(false), 90);
+      t = vfx.shuriken(mouth, to, c);
+      setTimeout(() => sfx.clang(), t);
+      break;
+    case "snow":
+      cast();
+      sfx.whoosh(false);
+      t = vfx.snowball(mouth, to, c);
+      setTimeout(() => sfx.shatter(), t);
+      break;
+    case "tongue":
+      tone(300, 0.1, "triangle", 0.04, 900);
+      t = vfx.tongue(mouth, to, c);
+      setTimeout(() => sfx.splat(), t);
+      break;
+    case "plane":
+      cast();
+      sfx.paper();
+      t = vfx.plane(mouth, to, c, n);
+      setTimeout(() => sfx.paper(), t);
+      break;
+    case "fire":
+      if (atk.big) {
+        sfx.fireball();
+        t = vfx.fireball(mouth, to, { big: true });
+        setTimeout(() => sfx.boom(false), t);
+      } else {
+        cast();
+        sfx.roar(300);
+        vfx.breath(mouth, to, c);
+        t = 220;
+      }
+      break;
+    case "cannon":
+      cast();
+      sfx.cannon();
+      vfx.shell(mouth, to);
+      t = 300;
+      setTimeout(() => sfx.boom(false), t);
+      break;
+    case "rocket":
+      cast();
+      sfx.rocketLaunch();
+      t = vfx.rocket(mouth, to);
+      setTimeout(() => sfx.boom(true), t);
+      break;
+    case "royal":
+      // скипетр вверх — и молния с неба в героя
+      cast();
+      tone(140, 0.18, "triangle", 0.04, 260);
+      for (let i = 0; i < n; i++)
+        setTimeout(
+          () => {
+            sfx.thunder();
+            vfx.lightning(to, 0, [c[2], c[1], c[0]]);
+          },
+          240 + i * 220,
+        );
+      t = 300 + (n - 1) * 220;
+      break;
+    default: {
+      // bite: подбегает и кусает
+      const dx = Math.max(30, b.x + b.w * 0.1 - (h.x + h.w * 0.85));
+      bossDash(dx);
+      tone(140, 0.18, "triangle", 0.04, 260);
+      t = 270;
+      setTimeout(() => {
+        vfx.bite(to);
+        sfx.chomp();
+      }, t - 20);
+    }
+  }
+  if (outcome === "dodge") setTimeout(() => replay(heroCv, "dodge"), Math.max(0, t - 180));
+  if (outcome === "block")
+    setTimeout(() => {
+      vfx.guard(to);
+      sfx.block();
+    }, t);
+  return t;
+}
+/** Вампир тянет жизнь из героя. */
+export function bossDrain() {
+  const h = rel(heroCv),
+    b = rel(bossCv);
+  vfx.drain([h.x + h.w * 0.6, h.y + h.h * 0.45], [b.x + b.w * 0.45, b.y + b.h * 0.5]);
+}
+/** Воришка: монетки летят от героя к боссу. */
+export function bossSteal(n) {
+  const h = rel(heroCv),
+    b = rel(bossCv);
+  vfx.coinsFly([h.x + h.w * 0.6, h.y + h.h * 0.4], [b.x + b.w * 0.4, b.y + b.h * 0.4], n);
+  sfx.coin();
 }

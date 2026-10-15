@@ -26,7 +26,7 @@ describe("код сохранения", () => {
     const d = await unpackSave(await packSave({ v: 1, p: OLD }));
     const p = migrateProfile(d.p);
     expect(p.name).toBe("Старичок");
-    expect(p.rv).toBe(2);
+    expect(p.rv).toBe(3);
     expect(p.xp).toBeGreaterThanOrEqual(9000);
   });
 

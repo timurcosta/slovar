@@ -1,6 +1,6 @@
 // Достижения: условия, награды, проверка.
 import { ITEM, ITEMS } from "../content/items.js";
-import { BOSSES } from "../content/bosses.js";
+import { BOSSES, bossIdx } from "../content/bosses.js";
 import { learnedCount } from "../state/stats.ts";
 import { P, save } from "../state/profile.ts";
 import { levelOf } from "./levels.ts";
@@ -66,14 +66,32 @@ export const ACH = [
   { id: "forge10", n: "Кузнец", d: "Прокачай Силу до 10", c: () => (P.up.str || 0) >= 10, r: 300 },
   { id: "d3", n: "Три дня подряд", d: "Играй 3 дня подряд", c: () => P.days.streak >= 3, r: 60 },
   { id: "d7", n: "Неделя подряд", d: "Играй 7 дней подряд", c: () => P.days.streak >= 7, r: 200 },
-  { id: "ralina", n: "Ралина довольна", d: "Победи Репетитора Ралину", c: () => P.beaten.includes(0), r: 150 },
-  { id: "angel", n: "Друг ангела", d: "Расколдуй Ангелику", c: () => P.beaten.includes(15), r: 600 },
-  { id: "sister", n: "Сестра спасена", d: "Расколдуй Олесю", c: () => P.beaten.includes(20), r: 1000 },
+  {
+    id: "ralina",
+    n: "Ралина довольна",
+    d: "Победи Репетитора Ралину",
+    c: () => P.beaten.includes(bossIdx("Репетитор Ралина")),
+    r: 150,
+  },
+  {
+    id: "angel",
+    n: "Друг ангела",
+    d: "Расколдуй Ангелику",
+    c: () => P.beaten.includes(bossIdx("Ангел Ангелика")),
+    r: 600,
+  },
+  {
+    id: "sister",
+    n: "Сестра спасена",
+    d: "Расколдуй Олесю",
+    c: () => P.beaten.includes(bossIdx("Олеся Отличница")),
+    r: 1000,
+  },
   {
     id: "king",
     n: "Король повержен",
     d: "Победи Короля Ошибок",
-    c: () => P.beaten.includes(BOSSES.length - 1),
+    c: () => P.beaten.includes(bossIdx("Король Ошибок")),
     r: 2500,
   },
   {

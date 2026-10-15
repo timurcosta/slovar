@@ -1,7 +1,8 @@
 // Раунд: следующий вопрос, таймер, ответ и его последствия.
 import { $, TOUCH, esc, replay } from "../lib/dom.js";
 import { pick, shuffle } from "../lib/random.js";
-import { FORM2 } from "../content/bosses.js";
+import { PALS, SPR } from "../content/sprites.js";
+import { drawBoss, drawSprite } from "../render/sprite.js";
 import { shownDmg } from "../content/rules.ts";
 import { poolFor } from "../topics/words/pools.js";
 import { stat } from "../state/stats.ts";
@@ -13,10 +14,26 @@ import { limitReason } from "../progress/limits.js";
 import { addCoins, addXP, refreshCoins } from "../progress/rewards.js";
 import { checkAch } from "../progress/achievements.js";
 import { noiseSweep, sfx, tone } from "../audio/sfx.js";
-import { startMusic } from "../audio/music.js";
+import { duckMusic, startMusic } from "../audio/music.js";
+import { ATTACK } from "../content/bosses.js";
 import { bossCv, heroCv, renderHUD } from "./hud.js";
 import { G, abilChips, bossDown, endGame, limitStop } from "./run.js";
-import { PET_RUN, droneVolley, fx, petAttack, petHitDelay, petRunsIn, petStartAt, pop, say } from "./effects.js";
+import {
+  PET_RUN,
+  bossAttack,
+  bossDrain,
+  bossSteal,
+  droneVolley,
+  fx,
+  petAttack,
+  petHitDelay,
+  petRunsIn,
+  petStartAt,
+  pop,
+  rel,
+  say,
+} from "./effects.js";
+import * as vfx from "./vfx.js";
 import { diffMul } from "./difficulty.js";
 
 export function clearRound() {
@@ -40,10 +57,14 @@ function clearTricks() {
   $("opts").classList.remove("swapping");
   document.querySelectorAll(".trick").forEach((el) => el.remove());
   ["opt0", "opt1", "type-in"].forEach((id) => $(id).classList.remove("frozen"));
+  ["opt0", "opt1", "typer"].forEach((id) => $(id).classList.remove("bubbled"));
   if (G) {
     G.ice = 0;
     G.swapping = false;
     G.web = null;
+    G.mobs = {};
+    G.cups = null;
+    G.bubble = null;
   }
 }
 /** Подсказка под словом: как справиться с подлянкой. */
@@ -183,6 +204,241 @@ function melt(broken) {
     pop("Лёд разбит!", "shield", "30%");
   }
 }
+// ---------- миньоны, напёрстки, пузыри ----------
+const MINION = { eraser: "m_crumb", bee: "m_bee", olesya: "m_plane", spider: "m_spider", shadow: "m_wisp" };
+const MINION_SAY = {
+  eraser: ["Крошки, вперёд!", "Ластиковый десант!"],
+  bee: ["Рой, в атаку!", "Жжжж! Малыши, кусь!"],
+  olesya: ["Шпаргалки, летите!", "Самолётики, в атаку!"],
+  spider: ["Паучата, ко мне!", "Детки, держите кнопки!"],
+  shadow: ["Тени, хватайте!", "Тьма, лезь на кнопки!"],
+};
+const hostOf = (k) => (k === "t" ? $("typer") : $("opt" + k));
+/** В режиме «Пишу сам» поле закрыто, пока на нём миньоны, пузырь или лёд. */
+function typerLock() {
+  if (!G.type || G.locked) return;
+  $("type-in").readOnly = !!(G.ice || G.mobs.t || (G.bubble && G.bubble.t));
+}
+/** Миньон прилетает на кнопку (0, 1) или на поле ввода ("t"). */
+function spawnMinion(k, i) {
+  const m = document.createElement("span"),
+    key = MINION[G.boss.pal] || "m_blob";
+  m.className = "minion trick";
+  if (SPR[key]) {
+    const cv = document.createElement("canvas");
+    drawSprite(cv, SPR[key], PALS[key]);
+    m.appendChild(cv);
+  } else m.classList.add("blobby");
+  m.style.left = 8 + Math.random() * 62 + "%";
+  m.style.setProperty("--fx", Math.round(Math.random() * 160 - 80) + "px");
+  m.style.animationDelay = i * 170 + "ms";
+  // на кнопке нажатие ловит сама кнопка (answer), на поле ввода — миньон
+  if (k === "t")
+    m.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!m.classList.contains("popped")) popMinion("t", m);
+    });
+  hostOf(k).appendChild(m);
+  G.mobs[k] = (G.mobs[k] || 0) + 1;
+}
+function popMinion(k, el) {
+  const m = el || hostOf(k).querySelector(".minion:not(.popped)");
+  if (m) {
+    m.classList.add("popped");
+    setTimeout(() => m.remove(), 260);
+  }
+  G.mobs[k] = Math.max(0, (G.mobs[k] || 0) - 1);
+  sfx.pop();
+  typerLock();
+  if (!Object.values(G.mobs).some(Boolean)) {
+    dropTip();
+    pop("Все лопнули!", "heal", "46%");
+  }
+}
+function liftCup(k) {
+  G.cups[k] = false;
+  const c = $("opt" + k).querySelector(".cupcover");
+  if (c) {
+    c.classList.add("lifted");
+    setTimeout(() => c.remove(), 300);
+  }
+  sfx.boing();
+  if (!G.cups.some(Boolean)) dropTip();
+}
+function popBubble(k) {
+  G.bubble[k] = false;
+  const host = hostOf(k),
+    b = host.querySelector(".bubblecover");
+  host.classList.remove("bubbled");
+  if (b) {
+    b.classList.add("popped");
+    setTimeout(() => b.remove(), 260);
+  }
+  sfx.pop();
+  typerLock();
+  if (!Object.values(G.bubble).some(Boolean)) dropTip();
+}
+/** Клавиши для подлянок (вешается в main.js на keydown): лёд, отбить супер-удар, миньоны и пузырь на поле ввода.
+ *  Возвращает true, если клавиша ушла на подлянку. */
+export function trickKey(e) {
+  if (!G || e.repeat || ["Shift", "Control", "Alt", "Meta", "Tab"].includes(e.key)) return false;
+  if (G.orb && G.orb.live) {
+    G.orb.hit();
+    return true;
+  }
+  if (G.locked) return false;
+  if (G.ice) {
+    hitIce();
+    return true;
+  }
+  if (G.type && G.mobs.t) {
+    popMinion("t");
+    return true;
+  }
+  if (G.type && G.bubble && G.bubble.t) {
+    popBubble("t");
+    return true;
+  }
+  return false;
+}
+
+// ---------- супер-удар ----------
+const CHARGE_FULL = 4;
+export function renderCharge() {
+  const el = $("boss-charge");
+  el.hidden = !G.boss.ab.includes("charge");
+  el.querySelectorAll("i").forEach((seg, i) => seg.classList.toggle("on", i < G.charge));
+  el.classList.toggle("full", G.charge >= CHARGE_FULL);
+}
+function addCharge() {
+  if (!G.boss.ab.includes("charge") || G.hp <= 0) return;
+  G.charge = Math.min(CHARGE_FULL, (G.charge || 0) + 1);
+  renderCharge();
+  tone(300 + G.charge * 120, 0.12, "sawtooth", 0.025, 500 + G.charge * 160);
+  if (G.charge >= CHARGE_FULL) say(pick(["Заряд полный! Берегись!", "СУПЕР-УДАР ГОТОВ!"]));
+}
+/** Супер-удар: босс копит, бросает большой медленный шар. Нажми на шар (или любую клавишу) — отобьёшь
+ *  обратно в босса, не успел — минус 2 сердца. Потом done(). */
+function superStrike(done) {
+  G.locked = true;
+  G.charge = 0;
+  renderCharge();
+  // прошлый ответ убираем: сейчас всё внимание на шар
+  [0, 1].forEach((k) => {
+    const b = $("opt" + k);
+    b.disabled = true;
+    b.className = "opt";
+    b.querySelector("span").textContent = "";
+  });
+  $("type-in").readOnly = true;
+  $("type-in").value = "";
+  $("word").innerHTML = "";
+  $("feedback").className = "feedback";
+  $("feedback").textContent = TOUCH ? "Жми на шар, отбей удар!" : "Жми на шар или любую клавишу!";
+  say("СУПЕР-УДАР!");
+  duckMusic(2600);
+  sfx.superCharge(900);
+  $("boss-wrap").classList.add("charging");
+  const b = rel(bossCv),
+    h = rel(heroCv),
+    from = [b.x + b.w * 0.22, b.y + b.h * 0.45],
+    to = [h.x + h.w * 0.6, h.y + h.h * 0.5];
+  const cols = ["#ffffff", "#ff9a3a", "#d62839"],
+    FLY = 1500;
+  const orb = { live: false };
+  G.orb = orb;
+  const btn = document.createElement("button");
+  btn.className = "orbhit trick";
+  btn.type = "button";
+  btn.setAttribute("aria-label", "Отбить супер-удар");
+  later(() => {
+    $("boss-wrap").classList.remove("charging");
+    if (!G) return;
+    orb.live = true;
+    const where = vfx.superOrb(from, to, cols, FLY, () => orb.live);
+    $("arena").appendChild(btn);
+    const follow = () => {
+      if (!orb.live || !G || G.orb !== orb) return;
+      const [x, y] = where();
+      btn.style.left = x + "px";
+      btn.style.top = y + "px";
+      requestAnimationFrame(follow);
+    };
+    follow();
+    orb.hit = () => {
+      if (!orb.live) return;
+      orb.live = false;
+      btn.remove();
+      const g = gear(),
+        dmg = Math.max(1, g.dmg - g.petDmg); // как обычный удар героя, без питомца и крита
+      const t = vfx.deflect(where(), [b.x + b.w * 0.45, b.y + b.h * 0.55], cols);
+      sfx.deflect();
+      pop("ОТБИЛ!", "crit", "40%");
+      later(() => {
+        sfx.boom(true);
+        replay(bossCv, "hit");
+        G.hp = Math.max(0, G.hp - dmg);
+        G.score += dmg;
+        pop(`-${shownDmg(dmg)}`, "crit");
+        say(pick(["Ой! Мой же удар!", "Так нечестно!", "Ай-ай-ай!"]));
+        renderHUD();
+        P.tot.deflects = (P.tot.deflects || 0) + 1;
+        save();
+      }, t);
+      later(() => (G.hp <= 0 ? bossDown() : done()), t + 900);
+    };
+    btn.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      orb.hit();
+    });
+    later(() => {
+      if (!orb.live) return;
+      orb.live = false;
+      btn.remove();
+      if (G.shieldLeft > 0) {
+        G.shieldLeft--;
+        vfx.guard([h.x + h.w * 0.92, to[1]]);
+        sfx.block();
+        pop("ЩИТ!", "shield", "22%");
+      } else {
+        const dmg = 2;
+        G.hearts = Math.max(0, G.hearts - dmg);
+        vfx.boomAt(to);
+        hurtHero();
+        pop(`-${dmg}`, "", "22%"); // от супер-удара не увернуться: его можно только отбить
+      }
+      renderHUD();
+      later(() => continueOrLose(done), 900);
+    }, FLY);
+  }, 900);
+}
+/** Герою попало: звук, вздрог и красная вспышка экрана. */
+function hurtHero() {
+  sfx.hurt();
+  replay(heroCv, "ouch");
+  document.body.classList.remove("hurt");
+  void document.body.offsetWidth;
+  document.body.classList.add("hurt");
+}
+/** После удара по герою: феникс воскрешает, сердца кончились — проигрыш, иначе дальше. */
+function continueOrLose(next) {
+  const g = gear();
+  if (G.hearts <= 0 && g.revive && !G.revived) {
+    G.revived = true;
+    G.hearts = 3;
+    pop("ФЕНИКС! +3", "heal", "22%");
+    replay(heroCv, "glow");
+    sfx.level();
+    renderHUD();
+    $("feedback").className = "feedback good";
+    $("feedback").textContent = "Крылья феникса воскресили тебя!";
+    later(next, 1200);
+    return;
+  }
+  G.hearts <= 0 ? endGame(false) : next();
+}
+
 export function nextQ() {
   G.hpLag = 0; // все удары прошлого ответа уже показаны
   {
@@ -193,6 +449,13 @@ export function nextQ() {
     }
   }
   startMusic();
+  if ((G.charge || 0) >= CHARGE_FULL && !G.orb) {
+    superStrike(() => {
+      G.orb = null;
+      nextQ();
+    });
+    return;
+  }
   if (!G.queue.length) G.queue = shuffle(poolFor(G.boss));
   const e = G.queue.shift();
   const slot = pick(e.slots);
@@ -512,6 +775,103 @@ export function nextQ() {
       },
       500 + Math.random() * 400,
     );
+  if (ab.includes("minions") && Math.random() < 0.65)
+    later(
+      () => {
+        if (!still()) return;
+        const n = 2 + (Math.random() < 0.4 ? 1 : 0);
+        for (let i = 0; i < n; i++) spawnMinion(G.type ? "t" : Math.random() < 0.5 ? 0 : 1, i);
+        typerLock();
+        tip(G.type || TOUCH ? "лопай малышей: нажимай на них" : "лопай малышей: клик по кнопке или клавиша 1 / 2");
+        say(pick(MINION_SAY[G.boss.pal] || ["Малыши, в атаку!", "Держи их!"]));
+        tone(900, 0.1, "triangle", 0.03, 1400);
+      },
+      400 + Math.random() * 500,
+    );
+  if (ab.includes("cups") && Math.random() < 0.6)
+    later(
+      () => {
+        if (!still()) return;
+        if (G.type) {
+          // кнопок нет: стаканчики мешают буквы самого слова
+          scatter($("word"));
+          tip("нажми на слово, и буквы соберутся");
+          say(pick(["Перемешаю! Хи-хи", "Где буква? А вот и нет!"]));
+          return;
+        }
+        G.cups = [true, true];
+        [0, 1].forEach((k) => {
+          const c = document.createElement("span");
+          c.className = "cupcover trick";
+          if (SPR.cup) {
+            const cv = document.createElement("canvas");
+            drawSprite(cv, SPR.cup, PALS.cup);
+            c.appendChild(cv);
+          }
+          $("opt" + k).appendChild(c);
+        });
+        sfx.boing();
+        say(pick(["Под каким стаканчиком буква?", "Напёрстки! Следи!", "Кручу-верчу, запутать хочу!"]));
+        tip("следи за стаканчиками!");
+        const swaps = 2 + ((Math.random() * 2) | 0);
+        let n = 0;
+        const one = () => {
+          if (!G || G.qid !== qid || G.locked) return;
+          G.swapping = true;
+          $("opts").classList.add("swapping");
+          tone(500, 0.3, "triangle", 0.03, 1100);
+          later(() => {
+            if (!G || G.qid !== qid) return;
+            $("opts").classList.remove("swapping");
+            if (G.locked) return;
+            G.cur.opts.reverse();
+            [0, 1].forEach((i) => ($("opt" + i).querySelector("span").textContent = G.cur.opts[i]));
+            if (++n < swaps) later(one, 140);
+            else {
+              G.swapping = false;
+              tip("нажми на стаканчик, чтобы поднять");
+            }
+          }, 480);
+        };
+        later(one, 450);
+      },
+      300 + Math.random() * 300,
+    );
+  if (ab.includes("bubble") && Math.random() < 0.6)
+    later(
+      () => {
+        if (!still()) return;
+        const ks = G.type ? ["t"] : Math.random() < 0.5 ? [0, 1] : [Math.random() < 0.5 ? 0 : 1];
+        G.bubble = {};
+        ks.forEach((k) => {
+          G.bubble[k] = true;
+          const host = hostOf(k),
+            b = document.createElement("span");
+          b.className = "bubblecover trick";
+          if (k === "t")
+            b.addEventListener("pointerdown", (ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              if (G.bubble && G.bubble.t) popBubble("t");
+            });
+          host.appendChild(b);
+          host.classList.add("bubbled");
+        });
+        typerLock();
+        tip(TOUCH || G.type ? "лопни пузырь: нажми на него" : "лопни пузырь: клик или клавиша 1 / 2");
+        say(pick(["Буль-буль! Пузырики!", "Улетай, кнопочка!", "Лови пузырь!"]));
+        tone(400, 0.25, "sine", 0.03, 900);
+      },
+      400 + Math.random() * 600,
+    );
+  if (ab.includes("charge")) {
+    // заряд копится и пока ты думаешь: каждые 6 с
+    const iv = setInterval(() => {
+      if (!G || G.locked || G.qid !== qid) return;
+      addCharge();
+    }, 6000);
+    G.ints.push(iv);
+  }
   if (ab.includes("regen")) {
     const iv = setInterval(() => {
       if (!G || G.locked || G.qid !== qid || G.hp <= 0) return;
@@ -526,21 +886,44 @@ export function nextQ() {
   }
   startRage();
 }
-/** Вторая форма финального босса: другой облик и имя на арене, новая подлянка со следующего слова. */
-function secondForm(f) {
-  if (!G || G.hp <= 0 || G.form2) return;
-  G.form2 = true;
+/** Превращение босса: пауза, тряска, вспышка, новый облик, имя, подлянка и атака. */
+function changeForm(f) {
+  if (!G || G.hp <= 0) return;
+  const n = ++G.formN;
   const ab = G.boss.ab.filter((a) => a !== "enrage");
-  if (!ab.includes(f.ab)) ab.push(f.ab);
-  G.boss = { ...G.boss, ab: [...ab, "enrage"] };
-  $("boss-name").textContent = f.name;
-  $("boss-abil").innerHTML = abilChips(G.boss.ab);
-  $("boss-wrap").style.filter = f.filter;
-  $("boss-wrap").classList.add("form2");
-  replay(bossCv, "glow");
-  sfx.boom(true);
-  pop("ВТОРАЯ ФОРМА!", "crit form2", "50%");
-  say(f.say);
+  if (f.ab && !ab.includes(f.ab)) ab.push(f.ab);
+  if (G.boss.ab.includes("enrage")) ab.push("enrage");
+  if (f.ab === "armor" && !G.armorLeft) {
+    G.armorLeft = 2;
+    $("boss-shields").innerHTML = '<i class="shield"></i>'.repeat(2);
+  }
+  if (f.ab === "charge") G.charge = G.charge || 0;
+  const b = rel(bossCv);
+  vfx.transform([b.x + b.w / 2, b.y + b.h / 2]);
+  sfx.morph();
+  duckMusic(1800);
+  replay($("boss-wrap"), "morphing");
+  later(() => {
+    if (!G) return;
+    G.boss = {
+      ...G.boss,
+      name: f.name,
+      f: f.f ?? G.boss.f,
+      spr: f.spr || G.boss.spr,
+      pal: f.pal || G.boss.pal,
+      atk: f.atk ? { ...(ATTACK[f.pal || G.boss.pal] || {}), ...f.atk } : G.boss.atk,
+      ab,
+    };
+    drawBoss(bossCv, G.boss);
+    $("boss-name").textContent = f.name;
+    $("boss-abil").innerHTML = abilChips(G.boss.ab);
+    $("boss-wrap").style.filter = f.filter || [G.boss.filter, "drop-shadow(0 0 6px #ffd23f)"].filter(Boolean).join(" ");
+    $("boss-wrap").classList.add("form2");
+    renderCharge();
+    sfx.boom(true);
+    pop(n > 1 ? "ТРЕТЬЯ ФОРМА!" : "ВТОРАЯ ФОРМА!", "crit form2", "50%");
+    say(f.say);
+  }, 700);
 }
 function renderWord(chosen) {
   const { e, slot } = G.cur;
@@ -639,6 +1022,19 @@ export function answer(i) {
     tearWeb();
     return;
   }
+  // напёрсток поднимается, миньон лопается, пузырь лопается — вместо ответа
+  if (i !== null && G.cups && G.cups[i]) {
+    liftCup(i);
+    return;
+  }
+  if (i !== null && G.mobs[i]) {
+    popMinion(i);
+    return;
+  }
+  if (i !== null && G.bubble && G.bubble[i]) {
+    popBubble(i);
+    return;
+  }
   G.locked = true;
   clearRound();
   const { e, slot, opts } = G.cur;
@@ -659,6 +1055,14 @@ export function typed(text) {
   if (text !== null && !text.trim()) return;
   if (text !== null && G.ice) {
     hitIce();
+    return;
+  }
+  if (text !== null && G.mobs.t) {
+    popMinion("t");
+    return;
+  }
+  if (text !== null && G.bubble && G.bubble.t) {
+    popBubble("t");
     return;
   }
   G.locked = true;
@@ -734,11 +1138,27 @@ function resolve(ok, timeout) {
       }, petHit);
     G.hp = Math.max(0, G.hp - dmg);
     G.score += dmg;
+    // превращение: жизни упали ниже порога следующей формы
+    const form = G.forms[G.formN];
+    let formAt = 0;
+    if (form && G.hp > 0 && G.hp / G.boss.hp < form.at) {
+      formAt = Math.max(delay, petPart ? petHit : 0) + 350;
+      later(() => changeForm(form), formAt);
+    }
     if (!G.enraged && G.boss.ab.includes("enrage") && G.hp > 0 && G.hp / G.boss.hp < 0.35) {
       G.enraged = true;
       $("boss-wrap").classList.add("enraged");
-      const f2 = FORM2[G.boss.name];
-      later(() => (f2 ? secondForm(f2) : say("Я В ЯРОСТИ! Быстрее!")), delay + 300);
+      if (!formAt) later(() => say("Я В ЯРОСТИ! Быстрее!"), delay + 300);
+    }
+    // три верных подряд сбивают заряд супер-удара
+    if (G.charge && G.streak % 3 === 0) {
+      G.charge = 0;
+      later(() => {
+        renderCharge();
+        pop("Сорвал супер-удар!", "heal", "46%");
+        sfx.deflect();
+        say(pick(["Мой заряд! Нет!", "Эй, так нечестно!"]));
+      }, delay + 150);
     }
     fb.className = "feedback good";
     fb.textContent = blocked
@@ -826,7 +1246,14 @@ function resolve(ok, timeout) {
     checkAch();
     later(
       () => (G.hp <= 0 ? bossDown() : nextQ()),
-      Math.max(900, delay + 650, petPart ? petHit + 300 : 0, petRun ? petAt + PET_RUN + 120 : 0, volleyEnd),
+      Math.max(
+        900,
+        delay + 650,
+        petPart ? petHit + 300 : 0,
+        petRun ? petAt + PET_RUN + 120 : 0,
+        volleyEnd,
+        formAt ? formAt + 1500 : 0,
+      ),
     );
   } else {
     G.streak = 0;
@@ -834,79 +1261,81 @@ function resolve(ok, timeout) {
     stat(e.word, "wrong");
     G.mistakes[e.word] = (G.mistakes[e.word] || 0) + 1;
     G.queue.splice(Math.min(2, G.queue.length), 0, e);
-    replay(bossCv, "lunge");
     say(pick(G.boss.taunts).replace(/\{name\}/g, P.name || "герой"));
     const shown = e.segs
       .map((s, k) => (s.t !== undefined ? esc(s.t) : G.type || k === slot ? `<u>${esc(s.c)}</u>` : esc(s.c)))
       .join("");
     fb.className = "feedback";
+    // босс бьёт в ответ своим ударом; сердце снимается, когда удар долетел
+    let outcome = "hit";
     if (G.shieldLeft > 0) {
       G.shieldLeft--;
-      sfx.block();
-      later(() => pop("ЩИТ!", "shield", "22%"), 200);
+      outcome = "block";
       fb.innerHTML = "Щит спас! Правильно: " + shown;
     } else if (g.dodge && Math.random() < g.dodge) {
-      sfx.block();
-      later(() => pop("УКЛОН!", "shield", "22%"), 200);
+      outcome = "dodge";
       fb.innerHTML = "Увернулся! Правильно: " + shown;
-    } else {
-      const dmg = G.boss.ab.includes("double") ? 2 : 1;
-      G.hearts = Math.max(0, G.hearts - dmg);
-      sfx.hurt();
+    } else fb.innerHTML = (timeout ? "Время вышло! " : "") + "Правильно: " + shown;
+    const dmg = outcome === "hit" ? (G.boss.ab.includes("double") ? 2 : 1) : 0;
+    const hitAt = bossAttack(outcome);
+    const land = (n) => {
+      G.hearts = Math.max(0, G.hearts - n);
+      hurtHero();
+      renderHUD();
+    };
+    if (outcome === "block") later(() => pop("ЩИТ!", "shield", "22%"), hitAt);
+    else if (outcome === "dodge")
       later(() => {
-        replay(heroCv, "ouch");
-        if (dmg > 1) pop("-2", "", "22%");
-      }, 180);
-      document.body.classList.remove("hurt");
-      void document.body.offsetWidth;
-      document.body.classList.add("hurt");
-      fb.innerHTML = (timeout ? "Время вышло! " : "") + "Правильно: " + shown;
-    }
+        pop("УКЛОН!", "shield", "22%");
+        sfx.whoosh(false);
+      }, hitAt);
+    else if (dmg > 1) {
+      // двойной удар: два удара подряд, второй с крупным «-2»
+      later(() => land(1), hitAt);
+      later(() => {
+        const t2 = bossAttack("hit");
+        later(() => {
+          land(1);
+          pop("-2", "", "22%");
+        }, t2);
+      }, hitAt + 200);
+    } else later(() => land(1), hitAt);
     if (G.boss.ab.includes("vampire") && G.hp > 0) {
       const vh = Math.round(G.boss.hp * 0.12);
       G.hp = Math.min(G.boss.hp, G.hp + vh);
+      G.hpLag = -vh; // полоска жизней босса растёт, когда нить жизни долетела
+      later(bossDrain, hitAt + 150);
       later(() => {
+        G.hpLag = 0;
         pop(`+${shownDmg(vh)}`, "heal", "72%");
         say(pick(["Ам! Твоя ошибка вкусная!", "Ммм, сил прибавилось!", "Спасибо за подарочек!"]));
         renderHUD();
-      }, 700);
+      }, hitAt + 600);
     }
     if (G.boss.ab.includes("steal") && P.coins > 0) {
-      const n = Math.min(P.coins, 5 + Math.floor((G.boss.idx || G.boss.floor || 0) / 2));
+      const n = Math.min(P.coins, 5 + Math.floor((G.boss.lvl ?? G.boss.floor ?? 0) / 2));
       P.coins -= n;
       G.coinsGot -= n;
       G.stolen = (G.stolen || 0) + n; // вернутся, если победить босса
       save();
       refreshCoins();
+      later(() => bossSteal(n), hitAt + 200);
       later(() => {
         pop(`-${n} монет`, "", "40%");
         say(pick(["Хе-хе, моё!", "Спасибо за монетки!", "Это я забираю!"]));
-      }, 650);
+      }, hitAt + 650);
     }
     if (g.spikes && G.hp > 0) {
       G.hp = Math.max(1, G.hp - g.spikes);
       later(() => {
         pop(`Шипы! -${shownDmg(g.spikes)}`, "", "72%");
         replay(bossCv, "hit");
-      }, 420);
+      }, hitAt + 120);
     }
+    addCharge();
     renderHUD();
     save();
-    later(() => {
-      if (G.hearts <= 0 && g.revive && !G.revived) {
-        G.revived = true;
-        G.hearts = 3;
-        pop("ФЕНИКС! +3", "heal", "22%");
-        replay(heroCv, "glow");
-        sfx.level();
-        renderHUD();
-        $("feedback").className = "feedback good";
-        $("feedback").textContent = "Крылья феникса воскресили тебя!";
-        later(nextQ, 1200);
-        return;
-      }
-      G.hearts <= 0 ? endGame(false) : nextQ();
-    }, 1900);
+    later(() => continueOrLose(nextQ), 1900);
   }
   save();
 }

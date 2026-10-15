@@ -24,6 +24,9 @@ const EXTRA_AB = [
   "glitch",
   "cloud",
   "lens",
+  "minions",
+  "cups",
+  "bubble",
 ];
 export function applyDiff(b) {
   const d = DIFF_BOSS[settings.words];

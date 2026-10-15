@@ -189,6 +189,40 @@ export const sfx = {
     tone(1300, 0.28, "sine", 0.035, 2300);
     tone(2300, 0.18, "triangle", 0.02, 1500, 0.2);
   },
+  // ---- атаки боссов и подлянки ----
+  splat() {
+    noiseSweep(900, 200, 0.22, 0.25, 0.8);
+    tone(260, 0.16, "sine", 0.05, 90);
+  },
+  chomp() {
+    tone(240, 0.06, "square", 0.04, 120);
+    tone(1500, 0.04, "triangle", 0.025, 0, 0.07);
+  },
+  spell() {
+    [880, 1175, 1568].forEach((f, i) => tone(f, 0.1, "triangle", 0.025, f * 0.7, i * 0.04));
+  },
+  paper() {
+    noiseSweep(4000, 2500, 0.12, 0.12, 1.5);
+  },
+  pop() {
+    tone(500, 0.08, "sine", 0.05, 1400);
+  },
+  boing() {
+    tone(220, 0.22, "triangle", 0.04, 520);
+  },
+  superCharge(ms = 900) {
+    tone(110, ms / 1000, "sawtooth", 0.03, 440);
+    noiseSweep(300, 2400, ms / 1000, 0.15, 0.8);
+  },
+  deflect() {
+    tone(1400, 0.08, "square", 0.04);
+    tone(2100, 0.2, "triangle", 0.04, 3200, 0.05);
+    noiseSweep(2000, 6000, 0.18, 0.15, 0.9);
+  },
+  morph() {
+    tone(90, 0.8, "sawtooth", 0.035, 360);
+    tone(180, 0.7, "square", 0.02, 720, 0.1);
+  },
   crit() {
     [660, 880, 1100, 1320].forEach((f, i) => tone(f, 0.08, "square", 0.05, 0, i * 0.05));
   },

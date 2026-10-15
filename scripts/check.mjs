@@ -369,8 +369,9 @@ const SCENARIOS = [
       await tick(p);
       await p.click("#btn-fight");
       await tick(p, 800);
-      for (const opt of ["#opt0", "#opt1", "#opt0"]) {
-        await p.click(opt);
+      // отвечаем, пока не попадём (нажатие может уйти на подлянку: миньона, пузырь)
+      for (let n = 0; n < 10 && (await p.textContent("#score")) === "0"; n++) {
+        await p.click(n % 2 ? "#opt1" : "#opt0");
         await tick(p, 2500);
       }
       await shot("02-fight");
@@ -400,7 +401,7 @@ const SCENARIOS = [
       await tick(p);
       await p.click("#btn-fight");
       await tick(p, 800);
-      const dead = async () => (await p.locator("#boss-cv.dead").count()) > 0;
+      const dead = async () => (await p.locator("#boss-cv.shattered").count()) > 0;
       for (let i = 0; i < 8 && !(await dead()); i++) {
         await p.click("#opt0");
         for (let t = 0; t < 30 && !(await dead()); t++) await tick(p, 100);
@@ -409,6 +410,77 @@ const SCENARIOS = [
       await shot("01-chest-shaking");
       await tick(p, 1000);
       await shot("02-chest-open");
+    },
+  },
+  {
+    // боссы: ответный удар, миньоны, напёрстки, пузыри, вторая форма, супер-удар и отбитый шар.
+    // Кампания пройдена до Короля; Сила 120: удар 141 из 182 жизней Кактуса — сразу вторая форма.
+    name: "bossfx",
+    kid: {
+      name: "Тест",
+      profile: {
+        ...VETERAN,
+        rv: 3,
+        unlocked: 36,
+        beaten: Array.from({ length: 36 }, (_, i) => i),
+        up: { ...VETERAN.up, str: 120 },
+      },
+    },
+    run: async (p, shot) => {
+      await enter(p);
+      await tick(p, 1100);
+      const has = async (sel) => (await p.locator(sel).count()) > 0;
+      /** Тикать мелкими шагами, пока не появится sel (не дольше ms). */
+      const until = async (sel, ms = 30000) => {
+        for (let t = 0; t < ms && !(await has(sel)); t += 100) await tick(p, 100);
+        if (!(await has(sel))) throw new Error(`не дождался ${sel}`);
+      };
+      const fight = async (i) => {
+        if (await has("#s-game:not([hidden])")) await p.click("#btn-quit");
+        await tick(p, 600);
+        await p.click(`#map .bcard[data-i='${i}']`);
+        await tick(p);
+        await p.click("#btn-fight");
+        await tick(p, 300);
+      };
+      // Ластик: миньоны садятся на кнопки; не отвечаем — по таймеру босс подбегает и кусает
+      await fight(4);
+      await until(".minion");
+      await tick(p, 600);
+      await shot("01-minions");
+      await until("#feedback:has(u)");
+      await tick(p, 240);
+      await shot("02-attack-bite");
+      // Медуза: пузыри и луч
+      await fight(13);
+      await until(".bubblecover");
+      await tick(p, 500);
+      await shot("03-bubbles");
+      await until("#feedback:has(u)");
+      await tick(p, 170);
+      await shot("04-attack-zap");
+      // Хамелеон: напёрстки посреди перемешивания
+      await fight(20);
+      await until(".cupcover");
+      await tick(p, 700);
+      await shot("05-cups");
+      // Кактус: два щита, потом удар срезает жизни ниже трети — превращение
+      await fight(6);
+      for (let n = 0; n < 15 && !(await has("#boss-wrap.form2")); n++) {
+        await p.click("#opt0");
+        for (let t = 0; t < 26 && !(await has("#boss-wrap.form2")); t++) await tick(p, 100);
+      }
+      await until("#boss-wrap.form2", 3000);
+      await tick(p, 200);
+      await shot("06-second-form");
+      // Мех Диктант: копит заряд, пока ты думаешь и ошибаешься; шар супер-удара отбивается нажатием
+      await fight(32);
+      await until(".orbhit", 60000);
+      await tick(p, 500);
+      await shot("07-super-orb");
+      await p.click(".orbhit");
+      await tick(p, 120);
+      await shot("08-deflect");
     },
   },
   // маленький телефон (iPhone SE и узкие Android): всё должно влезать по ширине

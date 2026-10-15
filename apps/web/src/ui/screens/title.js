@@ -21,7 +21,7 @@ import { openLogin } from "./join.js";
 
 const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 // враги на титуле — злодеи кампании, без заколдованных друзей; первым выходит следующий босс игрока
-const FRIENDS = ["Репетитор Ралина", "Ангел Ангелика", "Олеся Зоркая"];
+const FRIENDS = ["Репетитор Ралина", "Ангел Ангелика", "Олеся Отличница"];
 const FOES = BOSSES.filter((b) => !FRIENDS.includes(b.name));
 const FOE_MS = 4200;
 

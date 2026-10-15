@@ -431,6 +431,347 @@ KTKTKTSSSSSSSSSS
 .CCDDDXDDXDDDCC.
 CCCDDXDDDDXDDCCC
 CCC.DD....DD.CCC`,
+  // новые боссы
+  eraser: `
+.....QQQQQQQQQ..
+....QQQQQQQQQQD.
+...QQQQQQQQQQDD.
+..PPPPPPPPPPPDD.
+..PPKKPPPPPKPDD.
+..PKPPPPPPKPKDD.
+..PWWWPPPWWWPDD.
+..PWEEPPPWEEPDD.
+..PRPPPPPPMPRDD.
+..PPPMMMMMMPPDD.
+..PPPPTTPPPPPDD.
+..CCCCCCCCCCCNN.
+X.BBBBBBBBBBBNN.
+..BBBBBBBBBBBNN.
+..BBBBBBBBBBBN.X
+.X.BBBBBBBBBBN..
+....KK....KK..X.
+...KKK...KKK....`,
+  jelly: `
+.O...DDDDDD.....
+O.ODDPPPPPPDD...
+.O.DPPLLPPPPPD..
+.DPPLHLPPPPPPPD.
+.DPPLLPPPPPPPPD.
+DPPPEEPPPPEEPPPD
+DPPEWEEPPEWEEPPD
+DPPEEEEPPEEEEPPD
+DPPPEEPPPPEEPPPD
+DPRPPPPMMPPPPRPD
+.DDPPPPPPPPPPDD.
+.UUTUUTUUTUUTUU.
+..TT.TT..TT.TT..
+.TT.TT....TT.TT.
+..TT.TT..TT.TT..
+.TT.TT....TT.TT.
+..T..T....T..T..
+.T..T......T..T.`,
+  chameleon: `
+...DDDD...........
+..DGGGGD..........
+.DGGGGGGDDDD......
+.OOODGGGGGGGGD....
+OGGGOGGYGGGYGGD...
+OEEWOGGGGGGGGYGD..
+OEWWOGGGYGGGGGGG..
+.OOOGGGGGGGGD...G.
+GGGGGLLLLLLLD..G.G
+KKKKGLLLLLLD..G.GG
+TTGGGGGGGGGD..G..G
+.TT.GD..GD.....GG.
+BBBBGDBBGDBBBB....`,
+  bee: `
+...K........K...
+....K......K....
+.CC..KYYYYK..CC.
+CLLC.YYYYYY.CLLC
+CLLLCYYYYYYCLLLC
+.CLLKKYYYYKKLLC.
+..CYYYKYYKYYYC..
+..YYYWWYYWWYYY..
+..YYYWEYYEWYYY..
+..YYYYYMMYYYYY..
+..KKKKKKKKKKKK..
+.OYYYYYYYYYYYYO.
+..KKKKKKKKKKKK..
+...YYYYYYYYYY...
+....KKKKKKKK....
+......YYYY......
+.......SS.......
+.......S........`,
+  ninja: `
+Y...............
+.H..............
+..H.YNNNNNNN....
+...YNNNNNNNNN...
+..YNNNNNNNNNNN..
+...RRRRRRRRRRRR.
+...NSSKKSKKSSNRR
+...NSWEESEEWSN.R
+...NNNNNNNNNNN.R
+....NNNNNNNNN...
+..NNNNNNNNNNNN..
+.NNNNVNNNNVNNNN.
+.NNSVVVVVVVVSNN.
+.NNNNNNNNNNNNNN.
+..NRRRRRRRRRRN..
+...NNNNNNNNNN...
+...DDDD..DDDD...
+..SSDD....DDSS..`,
+  golem: `
+.....LLLLLLL.....
+....LSSSSSSSD....
+....SDDSSSDDD....
+....SEEDSDEED....
+....SSSOYOSSD....
+.LLLLDDSSSDDLLLL.
+LSSSDSSOSSSSDSSSD
+LSOSDSSYOSSSDSSOD
+LOSSDSSSOYSSDSOSD
+LSSSDSSSSOSSDOSSD
+LSSSDSSSOSSSDSSSD
+LSOSSDDDDDDDSSOSD
+DDDDD.SSSSS.DDDDD
+.....LSSDSSD.....
+....LSSD.LSSD....
+....SOSD.SOSD....
+...DDDDD.DDDDD...`,
+  mech: `
+.R.R.........R.R.
+DLDLD.......DLDLD
+DMMMD.DDDDD.DMMMD
+DYDYDDMMMMMDDYDYD
+DDDDDMVVVVVMDDDDD
+.MMMDMVVVVVMDMMM.
+LMMMDDMMMMMDDMMML
+LMDMLMMCCCMMLMDML
+LMDMLMCMMMCMLMDML
+DDDDLMMCCCMMLDDDD
+DCD.LMMMMMMML.DCD
+....DDDYKYDDD....
+....LMMD.DMML....
+....LCMD.DMCL....
+....LMMD.DMML....
+...LMMMD.DMMML...
+...DDDDD.DDDDD...`,
+  cyclops: `
+........H.......
+.......HH.......
+....SSSSSSSS....
+...SSSWWWWSSS...
+..SSSWWWWWWSSS..
+..SSWWIIIIWWSSCC
+..SSWWIXEIWWSCCC
+..SSWWIEEIWWSCCK
+..SSWWIIIIWWSCKC
+..SSSWWWWWWSSKC.
+...SSSLLLLSSSK..
+...SSMTMMTMSSK..
+..SSSSMMMMSSSK..
+.SBBNBBBBNBBSS..
+.S.BBBBNBBBB....
+...BBNBBBBBN....
+....SS...SS.....
+...SSS...SSS....`,
+  shadow: `
+...Q.Q.QQ.Q.Q...
+...QQQQQQQQQQ...
+...QGQQQQQQGQ...
+..PP.KKKKKK.PP..
+.PK.PKKKKKKK.KP.
+....PGGKKGGK....
+....PKWKKWKK....
+....PFKKKKFK....
+.....PFFFFK.....
+..PDDDDDDDDDDD..
+.PDKKKKKKKKKKDD.
+.PDKKKKKKKKKKDD.
+.PDKKKKKKKKKKDD.
+PDDKKKKKKKKKKDDD
+DD.KKDKKKDKKK.DD
+D..PK.PKKP.KP..D
+...P...PP...P...`,
+  // вторые формы боссов (FORMS в bosses.js): крупнее и с другим силуэтом
+  wizard2: `
+.........P........
+........PP........
+.......PPP........
+......PPYPP.......
+H.....PPPPP.....H.
+HH...PPPPPPP...HH.
+.HH.PPPPPPPPP.HH..
+..HQQQQQQQQQQQH...
+.QQQQQQQQQQQQQ.GG.
+.....SSSSSSS..GOXG
+.....SKSSSKS..GOOG
+.....SSSSSSS...GG.
+.....WWWWWWW...S..
+...DPWWWWWWWPDDS..
+..DDPPWWWWWPPDD...
+..DDDPPWWWPPDDD...
+.DDDDDPPWPPDDDDD..
+.DDYDDDDDDDDDYDD..
+DDDDDDDDDDDDDDDDD.`,
+  dragon2: `
+B..................B
+BB....Y......Y....BB
+BAB...YF....FY...BAB
+BAAB...HF..FH...BAAB
+BAAAB..HGGGGH..BAAAB
+BAAAAGGGGGGGGGGAAAAB
+BAAAGGEEGGGGEEGGAAAB
+BAAAGGEKGGGGKEGGAAAB
+.BAAGGGGGGGGGGGGAAB.
+.BAAGGGNNGGNNGGGAAB.
+..BAGGGGGGGGGGGGAB..
+..B.GTGGTGGTGGTG.B..
+....GGGGGGGGGGGG....
+.....GGGGGGGGGG.....
+......GGFFFFGG......
+.......FFYYFF.......
+......FFYYYYFF......
+.......FFFFFF.......`,
+  king2: `
+..Y..Y..Y..Y..Y.....
+..YY.YYYYYYY.YY...O.
+..YYYYYYYYYYYYY..OZO
+..YRYYBYRYBYYRY...O.
+..YYYYYYYYYYYYY...Y.
+HH..PPPPPPPPP..HH.Y.
+.HH.PRKPPPKRP.HH..Y.
+....PPPPPPPPP.....Y.
+....PKWKWKWKP.....Y.
+.....PPPPPPP......Y.
+.YYCCCCCCCCCCCYY..Y.
+YYCCDDDDDDDDDCCYYPP.
+.CCDDXDDDDDXDDCC..Y.
+.CCDDDXDDDXDDDCC..Y.
+CCCDDDDXDXDDDDCCC.Y.
+CCCDDDDDXDDDDDCCC.Y.
+CCCDDDDXDXDDDDCCC.Y.
+CCCDDDXDDDXDDDCCC...
+CCC.DD.....DD.CCC...`,
+  cactus2: `
+......FF..FF......
+.....FFFFFFFF.....
+....FFFFYYFFFF....
+.....FFFYYFFF.....
+......FFFFFF......
+...W..GGGGGG..W...
+.W..WGGGGGGGGW..W.
+GG..GKGGGGGGKG..GG
+GGW.GGKGGGGKGG.WGG
+GGG.GHEGGGGEHG.GGG
+WGG.GGGGGGGGGG.GGW
+.GGGGGGGKKGGGGGGG.
+..GGGGGKGGKGGGGG..
+....WGGGGGGGGW....
+....GGGGGGGGGG....
+...PPPPPPPPPPPP...
+...PDPPPPPPPPDP...
+....PPPPPPPPPP....
+....PPPPPPPPPP....`,
+  spider2: `
+.......Y.YY.Y.......
+...LL..YYYYYY..LL...
+..L..L.YGYYGY.L..L..
+.L....KKRKKRKK....L.
+.L...KRKKKKKKRK...L.
+L.LL.KKRRKKRRKK.LL.L
+.L..LKKRRKKRRKKL..L.
+.L...KKKKWWKKKK...L.
+L.....KKWKKWKK.....L
+..L..KKKKKKKKKK..L..
+.L.LKKLKPPPPKLKKL.L.
+.L..KLKKKPPKKKLK..L.
+L...KKKKKPPKKKKK...L
+..LLKKKKPPPPKKKKLL..
+.L...KKKKKKKKKK...L.
+L......KKKKKK......L`,
+  shadow2: `
+.....F..F..F..F.....
+.....FF.FFFF.FF.....
+.....QFQFQQFQFQ.....
+P....QQQQQQQQQQ....P
+PP...QGQQQQQQGQ...PP
+PDP.PKKKKKKKKKKP.PDP
+PDDPPKGGKKKKGGKPPDDP
+PDDDPKGWKKKKWGKPDDDP
+PDDDDPKKMMMMKKPDDDDP
+PDDDDDPKKKKKKPDDDDDP
+.PDPDDKKKKKKKKDDPDP.
+..P.PDKKKKKKKKDP.P..
+....PKKKKKKKKKKP....
+...PKKKKKKKKKKKKP...
+...PKKKKKKKKKKKKP...
+..PKKKKKKKKKKKKKKP..
+..PKKPKKKPPKKKPKKP..
+...PK.PKP..PKP.KP...
+....P...P..P...P....`,
+  // малыши для подлянок боссов и стаканчик для игры в напёрстки (без моргания)
+  m_plane: `
+.......LW
+.....LWWW
+...LWWWB.
+.LWWWWB..
+LWWWBBB..
+...BBN...
+...BN....
+...N.....`,
+  m_bee: `
+...CC.CC
+...CLCLC
+.KYKYKY.
+YEYKYKYS
+YYYKYKY.
+.YYKYKY.`,
+  m_crumb: `
+..PPPQ.
+.PPQQPD
+PWEPWEP
+PPPPPPD
+.PPMPPD
+..DDDD.`,
+  m_spider: `
+L.......L
+.L.KKK.L.
+..LKKKL..
+LLKRKRKLL
+..KKKKK..
+.L.KKK.L.
+L..L.L..L`,
+  m_wisp: `
+..PKKP..
+.PKKKKP.
+PKGKKGKP
+PKGKKGKP
+PKKKKKKP
+.PKKKKP.
+..PK.KP.
+.P..P..P`,
+  m_blob: `
+...B...
+..BBB..
+.BLBBB.
+BWKBWKB
+BBBBBBB
+.BBBBB.
+..BBB..`,
+  cup: `
+...RRRRR...
+...RLRRD...
+..WWWWWWW..
+..RLRRRRD..
+..RLRRRRD..
+.WWWWWWWWW.
+.RLRRRRRRD.
+.RLRRRRRRD.
+RRRRRRRRRRR
+.DDDDDDDDD.`,
   lep: `
 ....WWWW....
 ...WWWWWW...
@@ -576,6 +917,197 @@ export const PALS = {
     D: "#2a2238",
     X: "#ff3b3b",
   },
+  // новые боссы
+  eraser: {
+    Q: "#ffc2d4",
+    P: "#ff8fb1",
+    D: "#d65a85",
+    C: "#9cc7ff",
+    B: "#4a8fe0",
+    N: "#2a5fa8",
+    K: "#3a1a2a",
+    W: "#ffffff",
+    E: "#1b1b1b",
+    M: "#8e1d2b",
+    R: "#ff5a8a",
+    T: "#ffffff",
+    X: "#ffd6e2",
+  },
+  jelly: {
+    D: "#d9559a",
+    P: "#ff8cc6",
+    L: "#ffd0e8",
+    H: "#ffffff",
+    W: "#ffffff",
+    E: "#2a1438",
+    M: "#8e1d4b",
+    R: "#ff5a8a",
+    T: "#5ff0d8",
+    U: "#2bb5b0",
+    O: "#c8f6ff",
+  },
+  chameleon: {
+    G: "#5cc95c",
+    D: "#2b8a3e",
+    B: "#8a5a2b",
+    L: "#c8f29a",
+    Y: "#ffd23f",
+    O: "#3f9f4a",
+    W: "#ffffff",
+    E: "#1b1b1b",
+    K: "#1f4a24",
+    T: "#ff5a8a",
+  },
+  bee: {
+    Y: "#ffd23f",
+    O: "#f0a000",
+    K: "#1b1b1b",
+    W: "#ffffff",
+    E: "#1b1b1b",
+    M: "#d62839",
+    C: "#8fcfff",
+    L: "#dff4ff",
+    S: "#4a4a5a",
+  },
+  ninja: {
+    N: "#2a2f5a",
+    D: "#1a1d3a",
+    V: "#5a4fa8",
+    S: "#f2c7a5",
+    K: "#1a1d3a",
+    W: "#ffffff",
+    E: "#1b1b1b",
+    R: "#d62839",
+    Y: "#ffd23f",
+    H: "#8e1d2b",
+  },
+  golem: { L: "#948c99", S: "#6b6470", D: "#3e3842", O: "#ff7a1a", Y: "#ffd23f", E: "#ffb000" },
+  mech: {
+    M: "#8a96ab",
+    L: "#c9d3e3",
+    D: "#3a4258",
+    V: "#45d1e6",
+    C: "#45d1e6",
+    R: "#ff3b3b",
+    Y: "#ffd23f",
+    K: "#1b1b1b",
+  },
+  cyclops: {
+    S: "#8fd0a0",
+    L: "#4f9a6a",
+    H: "#f2e6c9",
+    W: "#ffffff",
+    I: "#3a7fd6",
+    E: "#111111",
+    X: "#ffffff",
+    M: "#5a1a2a",
+    T: "#ffffff",
+    B: "#a8642a",
+    N: "#6b3a1a",
+    C: "#8a5a2b",
+    K: "#5a3416",
+  },
+  shadow: { Q: "#8a5cf0", G: "#d9a6ff", W: "#ffffff", K: "#1a1026", D: "#2e1d4a", P: "#5a3a8a", F: "#b07ae0" },
+  // вторые формы боссов (FORMS в bosses.js): крупнее и с другим силуэтом
+  wizard2: {
+    P: "#2a1d4f",
+    Y: "#ffd23f",
+    H: "#e6dcc0",
+    Q: "#7a4fd6",
+    S: "#8a9a86",
+    K: "#ffe14a",
+    W: "#cfcfd8",
+    D: "#1a1430",
+    G: "#a855f7",
+    O: "#e0b0ff",
+    X: "#ffffff",
+  },
+  dragon2: {
+    G: "#1f7a3a",
+    N: "#0f4220",
+    H: "#3a1a1a",
+    E: "#ffd23f",
+    K: "#111111",
+    T: "#ffffff",
+    A: "#ff9a3a",
+    B: "#8e1d2b",
+    F: "#ff5a1a",
+    Y: "#ffe14a",
+  },
+  king2: {
+    Y: "#ffc21a",
+    R: "#ff3b3b",
+    B: "#45d1e6",
+    H: "#f2e6c9",
+    P: "#7a4fd6",
+    K: "#111111",
+    W: "#ffffff",
+    C: "#8e1d2b",
+    D: "#2a2238",
+    X: "#ff3b3b",
+    O: "#ff7ae0",
+    Z: "#ffffff",
+  },
+  cactus2: {
+    G: "#3f9f4a",
+    K: "#103a18",
+    H: "#ffffff",
+    E: "#111111",
+    W: "#fff4c0",
+    F: "#ff4f9a",
+    Y: "#ffd23f",
+    P: "#c0602a",
+    D: "#8a3f1a",
+  },
+  spider2: { K: "#2a2238", L: "#6a5a8a", Y: "#ffc21a", G: "#45d1e6", R: "#ff3b3b", P: "#d62839", W: "#ffffff" },
+  shadow2: {
+    F: "#d94fff",
+    Q: "#8a5cf0",
+    G: "#d9a6ff",
+    W: "#ffffff",
+    K: "#1a1026",
+    D: "#2e1d4a",
+    P: "#5a3a8a",
+    M: "#b07ae0",
+  },
+  // малыши для подлянок боссов и стаканчик для игры в напёрстки (без моргания)
+  m_plane: { W: "#ffffff", L: "#c9d3e3", B: "#8fcfff", N: "#4a8fe0" },
+  m_bee: { Y: "#ffd23f", K: "#1b1b1b", E: "#1b1b1b", C: "#8fcfff", L: "#dff4ff", S: "#4a4a5a" },
+  m_crumb: { P: "#ff8fb1", Q: "#ffc2d4", D: "#d65a85", W: "#ffffff", E: "#1b1b1b", M: "#8e1d2b" },
+  m_spider: { K: "#4a3a5a", L: "#7a6a9a", R: "#ff3b3b" },
+  m_wisp: { K: "#1a1026", P: "#5a3a8a", G: "#d9a6ff" },
+  m_blob: { B: "#2f55c8", L: "#8aa5f2", W: "#ffffff", K: "#0b1640" },
+  cup: { R: "#d62839", L: "#ff7a8a", D: "#8e1d2b", W: "#ffffff" },
+  // палитры вторых форм для старых спрайтов: angelika, olesya, robot
+  angelika2: {
+    Y: "#ffe14a",
+    H: "#36406a",
+    S: "#e8c4ac",
+    W: "#e0f4ff",
+    E: "#1b1b1b",
+    R: "#c98aa8",
+    M: "#a8476b",
+    T: "#4f63a0",
+    O: "#ffe14a",
+    L: "#7a8aaa",
+    G: "#ffd23f",
+  },
+  olesya2: {
+    H: "#2a1240",
+    S: "#ecc8cc",
+    G: "#2a1a40",
+    W: "#ffffff",
+    E: "#1b1b1b",
+    R: "#ff8ad8",
+    M: "#d6479b",
+    P: "#b03cff",
+    T: "#5ff3ff",
+    B: "#ff4fd8",
+    D: "#fff0ff",
+    K: "#1a1030",
+    L: "#3a1a5a",
+  },
+  cyber2: { M: "#6e7685", D: "#a8202e", R: "#ffb000", Y: "#ff3b3b", C: "#ff7a1a" },
   chest: { B: "#8a5a2b", Y: "#f0a000", G: "#ffd84a", W: "#fff3a0" },
   chest2: { B: "#4a5a7a", Y: "#c9d3e3", G: "#45d1e6", W: "#d6f3ff" },
   chest3: { B: "#a86400", Y: "#ffe27a", G: "#ff4fd8", W: "#ffffff" },
@@ -610,4 +1142,23 @@ export const BLINK = {
   shark: { R: "S" },
   king: { R: "P" },
   ghost: { K: "W" },
+  // новые боссы и вторые формы
+  eraser: { W: "P", E: "P" },
+  jelly: { W: "P", E: "P" },
+  chameleon: { W: "O", E: "O" },
+  bee: { W: "Y", E: "Y" },
+  ninja: { W: "S", E: "S" },
+  golem: { E: "D" },
+  mech: { V: "D" },
+  cyclops: { W: "S", I: "S", E: "S", X: "S" },
+  shadow: { G: "K", W: "K" },
+  wizard2: { K: "S", X: "O" },
+  dragon2: { E: "G" },
+  king2: { R: "P", O: "Y" },
+  cactus2: { E: "G", H: "G" },
+  spider2: { R: "K" },
+  shadow2: { G: "K", W: "K" },
+  angelika2: { E: "S", W: "S" },
+  olesya2: { E: "W" },
+  cyber2: { R: "D", C: "M" },
 };

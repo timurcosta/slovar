@@ -447,8 +447,8 @@ export function annihilate(from, to, chargeMs = 380, beamMs = 460) {
   return chargeMs + beamMs / 5;
 }
 
-/** Молния с неба в босса. */
-export function lightning(to, top = 0) {
+/** Молния с неба в цель (босса или героя). cols: [ореол, свет, ядро]. */
+export function lightning(to, top = 0, cols = ["#ff7a1a", "#ffd23f", "#ffffff"]) {
   ensure();
   const [x1, y1] = P(...to);
   const y0 = Math.max(0, top / PX);
@@ -463,17 +463,17 @@ export function lightning(to, top = 0) {
   add(300, (k, dt, age) => {
     if (Math.floor(age / 45) % 3 === 2) return; // мерцание
     for (let i = 1; i < pts.length; i++) {
-      line(...pts[i - 1], ...pts[i], "#ff7a1a", 6);
-      line(...pts[i - 1], ...pts[i], "#ffd23f", 4);
-      line(...pts[i - 1], ...pts[i], "#ffffff", 2);
+      line(...pts[i - 1], ...pts[i], cols[0], 6);
+      line(...pts[i - 1], ...pts[i], cols[1], 4);
+      line(...pts[i - 1], ...pts[i], cols[2], 2);
     }
     branches.forEach(([bx, by], i) => {
-      line(bx, by, bx + (i % 2 ? 9 : -9), by + 8, "#ffd23f", 2);
+      line(bx, by, bx + (i % 2 ? 9 : -9), by + 8, cols[1], 2);
       line(bx + (i % 2 ? 9 : -9), by + 8, bx + (i % 2 ? 12 : -12), by + 14, "#fff3a0", 1);
     });
   });
   flash("#ffffff", 160, 0.6, 40);
-  setTimeout(() => explosion(x1, y1, false, ["#ffffff", "#ffffff", "#fff3a0", "#ffd23f", "#f0a000", "#5a4a2a"]), 60);
+  setTimeout(() => explosion(x1, y1, false, ["#ffffff", "#ffffff", cols[2], cols[1], cols[0], "#3a2a4a"]), 60);
   return 60;
 }
 
@@ -776,4 +776,478 @@ export function phoenix(from, to, ms = 300) {
     burstParticles(x1, y1, { n: 20, cols: fire, speed: 110, life: 520, size: [1, 2], up: 50 });
     flash("#ffd23f", 140, 0.3);
   }, ms);
+}
+
+// ---------- атаки боссов (по герою) ----------
+// Всё мультяшное: клякса шлёпает, кость прилетает и отскакивает. Возвращают, через сколько мс попадание.
+
+/** Капля по дуге: чернила, слизь, паутина. На герое клякса, которая стекает. */
+export function splat(from, to, cols) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  const fly = 320,
+    arc = Math.min(24, Math.abs(x1 - x0) * 0.3);
+  add(
+    fly,
+    (k, dt, age) => {
+      const x = lerp(x0, x1, k),
+        y = lerp(y0, y1, k) - Math.sin(k * Math.PI) * arc;
+      const wob = Math.floor(age / 60) % 2;
+      disc(x, y, 4 + wob, cols[2]);
+      disc(x, y, 3, cols[1]);
+      px(x - 1, y - 2, cols[0], 2);
+      if (Math.random() < 0.5) {
+        let dx = x,
+          dy = y;
+        add(260, (kk, d) => {
+          dy += (d / 1000) * 30;
+          px(dx, dy, ramp([cols[1], cols[2]], kk), 2);
+        });
+      }
+    },
+    0,
+    () => {
+      // клякса растекается и стекает каплями
+      add(560, (k) => {
+        ctx.globalAlpha = k < 0.7 ? 1 : (1 - k) / 0.3;
+        const r = Math.round(lerp(3, 8, Math.min(1, k * 4)));
+        disc(x1, y1, r, cols[2]);
+        disc(x1 - 1, y1 - 1, r - 2, cols[1]);
+        for (let i = -2; i <= 2; i++) px(x1 + i * 3, y1 + r + k * 10 * (1 + (i & 1)), cols[2], 2);
+        ctx.globalAlpha = 1;
+      });
+      burstParticles(x1, y1, { n: 14, cols: [cols[1], cols[2]], speed: 90, life: 420, size: [1, 2], grav: 160 });
+    },
+  );
+  return fly;
+}
+
+const TWO = ["11110", "00001", "00001", "01110", "10000", "10000", "11111"];
+/** Огромная красная «2» падает сверху и штампует героя. */
+export function stampDrop(to, cols) {
+  ensure();
+  const [x1, y1] = P(...to);
+  const fall = 280,
+    S = 2;
+  // контур, потом заливка: цифра читается на любом фоне
+  const draw = (x, y, rot) =>
+    [
+      [cols[2], -1, S + 2],
+      [cols[1], 0, S],
+    ].forEach(([c, o, sz]) => {
+      ctx.fillStyle = c;
+      TWO.forEach((row, j) =>
+        [...row].forEach((ch, i) => {
+          if (ch === "1")
+            ctx.fillRect(Math.round(x + (i - 2) * S + (j - 3) * S * rot) + o, Math.round(y + (j - 3) * S) + o, sz, sz);
+        }),
+      );
+    });
+  add(
+    fall,
+    (k) => draw(x1, lerp(-10, y1 - 4, k * k), 0.15 * (1 - k)),
+    0,
+    () => {
+      add(380, (k) => {
+        ctx.globalAlpha = k < 0.6 ? 1 : (1 - k) / 0.4;
+        draw(x1, y1 - 4, 0);
+        ctx.globalAlpha = 1;
+      });
+      ring(x1, y1 + 6, 3, 18, [cols[0], cols[1]], 300, 1);
+      smoke(x1, y1 + 8, 4, 2, 500);
+      shake();
+    },
+  );
+  return fall;
+}
+
+/** Веер игл (кактус, пчела): тонкие иглы с белым кончиком. */
+export function needles(from, to, cols, n = 5) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  const fly = 240,
+    gap = 45;
+  for (let i = 0; i < n; i++) {
+    const ty = y1 + (i - (n - 1) / 2) * 3 + rnd(-1, 1);
+    add(
+      fly,
+      (k) => {
+        const x = lerp(x0, x1, k),
+          y = lerp(y0, ty, k);
+        const a = Math.atan2(ty - y0, x1 - x0);
+        line(x, y, x - Math.cos(a) * 6, y - Math.sin(a) * 6, cols[2], 1);
+        px(x, y, cols[0], 1);
+      },
+      i * gap,
+      () => sparks(x1, ty, [cols[0], cols[1]], 4, 60),
+    );
+  }
+  return fly + ((n - 1) * gap) / 2;
+}
+
+/** Луч из глаза: короткий заряд, потом лазер. */
+export function zap(from, to, cols) {
+  ensure();
+  const [x0, y0] = P(...from);
+  charge(x0, y0, [cols[1], cols[0]], 160, 10, 8);
+  setTimeout(() => laser(from, to, cols[1], false), 160);
+  return 200;
+}
+
+/** Заклинание: крутящийся сгусток со звёздочками, небольшой взрыв. n сгустков друг за другом. */
+export function spell(from, to, cols, n = 1) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  const fly = 360,
+    gap = 130;
+  for (let i = 0; i < n; i++) {
+    const off = n > 1 ? (i - (n - 1) / 2) * 10 : 0;
+    add(
+      fly,
+      (k, dt, age) => {
+        const x = lerp(x0, x1, k),
+          y = lerp(y0, y1, k) + Math.sin(k * Math.PI) * off;
+        for (let s = 0; s < 3; s++) {
+          const a = age / 70 + (s * Math.PI * 2) / 3;
+          px(x + Math.cos(a) * 6, y + Math.sin(a) * 6, cols[s % 2 ? 2 : 1], 2);
+        }
+        disc(x, y, 3, cols[2]);
+        disc(x, y, 2, cols[1]);
+        px(x, y, cols[0], 2);
+        if (Math.random() < 0.6) {
+          const sx = x + rnd(-2, 2),
+            sy = y + rnd(-2, 2);
+          add(280, (kk) => px(sx, sy, ramp(cols, kk), 1));
+        }
+      },
+      i * gap,
+      () => {
+        ring(x1, y1 + off * 0.3, 2, 14, cols, 300, 1);
+        burstParticles(x1, y1, { n: 14, cols, speed: 100, life: 400, size: [1, 2] });
+        flash(cols[2], 120, 0.2);
+      },
+    );
+  }
+  return fly + (n - 1) * gap;
+}
+
+/** Бумеранг (кость, бинт): крутится, бьёт и возвращается к боссу. */
+export function bone(from, to, cols) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  const fly = 300;
+  const draw = (x, y, a) => {
+    const c = Math.cos(a) * 5,
+      s = Math.sin(a) * 5;
+    line(x - c, y - s, x + c, y + s, cols[2], 3);
+    line(x - c, y - s, x + c, y + s, cols[1], 1);
+    px(x - c, y - s, cols[0], 3);
+    px(x + c, y + s, cols[0], 3);
+  };
+  add(
+    fly,
+    (k, dt, age) => draw(lerp(x0, x1, k), lerp(y0, y1, k) - Math.sin(k * Math.PI) * 14, age / 40),
+    0,
+    () => {
+      sparks(x1, y1, [cols[0], "#ffd23f"], 10, 90);
+      ring(x1, y1, 2, 10, [cols[0], cols[1]], 220, 1);
+      add(320, (k, dt, age) => draw(lerp(x1, x0, k), lerp(y1, y0, k) + Math.sin(k * Math.PI) * 10, -age / 40));
+    },
+  );
+  return fly;
+}
+
+/** Сюрикены: две крутящиеся звёздочки. */
+export function shuriken(from, to, cols) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  const fly = 220,
+    gap = 90;
+  for (let i = 0; i < 2; i++) {
+    const ty = y1 + (i ? 5 : -4);
+    add(
+      fly,
+      (k, dt, age) => {
+        const x = lerp(x0, x1, k),
+          y = lerp(y0, ty, k),
+          a = age / 25;
+        for (let r = 0; r < 4; r++) {
+          const aa = a + (r * Math.PI) / 2;
+          line(x, y, x + Math.cos(aa) * 4, y + Math.sin(aa) * 4, cols[1], 1);
+          px(x + Math.cos(aa + 0.5) * 2, y + Math.sin(aa + 0.5) * 2, cols[2], 1);
+        }
+        px(x, y, cols[0], 2);
+        if (Math.random() < 0.7) {
+          const sx = x,
+            sy = y;
+          add(120, (kk) => px(sx, sy, ramp([cols[1], cols[2]], kk), 1));
+        }
+      },
+      i * gap,
+      () => sparks(x1, ty, [cols[0], cols[1]], 8, 90),
+    );
+  }
+  return fly;
+}
+
+/** Снежок по дуге: на герое иней. */
+export function snowball(from, to, cols) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  const fly = 340,
+    arc = Math.min(30, Math.abs(x1 - x0) * 0.3);
+  add(
+    fly,
+    (k) => {
+      const x = lerp(x0, x1, k),
+        y = lerp(y0, y1, k) - Math.sin(k * Math.PI) * arc;
+      disc(x, y, 4, cols[2]);
+      disc(x, y, 3, cols[1]);
+      disc(x - 1, y - 1, 1, cols[0]);
+    },
+    0,
+    () => {
+      burstParticles(x1, y1, { n: 22, cols, speed: 120, life: 500, size: [1, 2], grav: 120 });
+      ring(x1, y1, 3, 16, cols, 320, 2);
+      flash("#d6f3ff", 160, 0.3);
+    },
+  );
+  return fly;
+}
+
+/** Язык хамелеона: выстреливает, шлёпает, втягивается. */
+export function tongue(from, to, cols) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  add(420, (k) => {
+    const reach = k < 0.3 ? k / 0.3 : k < 0.5 ? 1 : 1 - (k - 0.5) / 0.5;
+    const x = lerp(x0, x1, reach),
+      y = lerp(y0, y1, reach) + Math.sin(reach * Math.PI) * 3;
+    line(x0, y0, x, y, cols[2], 3);
+    line(x0, y0, x, y, cols[1], 1);
+    disc(x, y, 3, cols[1]);
+    px(x - 1, y - 1, cols[0], 1);
+  });
+  setTimeout(() => {
+    sparks(x1, y1, [cols[0], cols[1]], 10, 80);
+    ring(x1, y1, 2, 10, [cols[0], cols[1]], 200, 1);
+  }, 130);
+  return 130;
+}
+
+/** Бумажный самолётик (шпаргалка): летит волной, на герое — клочки бумаги. */
+export function plane(from, to, cols, n = 1) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  const fly = 420,
+    gap = 120;
+  for (let i = 0; i < n; i++) {
+    const ty = y1 + (n > 1 ? (i - (n - 1) / 2) * 6 : 0);
+    add(
+      fly,
+      (k) => {
+        const x = lerp(x0, x1, k),
+          y = lerp(y0 - 6, ty, k) + Math.sin(k * Math.PI * 3) * 4;
+        // летит влево: нос слева, крылья треугольником
+        for (let j = 0; j < 7; j++) {
+          const h = Math.floor(j / 2);
+          ctx.fillStyle = cols[0];
+          ctx.fillRect(Math.round(x + j), Math.round(y - h), 1, h + 1);
+          ctx.fillStyle = cols[2];
+          ctx.fillRect(Math.round(x + j), Math.round(y + 1), 1, Math.max(1, h - 1));
+        }
+        px(x + 3, y, cols[1], 1);
+      },
+      i * gap,
+      () =>
+        burstParticles(x1, ty, {
+          n: 10,
+          cols: [cols[0], cols[1], cols[0]],
+          speed: 80,
+          life: 520,
+          size: 2,
+          grav: 90,
+        }),
+    );
+  }
+  return fly + (n - 1) * gap;
+}
+
+/** Щит героя отбил удар: голубая дуга и искры. */
+export function guard(at) {
+  ensure();
+  const [x, y] = P(...at);
+  add(320, (k) => {
+    ctx.globalAlpha = 1 - k;
+    for (let a = -1.1; a <= 1.1; a += 0.08) px(x + Math.cos(a) * 9, y + Math.sin(a) * 12, "#a8f0ff", 2);
+    for (let a = -0.9; a <= 0.9; a += 0.1) px(x + Math.cos(a) * 7, y + Math.sin(a) * 10, "#ffffff", 1);
+    ctx.globalAlpha = 1;
+  });
+  sparks(x, y, ["#ffffff", "#a8f0ff", "#45d1e6"], 14, 110);
+}
+
+/** Нить жизни от героя к боссу (вампир). */
+export function drain(from, to) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  const cols = ["#ffffff", "#b8ff9a", "#3fbf5a"];
+  for (let i = 0; i < 16; i++)
+    add(
+      420,
+      (k) => {
+        const x = lerp(x0, x1, k),
+          y = lerp(y0, y1, k) - Math.sin(k * Math.PI) * 12 + Math.sin(k * 12 + i) * 2;
+        px(x, y, ramp(cols, k), 2);
+      },
+      i * 30,
+    );
+  setTimeout(() => ring(x1, y1, 2, 12, cols, 260, 1), 420);
+}
+
+/** Монетки летят от героя к боссу-воришке. */
+export function coinsFly(from, to, n = 5) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  for (let i = 0; i < Math.min(8, n); i++) {
+    const up = rnd(10, 22);
+    add(
+      460,
+      (k, dt, age) => {
+        const x = lerp(x0, x1, k),
+          y = lerp(y0, y1, k) - Math.sin(k * Math.PI) * up;
+        const w = Math.floor(age / 70) % 2 ? 1 : 3;
+        ctx.fillStyle = "#a86400";
+        ctx.fillRect(Math.round(x - w / 2) - 1, Math.round(y) - 2, w + 2, 5);
+        ctx.fillStyle = "#ffd23f";
+        ctx.fillRect(Math.round(x - w / 2), Math.round(y) - 1, w, 3);
+      },
+      i * 50,
+    );
+  }
+}
+
+/** Босс превращается: стягивающиеся частицы, кольца, вспышка. */
+export function transform(at, cols = ["#ffffff", "#fff3a0", "#ffd23f", "#ff7a1a"]) {
+  ensure();
+  const [x, y] = P(...at);
+  charge(x, y, cols, 700, 34, 40);
+  flash("#ffffff", 260, 0.8, 700);
+  ring(x, y, 4, 40, cols, 520, 2, 700);
+  ring(x, y, 2, 28, cols, 420, 1, 820);
+  setTimeout(() => {
+    burstParticles(x, y, { n: 40, cols, speed: 170, life: 700, size: [1, 3] });
+    shake();
+  }, 700);
+}
+
+/** Босс повержен: рассыпается на свои же пиксели, они разлетаются и падают. */
+export function shatter(cv, rect, filter = "") {
+  ensure();
+  const w = cv.width,
+    h = cv.height;
+  if (!w || !h) return;
+  let data;
+  try {
+    // с тем же CSS-фильтром, что у босса на арене (башня, вторая форма), где браузер умеет
+    const tmp = document.createElement("canvas");
+    tmp.width = w;
+    tmp.height = h;
+    const t = tmp.getContext("2d");
+    if (filter && "filter" in t) t.filter = filter.replace(/drop-shadow\([^)]*\)/g, "").trim() || "none";
+    t.drawImage(cv, 0, 0);
+    data = t.getImageData(0, 0, w, h).data;
+  } catch (e) {
+    return;
+  }
+  const s = rect.w / w / PX; // размер пикселя босса в пикселях эффекта
+  const [ox0, oy0] = P(rect.x, rect.y);
+  const cx = w / 2,
+    cy = h / 2;
+  for (let j = 0; j < h; j++)
+    for (let i = 0; i < w; i++) {
+      const o = (j * w + i) * 4;
+      if (data[o + 3] < 128) continue;
+      const col = `rgb(${data[o]},${data[o + 1]},${data[o + 2]})`;
+      let x = ox0 + (i + 0.5) * s,
+        y = oy0 + (j + 0.5) * s,
+        vx = (i - cx) * rnd(5, 12) + rnd(-15, 15),
+        vy = (j - cy) * rnd(3, 8) - rnd(40, 110);
+      const size = Math.max(1, Math.round(s));
+      add(
+        rnd(700, 1100),
+        (k, dt) => {
+          const d = dt / 1000;
+          vy += 260 * d;
+          x += vx * d;
+          y += vy * d;
+          ctx.globalAlpha = k < 0.7 ? 1 : (1 - k) / 0.3;
+          ctx.fillStyle = col;
+          ctx.fillRect(Math.round(x), Math.round(y), size, size);
+          ctx.globalAlpha = 1;
+        },
+        rnd(0, 120),
+      );
+    }
+  flash("#ffffff", 200, 0.5);
+  shake();
+}
+
+/** Супер-удар босса: большой медленный шар, который можно отбить нажатием. Рисует, пока жив `alive()`. */
+export function superOrb(from, to, cols, ms, alive) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  let pos = [x0, y0];
+  add(ms, (k, dt, age) => {
+    if (!alive()) return;
+    const x = lerp(x0, x1, k),
+      y = lerp(y0, y1, k) - Math.sin(k * Math.PI) * 10;
+    pos = [x, y];
+    const r = 6 + (Math.floor(age / 80) % 2);
+    disc(x, y, r + 2, cols[2]);
+    disc(x, y, r, cols[1]);
+    disc(x - 1, y - 1, r - 3, cols[0]);
+    for (let s = 0; s < 4; s++) {
+      const a = age / 60 + (s * Math.PI) / 2;
+      px(x + Math.cos(a) * (r + 4), y + Math.sin(a) * (r + 4), cols[0], 2);
+    }
+  });
+  return () => pos.map((v, i) => v * PX + (i ? oy : ox)); // где шар сейчас, в CSS px арены
+}
+/** Отбитый шар улетает обратно в босса. */
+export function deflect(from, to, cols) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to);
+  ring(x0, y0, 3, 20, ["#ffffff", "#a8f0ff"], 260, 2);
+  sparks(x0, y0, ["#ffffff", "#a8f0ff", "#ffd23f"], 18, 140);
+  add(
+    220,
+    (k) => {
+      const x = lerp(x0, x1, k),
+        y = lerp(y0, y1, k);
+      disc(x, y, 6, cols[2]);
+      disc(x, y, 4, cols[1]);
+      px(x, y, cols[0], 3);
+    },
+    0,
+    () => explosion(x1, y1, true),
+  );
+  return 220;
+}
+
+/** Взрыв в точке арены (CSS px). */
+export function boomAt(at, big = true) {
+  ensure();
+  explosion(...P(...at), big);
 }

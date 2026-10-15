@@ -15,6 +15,42 @@ const items = ITEMS as ItemInfo[];
 const itemById = ITEM as Record<string, ItemInfo | undefined>;
 const defaultEquip = DEFAULT_EQUIP as Equip;
 const bossNames = (BOSSES as unknown as { name: string }[]).map((b) => b.name);
+/** Версия порядка боссов в кампании. */
+const RV = 3;
+/** Кампания rv 2 (28 боссов, до 16.10.2026). Имена нынешние: «Олеся Зоркая» стала «Олеся Отличница». */
+const CAMPAIGN_V2 = [
+  "Репетитор Ралина",
+  "Клякса",
+  "Слизняк Опечатка",
+  "Двойка",
+  "Мышь Путаница",
+  "Кактус Колючка",
+  "Кракозябра",
+  "Робот Проверятор",
+  "Тыква Тыквус",
+  "Паук Каракуль",
+  "Осьминог Чернильный",
+  "Пришелец Зырк",
+  "Снеговик Запятушка",
+  "Скелет Безударный",
+  "Призрак Пропуска",
+  "Ангел Ангелика",
+  "Гоблин Безграмотный",
+  "Мумия Задачник",
+  "Капитан Клякс",
+  "Тарелка Похититель",
+  "Олеся Отличница",
+  "Злой Учебник",
+  "Зомби Списун",
+  "Кибер-Акула",
+  "Маг Безграмот",
+  "Кибер-Двоечник",
+  "Словарный дракон",
+  "Король Ошибок",
+];
+/** rv 1: ещё без Кракозябры, Ангелики и Олеси; rv 0: и без Ралины. */
+const CAMPAIGN_V1 = CAMPAIGN_V2.filter((n) => !["Кракозябра", "Ангел Ангелика", "Олеся Отличница"].includes(n));
+const CAMPAIGN_V0 = CAMPAIGN_V1.filter((n) => n !== "Репетитор Ралина");
 
 export function freshProfile(): Profile {
   const owned: Record<string, number> = {};
@@ -28,7 +64,7 @@ export function freshProfile(): Profile {
     unlocked: 0,
     beaten: [],
     towerBest: 0,
-    rv: 2,
+    rv: RV,
     xpv: 2,
     tot: { correct: 0, typed: 0, bosses: 0, flawless: 0, bought: 0, crits: 0 },
     bestStreak: 0,
@@ -67,18 +103,19 @@ export function migrateProfile(stored: Partial<Profile> | null, legacyHero?: { x
     if (!it || it.slot !== sl) P.equip[sl] = defaultEquip[sl];
   });
 
-  // rv: перенос прогресса, когда в кампанию вставляются новые боссы
+  // rv: перенос прогресса, когда в кампанию вставляются новые боссы. Победы хранятся индексами, поэтому
+  // старый индекс → имя по списку той версии → индекс в нынешней кампании.
   const rv = st.rv || 0;
-  if (!Object.keys(st).length || rv >= 2) P.rv = 2;
+  if (!Object.keys(st).length || rv >= RV) P.rv = RV;
   else {
-    const NEW = ["Кракозябра", "Ангел Ангелика", "Олеся Зоркая"];
-    const v1 = bossNames.filter((n) => !NEW.includes(n));
-    const old = rv === 1 ? v1 : v1.filter((n) => n !== "Репетитор Ралина");
+    const old = rv >= 2 ? CAMPAIGN_V2 : rv === 1 ? CAMPAIGN_V1 : CAMPAIGN_V0;
     const idx = (n: string) => bossNames.indexOf(n);
     P.beaten = (P.beaten || []).map((i) => idx(old[i])).filter((i) => i >= 0);
     const u = idx(old[Math.min(P.unlocked || 0, old.length - 1)]);
     P.unlocked = u >= 0 ? u : P.unlocked || 0;
-    P.rv = 2;
+    // за последним побеждённым открыт следующий (Тень Короля за Королём); вставленные раньше — уже открыты
+    if (P.beaten.length) P.unlocked = Math.max(P.unlocked, Math.max(...P.beaten) + 1);
+    P.rv = RV;
   }
 
   // xpv 2: поздние уровни стали дороже, поэтому опыт поднимается до прежнего уровня

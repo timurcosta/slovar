@@ -56,7 +56,7 @@ bar.className = "dev-bar";
 bar.hidden = true;
 bar.innerHTML = `
   <button data-a="ok">Верно</button><button data-a="crit">Крит</button><button data-a="bad">Ошибка</button>
-  <button data-a="pet">Питомец</button><button data-a="rage">Ярость</button><button data-a="kill">Добить</button>
+  <button data-a="pet">Питомец</button><button data-a="rage">Ярость</button><button data-a="charge">Заряд</button><button data-a="kill">Добить</button>
   <label><input type="checkbox" data-a="god" checked> Бессмертие</label>`;
 document.body.appendChild(bar);
 
@@ -212,6 +212,9 @@ bar.addEventListener("click", (e) => {
   if (a === "rage") {
     G.hp = Math.ceil(G.boss.hp * 0.25);
     renderHUD();
+  }
+  if (a === "charge") {
+    G.charge = 4; // супер-удар со следующего слова (у босса с «Супер-ударом» видна шкала)
   }
   if (a === "kill") {
     G.hp = 1;

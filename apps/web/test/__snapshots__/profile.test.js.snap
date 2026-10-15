@@ -1,28 +1,28 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`профиль > rv 0 → 2: ещё без Ралины 1`] = `
+exports[`профиль > rv 0 → 3: ещё без Ралины 1`] = `
 {
   "beaten": [
     1,
     2,
     3,
   ],
-  "rv": 2,
-  "unlocked": 4,
+  "rv": 3,
+  "unlocked": 5,
 }
 `;
 
-exports[`профиль > rv 1 → 2: индексы боссов переносятся по именам 1`] = `
+exports[`профиль > rv 1 → 3: индексы боссов переносятся по именам 1`] = `
 {
   "beaten": [
     0,
     1,
     2,
     3,
-    4,
+    5,
   ],
-  "rv": 2,
-  "unlocked": 5,
+  "rv": 3,
+  "unlocked": 6,
 }
 `;
 
