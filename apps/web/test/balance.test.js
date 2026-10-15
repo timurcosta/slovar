@@ -41,6 +41,13 @@ describe("магазин", () => {
     expect(Object.fromEntries(UPGRADES.map((u) => [u.id, [0, 1, 2, 5, 9].map((n) => upCost(u, n))]))).toMatchSnapshot();
   });
 
+  it("питомцы: урон и умения", () => {
+    const keys = ["dmgPlus", "critMult", "heal8", "heal6", "heal5", "drone", "guard5", "coinMul"];
+    expect(
+      ITEMS.filter((i) => i.slot === "pet").map((i) => [i.id, ...keys.filter((k) => i[k]).map((k) => `${k}=${i[k]}`)]),
+    ).toMatchSnapshot();
+  });
+
   it("цены и уровни предметов", () => {
     expect(
       ITEMS.map((i) => `${i.slot}/${i.id}: ${i.price} lvl${i.lvl ?? "-"} ${RARITY(i.price)[0]}`),

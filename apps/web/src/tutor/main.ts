@@ -210,7 +210,7 @@ async function renderStudent(id: string) {
       <div class="panel">
         <h2>Код для входа</h2>
         <p class="tutor-code" id="code">${esc(s.code)}</p>
-        <p class="note">В игре: «У меня есть код от учителя» на первом экране или «Код учителя» внизу главной.
+        <p class="note">В игре: «Войти по коду» на заставке игры или «Код учителя» внизу главной.
           После входа прогресс ученика сохраняется здесь.</p>
         <div class="row"><button class="btn small" id="new-code">Выдать новый код</button><span class="msg" id="code-msg"></span></div>
       </div>

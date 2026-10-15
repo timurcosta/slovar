@@ -17,7 +17,7 @@ import { addCoins, addXP, grantChest } from "../progress/rewards.js";
 import { checkAch } from "../progress/achievements.js";
 import { sfx } from "../audio/sfx.js";
 import { duckMusic, stopMusic } from "../audio/music.js";
-import { bossCv, heroCv, renderHUD } from "./hud.js";
+import { bossCv, drawFighters, heroCv, renderHUD } from "./hud.js";
 import { clearRound, later, nextQ } from "./round.js";
 import { DIFF_NAME, applyDiff, diffMul } from "./difficulty.js";
 import { toast } from "../ui/toast.js";
@@ -51,7 +51,7 @@ function newRun(kind) {
   $("opts").hidden = G.type;
   $("typer").hidden = !G.type;
   document.body.classList.toggle("kb", TOUCH && G.type);
-  drawHero(heroCv, P.equip, $("hero-aura"));
+  drawFighters();
   show("s-game");
 }
 export function startTraining(kind) {
@@ -94,6 +94,12 @@ export function startTraining(kind) {
   b.training = kind;
   startBoss(b);
 }
+/** Бой с любым боссом как есть (меню разработчика). */
+export function startCustom(b) {
+  newRun("campaign");
+  G.bossIdx = b.idx || 0;
+  startBoss(b);
+}
 export function startCampaign(idx) {
   newRun("campaign");
   G.bossIdx = idx;
@@ -110,6 +116,7 @@ function startBoss(b) {
   const g = gear();
   G.boss = b;
   G.hp = b.hp;
+  G.hpLag = 0;
   G.queue = shuffle(poolFor(b));
   G.shieldLeft = g.shield;
   G.armorLeft = b.ab.includes("armor") ? 2 : 0;
@@ -124,7 +131,7 @@ function startBoss(b) {
   $("boss-wrap").classList.remove("enraged");
   drawBoss(bossCv, b);
   heroCv.className = "";
-  drawHero(heroCv, P.equip, $("hero-aura"));
+  drawFighters();
   $("boss-name").textContent = b.name;
   $("boss-num").textContent =
     G.kind === "tower" ? `ЭТАЖ ${b.floor}` : G.kind === "training" ? "ТРЕНИРОВКА" : `${b.idx + 1}/${BOSSES.length}`;
@@ -297,13 +304,13 @@ export function bossDown() {
       });
       sfx.level();
       renderHUD();
-      drawHero(heroCv, P.equip, $("hero-aura"));
+      drawFighters();
     } else drawSprite($("chest-cv"), SPR.chest, PALS.chest);
     if (chest.item)
       $("btn-equip-new").onclick = () => {
         P.equip[chest.item.slot] = chest.item.id;
         save();
-        drawHero(heroCv, P.equip, $("hero-aura"));
+        drawFighters();
         $("btn-equip-new").textContent = "Надето!";
         $("btn-equip-new").disabled = true;
         renderHUD();

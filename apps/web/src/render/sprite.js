@@ -35,4 +35,10 @@ export const drawBoss = (cv, b, sil, blink, angry) => {
     });
   }
   drawSprite(cv, SPR[b.spr], pal, sil);
+  // ширина босса в долях ширины холста героя (42 px): пиксель босса в BOSS_PX раз крупнее пикселя героя,
+  // высокие спрайты чуть мельче — так все боссы одного масштаба и всегда крупнее героя
+  cv.style.setProperty("--bk", (bossPx(cv) * cv.width) / 42);
 };
+export const BOSS_PX = 2.2;
+/** Во сколько раз пиксель босса крупнее пикселя героя (после drawBoss). */
+export const bossPx = (cv) => BOSS_PX * Math.min(1, 17 / Math.max(cv.width, cv.height));

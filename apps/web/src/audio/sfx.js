@@ -34,6 +34,7 @@ function noiseSweep(f0, f1, dur, vol, q = 1.2) {
     g = c.createGain(),
     t = c.currentTime;
   s.buffer = sfxNoise;
+  s.loop = true; // буфер 0,5 с, а взрыв звучит дольше
   f.type = "bandpass";
   f.Q.value = q;
   f.frequency.setValueAtTime(f0, t);
@@ -111,6 +112,82 @@ export const sfx = {
   bolt() {
     tone(90, 0.35, "sawtooth", 0.07, 40);
     tone(1600, 0.08, "square", 0.04, 0, 0.02);
+  },
+  // ---- дальнобойное оружие ----
+  pew(i = 0) {
+    tone(1500 - (i % 3) * 140, 0.09, "square", 0.03, 260);
+    noiseSweep(5200, 2400, 0.05, 0.08, 1);
+  },
+  charge(ms, hi = 2400) {
+    tone(240, ms / 1000, "sine", 0.04, hi);
+    tone(480, ms / 1000, "triangle", 0.018, hi * 1.3);
+  },
+  railShot() {
+    tone(3200, 0.14, "square", 0.035, 180);
+    noiseSweep(7000, 1500, 0.18, 0.3, 0.8);
+    tone(1900, 0.55, "sine", 0.028, 700, 0.04); // звенящий хвост
+  },
+  rocketLaunch() {
+    noiseSweep(500, 3200, 0.5, 0.32, 0.8);
+    tone(90, 0.4, "sawtooth", 0.025, 170);
+  },
+  boom(big) {
+    tone(big ? 110 : 150, big ? 0.7 : 0.45, "sine", 0.12, 28);
+    noiseSweep(1400, 90, big ? 0.8 : 0.5, big ? 0.45 : 0.32, 0.6);
+    if (big) tone(55, 0.9, "triangle", 0.07, 30, 0.03);
+  },
+  thunder() {
+    noiseSweep(3200, 180, 0.5, 0.42, 0.5);
+    tone(70, 0.6, "sawtooth", 0.035, 35, 0.03);
+  },
+  fireball() {
+    noiseSweep(300, 1600, 0.35, 0.3, 0.9);
+    tone(220, 0.3, "sawtooth", 0.018, 440);
+  },
+  beam(ms) {
+    tone(110, ms / 1000, "sawtooth", 0.035, 90);
+    tone(220, ms / 1000, "square", 0.014, 235);
+    noiseSweep(1200, 2600, ms / 1000, 0.14, 0.6);
+  },
+  comet() {
+    tone(2400, 0.45, "sine", 0.028, 500);
+    noiseSweep(4200, 700, 0.45, 0.2, 0.8);
+  },
+  shatter() {
+    [2600, 3100, 3700, 2900].forEach((f, i) => tone(f, 0.12, "triangle", 0.03, f * 0.7, i * 0.035));
+  },
+  vortex() {
+    tone(60, 0.8, "sawtooth", 0.045, 30);
+    tone(320, 0.7, "sine", 0.045, 40, 0.05);
+  },
+  // ---- питомцы ----
+  meow() {
+    tone(680, 0.12, "triangle", 0.04, 1050);
+    tone(1050, 0.22, "triangle", 0.04, 620, 0.11);
+  },
+  scratch(n = 3) {
+    for (let i = 0; i < n; i++) setTimeout(() => noiseSweep(5200, 1800, 0.08, 0.22, 1.5), i * 70);
+  },
+  bark() {
+    tone(330, 0.07, "square", 0.04, 190);
+    tone(300, 0.1, "square", 0.04, 170, 0.12);
+    tone(1700, 0.05, "triangle", 0.025, 0, 0.2); // щёлк челюстей
+  },
+  roar(ms = 380) {
+    tone(140, ms / 1000, "sawtooth", 0.04, 70);
+    noiseSweep(900, 2600, ms / 1000, 0.22, 0.6);
+  },
+  beep() {
+    tone(1800, 0.05, "square", 0.025);
+    tone(1800, 0.05, "square", 0.025, 0, 0.08);
+  },
+  cannon() {
+    tone(120, 0.3, "sine", 0.1, 40);
+    noiseSweep(1500, 200, 0.3, 0.3, 0.7);
+  },
+  screech() {
+    tone(1300, 0.28, "sine", 0.035, 2300);
+    tone(2300, 0.18, "triangle", 0.02, 1500, 0.2);
   },
   crit() {
     [660, 880, 1100, 1320].forEach((f, i) => tone(f, 0.08, "square", 0.05, 0, i * 0.05));

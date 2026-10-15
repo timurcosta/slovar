@@ -14,7 +14,7 @@ import { sfx, tone } from "../audio/sfx.js";
 import { startMusic } from "../audio/music.js";
 import { bossCv, heroCv, renderHUD } from "./hud.js";
 import { G, bossDown, endGame, limitStop } from "./run.js";
-import { fx, petAttack, pop, say } from "./effects.js";
+import { PET_RUN, droneVolley, fx, petAttack, petHitDelay, petRunsIn, petStartAt, pop, say } from "./effects.js";
 import { diffMul } from "./difficulty.js";
 
 export function clearRound() {
@@ -30,6 +30,7 @@ export function later(fn, ms) {
   G.timers.push(setTimeout(fn, ms));
 }
 export function nextQ() {
+  G.hpLag = 0; // все удары прошлого ответа уже показаны
   {
     const lr = limitReason();
     if (lr) {
@@ -70,7 +71,9 @@ export function nextQ() {
   }
   $("feedback").textContent = "";
   $("feedback").className = "feedback";
-  const ab = G.boss.ab;
+  // робопёс-сторож отогнал подлянки: в этом слове способности босса не срабатывают
+  const ab = G.guard ? [] : G.boss.ab;
+  G.guard = false;
   const still = () => G && G.qid === qid && !G.locked;
   if (ab.includes("shake")) $("word").classList.add("shakeW");
   if (ab.includes("tiny") && Math.random() < 0.6)
@@ -430,6 +433,8 @@ function resolve(ok, timeout) {
     G.firstHit = true;
     let base = G.type ? Math.round(g.dmg * 1.5) : g.dmg;
     let dmg = crit ? Math.round(base * g.critMult) : base;
+    // без доли питомца: от неё считается залп дрона (как было до отдельного удара питомца)
+    const heroBase = G.type ? Math.round((g.dmg - g.petDmg) * 1.5) : g.dmg - g.petDmg;
     let blocked = false;
     if (G.armorLeft > 0) {
       G.armorLeft--;
@@ -437,8 +442,16 @@ function resolve(ok, timeout) {
       blocked = true;
     }
     stat(e.word, "right");
-    const delay = fx(g.fx, g.fxCol);
-    if (!blocked) later(petAttack, delay + 140);
+    // урон делится: свою долю питомец наносит сам, своей атакой; полоска жизней падает в момент каждого удара
+    const petPart = blocked || !g.petDmg ? 0 : Math.round((dmg * g.petDmg) / g.dmg),
+      heroPart = dmg - petPart;
+    G.hpLag = dmg;
+    // питомец ближнего боя подбегает после удара героя (герой его ждёт), стрелок стреляет со своего места
+    const petRun = !blocked && petRunsIn();
+    const delay = fx(g.fx, g.fxCol, petRun);
+    const petAt = petRun ? petStartAt(delay) : delay + 140,
+      petHit = petAt + petHitDelay();
+    if (!blocked) later(petAttack, petAt);
     later(() => {
       if (blocked) {
         pop("БЛОК", "block");
@@ -447,13 +460,21 @@ function resolve(ok, timeout) {
       } else {
         replay(bossCv, g.fx === "smash" ? "smashed" : "hit");
         if (crit) {
-          pop(`КРИТ! -${dmg}`, "crit");
+          pop(`КРИТ! -${heroPart}`, "crit");
           sfx.crit();
           P.tot.crits++;
           quest("crits");
-        } else pop(`-${dmg}`);
+        } else pop(`-${heroPart}`);
       }
+      G.hpLag = Math.max(0, G.hpLag - heroPart);
+      renderHUD();
     }, delay);
+    if (petPart)
+      later(() => {
+        pop(`-${petPart}`, "pet" + (crit ? " crit" : ""), "62%");
+        G.hpLag = Math.max(0, G.hpLag - petPart);
+        renderHUD();
+      }, petHit);
     G.hp = Math.max(0, G.hp - dmg);
     G.score += dmg;
     if (!G.enraged && G.boss.ab.includes("enrage") && G.hp > 0 && G.hp / G.boss.hp < 0.35) {
@@ -505,19 +526,34 @@ function resolve(ok, timeout) {
         }, 600);
       }
     }
+    if (g.guard5 && !blocked && G.boss.ab.length) {
+      G.guardN = (G.guardN || 0) + 1;
+      if (G.guardN % 5 === 0) {
+        G.guard = true;
+        later(() => {
+          pop("Гав! Сторожу!", "pet", "14%");
+          sfx.bark();
+        }, petHit + 250);
+      }
+    }
+    let volleyEnd = 0;
     if (g.drone && !blocked && G.hp > 0) {
       G.droneN = (G.droneN || 0) + 1;
       if (G.droneN % 4 === 0) {
-        const dd = base * 2;
+        const dd = heroBase * 2;
         G.hp = Math.max(0, G.hp - dd);
         G.score += dd;
+        G.hpLag += dd;
+        volleyEnd = petHit + 700;
         later(() => {
-          fx("beam", "#ff3b3b");
+          droneVolley();
           later(() => {
             pop(`Дрон -${dd}`, "crit", "60%");
             replay(bossCv, "hit");
+            G.hpLag = Math.max(0, G.hpLag - dd);
+            renderHUD();
           }, 180);
-        }, delay + 260);
+        }, petHit + 260);
       }
     }
     const mult = (G.type ? 2 : 1) * diffMul();
@@ -528,7 +564,10 @@ function resolve(ok, timeout) {
     if (G.type) quest("typed");
     renderHUD();
     checkAch();
-    later(() => (G.hp <= 0 ? bossDown() : nextQ()), Math.max(900, delay + 650));
+    later(
+      () => (G.hp <= 0 ? bossDown() : nextQ()),
+      Math.max(900, delay + 650, petPart ? petHit + 300 : 0, petRun ? petAt + PET_RUN + 120 : 0, volleyEnd),
+    );
   } else {
     G.streak = 0;
     G.bossMistakes++;

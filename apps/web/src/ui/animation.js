@@ -6,7 +6,7 @@ import { drawHero } from "../render/hero.js";
 import { drawBoss } from "../render/sprite.js";
 import { P } from "../state/profile.ts";
 import { tone } from "../audio/sfx.js";
-import { bossCv, heroCv } from "../battle/hud.js";
+import { bossCv, drawFighters, heroCv } from "../battle/hud.js";
 import { G } from "../battle/run.js";
 import { rel, say } from "../battle/effects.js";
 import { tryOn } from "./screens/shop.js";
@@ -14,13 +14,8 @@ import { tryOn } from "./screens/shop.js";
 // live hero animation (aura + pet) for the big hero views
 const HERO_ANIM = [
   { cv: $("home-hero"), wrap: $("home-aura"), eq: () => P.equip },
-  {
-    cv: heroCv,
-    wrap: $("hero-aura"),
-    eq: () =>
-      G ? { ...P.equip, ...(G.swinging ? { weapon: "none" } : {}), ...(G.petBusy ? { pet: "nopet" } : {}) } : P.equip,
-  },
   { cv: $("end-hero"), wrap: $("end-aura"), eq: () => P.equip },
+  { cv: $("title-hero"), wrap: $("title-aura"), eq: () => P.equip },
   { cv: $("shop-hero"), wrap: $("shop-aura"), eq: () => (tryOn ? { ...P.equip, [ITEM[tryOn].slot]: tryOn } : P.equip) },
 ];
 export let heroFrame = 0;
@@ -31,6 +26,7 @@ if (!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matche
     HERO_ANIM.forEach((h) => {
       if (h.cv.offsetParent !== null) drawHero(h.cv, h.eq(), h.wrap, heroFrame);
     });
+    if (heroCv.offsetParent !== null) drawFighters(heroFrame);
     if (G && G.boss && bossCv.offsetParent !== null && !bossCv.classList.contains("dead")) {
       const angry = G.hp > 0 && G.hp / G.boss.hp < 0.3;
       drawBoss(bossCv, G.boss, false, !angry && (heroFrame % 13 === 0 || heroFrame % 13 === 1), angry);

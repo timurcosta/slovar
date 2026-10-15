@@ -186,6 +186,54 @@ exports[`боссы > кампания: жизни и время 1`] = `
 ]
 `;
 
+exports[`магазин > питомцы: урон и умения 1`] = `
+[
+  [
+    "nopet",
+  ],
+  [
+    "cat",
+    "dmgPlus=2",
+    "heal8=true",
+  ],
+  [
+    "robodog",
+    "dmgPlus=3",
+    "guard5=true",
+  ],
+  [
+    "minidragon",
+    "dmgPlus=3",
+    "critMult=2.5",
+  ],
+  [
+    "drone",
+    "dmgPlus=3",
+    "drone=true",
+  ],
+  [
+    "cyberwolf",
+    "dmgPlus=4",
+    "heal6=true",
+  ],
+  [
+    "darkdragon",
+    "dmgPlus=4",
+    "critMult=3",
+  ],
+  [
+    "phoenixpet",
+    "dmgPlus=10",
+    "heal5=true",
+  ],
+  [
+    "stardragon",
+    "dmgPlus=5",
+    "critMult=3.5",
+  ],
+]
+`;
+
 exports[`магазин > цены и уровни предметов 1`] = `
 [
   "weapon/pencil: 0 lvl1 ОБЫЧНЫЙ",

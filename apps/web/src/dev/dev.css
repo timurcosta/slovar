@@ -1,0 +1,106 @@
+/* Меню разработчика (только npm run dev) */
+.dev-fab {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
+  z-index: 60;
+  font: 10px var(--font-pixel);
+  color: #fff;
+  background: #7a4fd6;
+  border: 2px solid var(--ink);
+  padding: 6px 8px;
+  opacity: 0.55;
+  cursor: pointer;
+}
+.dev-fab:hover {
+  opacity: 1;
+}
+.dev-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  max-width: calc(100vw - 80px);
+  padding: 6px;
+  background: #1b0f3a;
+  border: 2px solid #7a4fd6;
+  color: #fff;
+  font: 800 13px var(--font-body);
+}
+.dev-bar button {
+  font: inherit;
+  padding: 6px 10px;
+  border: 2px solid #fff;
+  background: #7a4fd6;
+  color: #fff;
+  cursor: pointer;
+}
+.dev-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.dev-card {
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  text-align: center;
+  min-width: 0;
+}
+.dev-card.on {
+  border-color: var(--ok);
+  border-width: 3px;
+}
+.dev-card canvas {
+  width: 120px;
+  height: auto;
+}
+.dev-card canvas[data-b] {
+  width: auto;
+  height: 84px;
+}
+.dev-card b {
+  font-size: 14px;
+  line-height: 1.15;
+}
+.dev-card small {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+.dev-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: center;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  padding: 12px;
+}
+.dev-hero canvas {
+  width: 200px;
+  height: auto;
+}
+.dev-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.dev-list .btn small {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+}

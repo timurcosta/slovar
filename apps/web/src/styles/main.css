@@ -14,6 +14,7 @@
   --font-pixel: "Press Start 2P", ui-monospace, "Courier New", monospace;
   --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-hand: "Caveat", "Segoe Print", "Comic Sans MS", cursive;
+  --sheet: 560px;
 }
 * {
   box-sizing: border-box;
@@ -37,7 +38,7 @@ body {
   padding: 0 16px;
 }
 .sheet {
-  max-width: 560px;
+  max-width: var(--sheet);
   margin: 0 auto;
   padding-block: 16px 40px;
   position: relative;
@@ -47,7 +48,7 @@ body {
   position: fixed;
   top: 0;
   bottom: 0;
-  left: max(8px, calc(50% - 300px));
+  left: max(8px, calc(50% - var(--sheet) / 2 - 20px));
   width: 2px;
   background: var(--margin);
   opacity: 0.7;
@@ -586,28 +587,52 @@ textarea:focus-visible {
   justify-content: space-between;
 }
 .stage {
+  /* --hw: ширина холста героя; босс — от неё (--bk ставит drawBoss), --bs — общий множитель боссов */
+  container-type: inline-size;
+  --hw: min(190px, 60cqw);
+  --bs: 0.82;
   position: relative;
   height: 214px;
   padding-top: 34px !important;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 0 2px;
+  padding: 0 4%;
   border-bottom: 3px dotted var(--grid);
+}
+/* без питомца слева у холста героя пустая полоса под питомца (10 из 42 px) — убираем её из раскладки */
+/* питомец в бою на своём холсте поверх полосы питомца в холсте героя: левые края совпадают,
+   поэтому стоит там же, где на остальных экранах; ширину ставит drawFighters */
+#pet-cv {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: auto;
+  z-index: 3;
+}
+/* без питомца пустая полоса (10 из 42 px) не нужна в раскладке */
+.stage.nopet #hero-aura {
+  margin-left: calc(var(--hw) * -10 / 42);
 }
 .fighter {
   display: flex;
   align-items: flex-end;
 }
 #hero-cv {
-  width: 196px;
+  width: var(--hw);
   height: auto;
-  max-width: 54vw;
 }
 #boss-cv {
-  width: 132px;
+  width: calc(var(--hw) * var(--bk, 0.84) * var(--bs));
   height: auto;
-  max-height: 150px;
+}
+.vfx {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  pointer-events: none;
+  image-rendering: pixelated;
 }
 .bob {
   animation: bob 1.6s ease-in-out infinite;
@@ -761,6 +786,11 @@ textarea:focus-visible {
   color: var(--gold);
   text-shadow: 2px 2px 0 var(--ink);
 }
+/* урон питомца — своим цветом, чтобы было видно, что это он */
+.pop.pet {
+  top: 62%;
+  color: #7a4fd6;
+}
 .pop.heal {
   color: var(--ok);
 }
@@ -800,33 +830,6 @@ textarea:focus-visible {
   position: absolute;
   pointer-events: none;
   z-index: 3;
-}
-.beam {
-  height: 6px;
-  transform-origin: left center;
-  background: currentColor;
-  box-shadow:
-    0 0 10px currentColor,
-    0 0 2px #fff inset;
-  animation: beam 0.34s forwards;
-}
-.beam.big {
-  height: 12px;
-}
-.bullet {
-  width: 12px;
-  height: 5px;
-  background: currentColor;
-  box-shadow: 0 0 8px currentColor;
-  animation: fly 0.22s linear forwards;
-}
-.ball {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff3a0 20%, #ffd23f 40%, #ff7a1a 65%, #d62839);
-  box-shadow: 0 0 12px #ff7a1a;
-  animation: fly 0.34s ease-in forwards;
 }
 .slash {
   width: 60px;
@@ -872,18 +875,6 @@ textarea:focus-visible {
   transform-origin: 80% 59%;
   z-index: 2;
 }
-.petov {
-  position: absolute;
-  image-rendering: pixelated;
-  pointer-events: none;
-  z-index: 2;
-}
-.pa-pounce {
-  animation: paPounce 0.62s ease-in-out;
-}
-.pa-bite {
-  animation: paBite 0.6s ease-in-out;
-}
 .pa-breath {
   animation: paBreath 0.6s ease-in-out;
 }
@@ -895,40 +886,6 @@ textarea:focus-visible {
 }
 .pa-swoop {
   animation: paSwoop 0.64s ease-in-out;
-}
-@keyframes paPounce {
-  0% {
-    transform: none;
-  }
-  15% {
-    transform: translate(-4px, 4px) scaleY(0.85);
-  }
-  42% {
-    transform: translate(calc(var(--dx) * 0.6), -34px);
-  }
-  58% {
-    transform: translate(var(--dx), -6px);
-  }
-  100% {
-    transform: none;
-  }
-}
-@keyframes paBite {
-  0% {
-    transform: none;
-  }
-  38% {
-    transform: translateX(var(--dx));
-  }
-  52% {
-    transform: translateX(var(--dx)) rotate(-8deg);
-  }
-  64% {
-    transform: translateX(var(--dx));
-  }
-  100% {
-    transform: none;
-  }
 }
 @keyframes paBreath {
   0% {
@@ -1076,46 +1033,6 @@ textarea:focus-visible {
     transform: rotate(0);
   }
 }
-.hb-slash {
-  animation: hbSlash 0.66s ease-in-out;
-}
-.hb-smash {
-  animation: hbSmash 0.68s ease-in-out;
-}
-@keyframes hbSlash {
-  0% {
-    transform: none;
-  }
-  30% {
-    transform: translateX(-6px) rotate(-6deg);
-  }
-  46% {
-    transform: translateX(var(--dash)) rotate(5deg);
-  }
-  72% {
-    transform: translateX(var(--dash)) rotate(2deg);
-  }
-  100% {
-    transform: none;
-  }
-}
-@keyframes hbSmash {
-  0% {
-    transform: none;
-  }
-  32% {
-    transform: translate(-4px, -18px) rotate(-8deg);
-  }
-  48% {
-    transform: translate(var(--dash), 3px) rotate(9deg);
-  }
-  74% {
-    transform: translate(var(--dash), 0) rotate(3deg);
-  }
-  100% {
-    transform: none;
-  }
-}
 .dashSmash {
   animation: dashSmash 0.45s ease-in-out;
 }
@@ -1147,22 +1064,6 @@ textarea:focus-visible {
     transform: translateX(0);
   }
 }
-.boltfx {
-  animation: boltA 0.4s forwards;
-}
-.burst {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  border: 5px dotted currentColor;
-  animation: burst 0.35s forwards;
-}
-.burst.big {
-  width: 100px;
-  height: 100px;
-  border-width: 8px;
-  border-style: solid;
-}
 .sucked {
   animation: sucked 0.9s ease-in-out;
 }
@@ -1183,26 +1084,6 @@ textarea:focus-visible {
     transform: none;
     filter: none;
   }
-}
-.ring {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 3px solid #a8f0ff;
-  animation: ringA 0.35s ease-out forwards;
-}
-@keyframes ringA {
-  from {
-    transform: scale(0.3);
-    opacity: 1;
-  }
-  to {
-    transform: scale(1.8);
-    opacity: 0;
-  }
-}
-.nova.pink {
-  background: radial-gradient(circle, #ffffff 0%, #ffd0f4 30%, #ff4fd8 55%, rgba(255, 79, 216, 0) 72%);
 }
 .slash.wide {
   width: 110px;
@@ -1241,71 +1122,6 @@ textarea:focus-visible {
   80% {
     transform: translate(4px, 2px);
   }
-}
-.ball.comet {
-  background: radial-gradient(circle, #ffffff 25%, #a8f0ff 45%, #45d1e6 70%, rgba(69, 209, 230, 0));
-  box-shadow: -14px 0 14px #45d1e6;
-  width: 22px;
-  height: 22px;
-}
-.ball.hole {
-  background: radial-gradient(circle, #000 35%, #3d2a6b 60%, #c77dff 75%, rgba(199, 125, 255, 0));
-  box-shadow: 0 0 14px #7a4fd6;
-  width: 22px;
-  height: 22px;
-}
-.vortex {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  background: conic-gradient(#000, #7a4fd6, #000, #c77dff, #000);
-  animation: vortex 0.5s ease-in forwards;
-}
-@keyframes vortex {
-  0% {
-    transform: scale(1.2) rotate(0);
-    opacity: 0.9;
-  }
-  100% {
-    transform: scale(0.05) rotate(720deg);
-    opacity: 1;
-  }
-}
-.nova {
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    #ffffff 0%,
-    #fff3a0 30%,
-    #ffd23f 50%,
-    rgba(255, 122, 26, 0.5) 65%,
-    rgba(255, 122, 26, 0) 72%
-  );
-  animation: novaA 0.5s ease-out forwards;
-}
-@keyframes novaA {
-  0% {
-    transform: scale(0.1);
-    opacity: 1;
-  }
-  60% {
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
-}
-.rocketfx {
-  width: 16px;
-  height: 6px;
-  background: #d62839;
-  box-shadow:
-    -8px 0 8px #ff7a1a,
-    -3px 0 0 #ffd23f;
-  animation: fly 0.3s ease-in forwards;
 }
 .rar {
   font-family: var(--font-pixel);
@@ -2340,13 +2156,7 @@ body.kb #s-game {
 }
 body.kb .stage {
   height: 140px;
-}
-body.kb #hero-cv {
-  width: 136px;
-}
-body.kb #boss-cv {
-  width: 92px;
-  max-height: 104px;
+  --hw: 136px;
 }
 body.kb .word {
   height: 54px;
@@ -2586,25 +2396,6 @@ body.kb .arena {
     transform: translate(-3px, 1px);
   }
 }
-@keyframes beam {
-  0% {
-    transform: scaleX(0);
-    opacity: 1;
-  }
-  55% {
-    transform: scaleX(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scaleX(1);
-    opacity: 0;
-  }
-}
-@keyframes fly {
-  to {
-    transform: translate(var(--dx), var(--dy));
-  }
-}
 @keyframes slash {
   0% {
     opacity: 1;
@@ -2615,46 +2406,16 @@ body.kb .arena {
     transform: rotate(40deg) scale(1.1);
   }
 }
-@keyframes boltA {
-  0%,
-  100% {
-    opacity: 0;
-  }
-  10%,
-  30%,
-  55% {
-    opacity: 1;
-  }
-  20%,
-  45% {
-    opacity: 0.2;
-  }
-}
-@keyframes burst {
-  0% {
-    opacity: 1;
-    transform: scale(0.3);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.4);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .petov,
+  #pet-cv,
   .wpn,
-  .hb-slash,
-  .hb-smash,
   .bob,
   .atk,
   .sucked,
   .quake,
-  .ring,
   .dash,
   .dashSmash,
   .steam,
-  .vortex,
-  .nova,
   .word.dark,
   .opts.runaway .opt,
   #boss-wrap.angry,
@@ -2674,7 +2435,8 @@ body.kb .arena {
   .blot {
     animation: none !important;
   }
-  .fx {
+  .fx,
+  .vfx {
     display: none;
   }
   .dead {
@@ -2688,5 +2450,441 @@ body.kb .arena {
   .lvlup,
   .toast {
     animation: none;
+  }
+}
+
+/* ---------- Title screen: full-screen night scene, logo, press start, menu ---------- */
+body.on-title {
+  overflow: hidden;
+}
+body.on-title .sheet::before {
+  display: none;
+}
+#s-title {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden auto;
+  isolation: isolate;
+  background: #0b0a26;
+  color: #fff;
+  display: grid;
+  grid-template:
+    "logo logo" auto
+    "hero boss" minmax(150px, 1fr)
+    "menu menu" auto
+    "foot foot" auto / 1fr 1fr;
+  gap: 0 8px;
+  padding: max(20px, env(safe-area-inset-top)) 16px max(10px, env(safe-area-inset-bottom));
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#title-sky {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.ts-logo {
+  grid-area: logo;
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 2vh 0 0;
+  text-align: center;
+  line-height: 1.15;
+  text-transform: uppercase;
+  animation: ts-drop 0.7s steps(7) both;
+}
+.ts-l1,
+.ts-l2 {
+  display: block;
+  font-family: var(--font-pixel);
+  /* pixel outline: four hard shadows + a deep drop */
+  filter: drop-shadow(3px 0 0 #1b0f3a) drop-shadow(-3px 0 0 #1b0f3a) drop-shadow(0 3px 0 #1b0f3a)
+    drop-shadow(0 -3px 0 #1b0f3a) drop-shadow(0 6px 0 #07051a);
+}
+.ts-l1 {
+  font-size: clamp(26px, 9.6vw, 78px);
+  background: linear-gradient(#fff7c2 0 30%, #ffd84a 30% 58%, #f0a000 58% 80%, #c76a00 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ts-l2 {
+  font-size: clamp(17px, 6.1vw, 48px);
+  color: #ffe6f1;
+  margin-top: 0.75em;
+}
+/* teacher's red-pen correction: «ошЫбками» → «ошИбками» */
+.ts-fix {
+  position: relative;
+  display: inline-block;
+}
+.ts-fix s {
+  text-decoration: none;
+  position: relative;
+}
+.ts-fix s::after {
+  content: "";
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  top: 46%;
+  height: 0.16em;
+  background: #ff3b4e;
+  transform: rotate(-14deg) scaleX(0);
+  transform-origin: left;
+  animation: ts-strike 0.25s 0.9s steps(4) forwards;
+}
+.ts-fix i {
+  position: absolute;
+  left: 50%;
+  bottom: 72%;
+  font-family: var(--font-hand);
+  font-style: normal;
+  font-size: 1.45em;
+  line-height: 1;
+  text-transform: lowercase;
+  color: #ff3b4e;
+  transform: translateX(-50%) rotate(-8deg) scale(0);
+  animation: ts-pen 0.3s 1.2s steps(5) forwards;
+}
+.ts-spot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+}
+#title-hero-spot {
+  grid-area: hero;
+}
+#title-boss-spot {
+  grid-area: boss;
+}
+#title-aura {
+  margin-bottom: calc(var(--fx, 4) * -1px);
+}
+.ts-spot.nopet #title-aura {
+  margin-left: calc(var(--fx, 4) * -10px);
+}
+#title-hero,
+#title-boss {
+  height: auto;
+  display: block;
+}
+#title-hero {
+  width: 168px;
+  animation: bob 2.2s ease-in-out infinite;
+}
+#title-boss {
+  width: 128px;
+  animation: bob 1.6s ease-in-out infinite;
+}
+#title-boss.ts-pop {
+  animation:
+    ts-pop 0.35s steps(5),
+    bob 1.6s ease-in-out infinite;
+}
+.ts-menu,
+.ts-press {
+  grid-area: menu;
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 340px);
+}
+.ts-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 0 8px;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.25s steps(4),
+    transform 0.25s steps(4),
+    visibility 0s 0.25s;
+}
+.ts-menu .btn {
+  text-align: center;
+  width: 100%;
+}
+.ts-menu .btn.primary {
+  font-size: 22px;
+  padding: 14px 16px;
+}
+.ts-menu .btn small {
+  font-size: 13px;
+}
+#s-title.started .ts-menu {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.25s steps(4),
+    transform 0.25s steps(4);
+}
+.ts-press {
+  font-family: var(--font-pixel);
+  font-size: clamp(11px, 3.4vw, 16px);
+  line-height: 1.6;
+  color: #fff;
+  background: none;
+  border: 0;
+  padding: 16px 0;
+  text-shadow: 2px 2px 0 #1b0f3a;
+  cursor: pointer;
+  animation: ts-blink 1.1s steps(1) infinite;
+}
+#s-title.started .ts-press {
+  visibility: hidden;
+}
+.ts-foot {
+  grid-area: foot;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 6px;
+}
+.ts-foot .link {
+  color: #c9c2ff;
+  font-weight: 800;
+  font-size: 15px;
+}
+.ts-foot .link:hover {
+  color: #fff;
+}
+/* landscape (tablet sideways, laptop, desktop): hero | menu | boss on one line */
+@media (min-width: 700px) and (min-aspect-ratio: 5/4) {
+  #s-title {
+    grid-template:
+      "logo logo logo" auto
+      "hero menu boss" minmax(240px, 1fr)
+      "foot foot foot" auto / 1fr minmax(260px, 340px) 1fr;
+    gap: 0 24px;
+    padding-inline: max(24px, 4vw);
+  }
+  .ts-menu,
+  .ts-press {
+    align-self: end;
+    margin-bottom: 7vh;
+  }
+}
+@keyframes ts-drop {
+  from {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+}
+@keyframes ts-strike {
+  to {
+    transform: rotate(-14deg) scaleX(1);
+  }
+}
+@keyframes ts-pen {
+  to {
+    transform: translateX(-50%) rotate(-8deg) scale(1);
+  }
+}
+@keyframes ts-pop {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+  }
+}
+@keyframes ts-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ts-logo,
+  .ts-press,
+  #title-hero,
+  #title-boss,
+  #title-boss.ts-pop {
+    animation: none;
+  }
+  .ts-fix s::after {
+    animation: none;
+    transform: rotate(-14deg);
+  }
+  .ts-fix i {
+    animation: none;
+    transform: translateX(-50%) rotate(-8deg);
+  }
+}
+
+/* ---------- Bigger screens. Phone layout above is the base; columns on home/shop are transparent there ---------- */
+.cols > .col {
+  display: contents;
+}
+/* tablet portrait and up: wider sheet, bigger hero, boss and letters */
+@media (min-width: 720px) {
+  :root {
+    --sheet: 720px;
+  }
+  body {
+    font-size: 17px;
+  }
+  #home-hero,
+  #end-hero,
+  #name-hero {
+    width: 210px;
+  }
+  #shop-hero {
+    width: 180px;
+  }
+  .map {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .bcard canvas {
+    width: 52px;
+    max-height: 56px;
+  }
+  .stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .story .cast canvas {
+    width: 88px;
+  }
+  .items {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
+  .stage {
+    height: clamp(270px, 32vh, 420px);
+    --hw: min(300px, 36cqw);
+    --bs: 1;
+  }
+  .overlay canvas {
+    width: 92px;
+  }
+  .word {
+    font-size: 60px;
+    height: 84px;
+  }
+  .opt {
+    font-size: 48px;
+    padding: 22px 8px;
+  }
+  .typer input {
+    font-size: 30px;
+  }
+  .feedback {
+    font-size: 32px;
+  }
+}
+/* laptop and desktop: home and shop in two columns, battle side by side */
+@media (min-width: 1000px) {
+  :root {
+    --sheet: 1240px;
+  }
+  /* text screens stay readable: centred, not stretched */
+  #s-name,
+  #s-join,
+  #s-save,
+  #s-story,
+  #s-end,
+  #s-pin,
+  #s-teacher {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: minmax(400px, 480px) minmax(0, 1fr);
+    gap: 16px 32px;
+    align-items: start;
+  }
+  .cols > .topbar,
+  .cols > .row {
+    grid-column: 1 / -1;
+  }
+  .cols > .col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+  .cols > .col-main {
+    position: sticky;
+    top: 16px;
+  }
+  #home-hero {
+    width: 180px;
+  }
+  #s-shop .preview {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  #shop-hero {
+    width: 252px;
+  }
+  .map {
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  }
+  .achs,
+  .trophies {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  }
+}
+/* landscape with room: arena on the left, word and answers on the right, all on one screen */
+@media (min-width: 1000px) and (min-aspect-ratio: 5/4) {
+  #s-game {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+    grid-template-rows: auto auto 1fr auto auto auto auto 1fr auto;
+    grid-template-areas:
+      "hud hud"
+      "herohud herohud"
+      "arena ."
+      "arena word"
+      "arena opts"
+      "arena typer"
+      "arena feedback"
+      "arena ."
+      "foot foot";
+    gap: 14px 40px;
+  }
+  #s-game > .hud {
+    grid-area: hud;
+  }
+  #s-game > .herohud {
+    grid-area: herohud;
+  }
+  #s-game > .arena {
+    grid-area: arena;
+  }
+  #s-game > .word {
+    grid-area: word;
+  }
+  #s-game > .opts {
+    grid-area: opts;
+  }
+  #s-game > .typer {
+    grid-area: typer;
+  }
+  #s-game > .feedback {
+    grid-area: feedback;
+  }
+  #s-game > .row {
+    grid-area: foot;
+  }
+  .stage {
+    height: clamp(260px, 42vh, 390px);
+    --hw: min(330px, 34cqw);
+  }
+  .word {
+    font-size: clamp(44px, 4.4vw, 64px);
   }
 }

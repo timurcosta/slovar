@@ -14,8 +14,8 @@ import { sfx } from "../../audio/sfx.js";
 import { syncDiff } from "../../battle/difficulty.js";
 import { toast } from "../toast.js";
 import { show } from "../screens.js";
-import { home } from "./home.js";
 import { askName, cleanName } from "./intro.js";
+import { backToGame } from "./title.js";
 
 let resetArm = false,
   resetT = 0,
@@ -123,7 +123,7 @@ $("btn-reset-hero").onclick = () => {
 };
 const pinHash = (v) => String(hash("sb-pin:" + v));
 const getPin = () => LS.get("sb_pin", "");
-function openTeacher() {
+export function openTeacher() {
   if (getPin()) {
     $("pin-in").value = "";
     $("pin-msg").textContent = "";
@@ -160,7 +160,7 @@ $("pin-form").onsubmit = (ev) => {
     $("pin-msg").textContent = "Неверно. Вход закрыт на минуту.";
   } else $("pin-msg").textContent = "Неверный PIN-код.";
 };
-$("btn-pin-back").onclick = home;
+$("btn-pin-back").onclick = () => backToGame();
 $("btn-pin-set").onclick = () => {
   const v = $("pin-new").value.trim(),
     m = $("pin-set-msg");

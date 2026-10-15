@@ -11,7 +11,8 @@ export function gear(eq = P.equip) {
     p = ITEM[eq.pet];
   const up = P.up || {};
   return {
-    dmg: (w.dmg || 10) + (p.dmgPlus || 0) + (up.str || 0),
+    dmg: (w.dmg || 10) + (p.dmgPlus || 0) + (up.str || 0), // вместе с питомцем
+    petDmg: p.dmgPlus || 0, // доля питомца: он бьёт её сам, своей атакой
     fx: w.fx,
     fxCol: w.col,
     maxH: 5 + (a.hp || 0) + (up.hp || 0) + (settings.words === "a" ? 2 : 0) + (P.lep ? 1 : 0),
@@ -27,6 +28,7 @@ export function gear(eq = P.equip) {
     heal6: !!p.heal6,
     heal5: !!p.heal5,
     drone: !!p.drone,
+    guard5: !!p.guard5,
     critMult: p.critMult || 2,
     critAt: 3,
   };

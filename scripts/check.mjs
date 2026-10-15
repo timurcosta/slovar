@@ -111,6 +111,44 @@ const VETERAN = {
   up: { str: 5, hp: 2, time: 1, gold: 1 },
   tot: { correct: 800, typed: 120, bosses: 40, flawless: 9, bought: 20, crits: 300 },
 };
+/** Титульный экран: «Нажми, чтобы начать», меню, «Играть». */
+async function enter(p, shot) {
+  await tick(p, 1500);
+  if (shot) await shot("00-title");
+  await p.click("#title-press");
+  await tick(p, 400);
+  if (shot) await shot("00-title-menu");
+  await p.click("#btn-title-play");
+  await tick(p);
+}
+
+/** Экраны «прокачанного» игрока на большом экране: титул, главная, гардероб, бой. */
+async function bigScreens(p, shot) {
+  await enter(p, shot);
+  await tick(p, 1100);
+  await shot("01-home");
+  await p.click("#btn-shop");
+  await tick(p);
+  await shot("02-shop");
+  await p.click("#btn-shop-back");
+  await p.click("#btn-awards");
+  await tick(p);
+  await shot("03-awards");
+  await p.click("#btn-aw-back");
+  await p.click("#btn-tower");
+  await tick(p);
+  await shot("04-tower-intro");
+  await p.click("#btn-fight");
+  await tick(p, 800);
+  await p.click("#opt0");
+  await tick(p, 2500);
+  await shot("05-tower-fight");
+  await p.click("#btn-quit");
+  await p.click("#btn-teacher-1");
+  await tick(p);
+  await shot("06-teacher");
+}
+
 // старое сохранение: до вставки новых боссов (rv:1) и до новой формулы опыта (xpv нет)
 const LEGACY = {
   name: "Старичок",
@@ -129,6 +167,7 @@ const SCENARIOS = [
     name: "new",
     storage: {},
     run: async (p, shot) => {
+      await enter(p, shot);
       await shot("01-name");
       await p.fill("#name-in", "Тест");
       await p.click("#name-form button[type=submit]");
@@ -159,7 +198,8 @@ const SCENARIOS = [
     name: "veteran",
     storage: { sb2_profile: VETERAN, sb_stats: { берёза: { right: 3, wrong: 2 }, ворона: { right: 1, wrong: 4 } } },
     run: async (p, shot) => {
-      await tick(p, 1500);
+      await enter(p, shot);
+      await tick(p, 1100);
       await shot("01-home");
       await p.click("#btn-shop");
       await tick(p);
@@ -208,10 +248,14 @@ const SCENARIOS = [
     name: "legacy",
     storage: { sb2_profile: LEGACY },
     run: async (p, shot) => {
-      await tick(p, 2500);
+      await enter(p);
+      await tick(p, 2100);
       await shot("01-home");
     },
   },
+  { name: "tablet", storage: { sb2_profile: VETERAN }, viewport: { width: 820, height: 1180 }, run: bigScreens },
+  { name: "laptop", storage: { sb2_profile: VETERAN }, viewport: { width: 1024, height: 768 }, run: bigScreens },
+  { name: "desktop", storage: { sb2_profile: VETERAN }, viewport: { width: 1440, height: 900 }, run: bigScreens },
 ];
 
 const tick = (p, ms = 400) => p.clock.runFor(ms);
@@ -269,7 +313,7 @@ async function openPage(label, url, storage = {}, viewport = { width: 390, heigh
 }
 
 for (const sc of SCENARIOS) {
-  const { ctx, p, shot, dump } = await openPage(sc.name, URL_, sc.storage);
+  const { ctx, p, shot, dump } = await openPage(sc.name, URL_, sc.storage, sc.viewport);
   try {
     await sc.run(p, shot);
   } catch (e) {
@@ -307,8 +351,11 @@ if (fs.existsSync(path.join(onlineRoot, "index.html"))) {
     const code = (await t.textContent("#code")).trim();
     await tutor.shot("03-new-student", ["#code"]);
 
-    await kid.shot("01-name");
-    await k.click("#btn-name-join");
+    await tick(k, 1500);
+    await k.click("#title-press");
+    await tick(k, 400);
+    await kid.shot("01-title");
+    await k.click("#btn-title-play");
     await tick(k);
     await kid.shot("02-join");
     await k.fill("#join-in", "нет такого");
@@ -356,7 +403,8 @@ if (fs.existsSync(path.join(onlineRoot, "index.html"))) {
     const pulled = k.waitForResponse((r) => r.url().endsWith("/api/me"));
     await k.reload();
     await pulled;
-    await tick(k, 1500);
+    await enter(k);
+    await tick(k, 1100);
     await kid.shot("06-home-after-settings");
     const ls = await kid.dump("online-kid");
     expect(ls.sb_settings?.words === "custom", "ученик не получил режим слов от репетитора");

@@ -64,7 +64,7 @@ $("btn-save-copy").onclick = async () => {
   }
 };
 $("btn-save-share").onclick = () => {
-  navigator.share({ title: "Словарная битва: код сохранения", text: $("save-code").value }).catch(() => {});
+  navigator.share({ title: "Охотники за ошибками: код сохранения", text: $("save-code").value }).catch(() => {});
 };
 $("load-code").oninput = () => {
   loadArm = null;

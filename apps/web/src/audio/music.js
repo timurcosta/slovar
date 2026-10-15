@@ -372,8 +372,83 @@ export const TRACKS = {
     ]),
   },
 };
+// трек титульного экрана: не в TRACK_ORDER, кнопка «Музыка» в бою его не выбирает
+export const TITLE_TRACK = {
+  name: "Меню",
+  bpm: 116,
+  style: "title",
+  roots: [36, 43, 45, 41, 36, 41, 43, 36],
+  q: ["M", "M", "m", "M", "M", "M", "M", "M"],
+  kick: [],
+  snare: [],
+  mel: flatMel([
+    [
+      [72, 4],
+      [76, 2],
+      [79, 2],
+      [84, 6],
+      [83, 2],
+    ],
+    [
+      [83, 4],
+      [79, 4],
+      [74, 4],
+      [79, 4],
+    ],
+    [
+      [81, 6],
+      [79, 2],
+      [76, 4],
+      [72, 4],
+    ],
+    [
+      [77, 4],
+      [76, 2],
+      [74, 2],
+      [72, 4],
+      [69, 4],
+    ],
+    [
+      [72, 2],
+      [74, 2],
+      [76, 4],
+      [79, 4],
+      [76, 4],
+    ],
+    [
+      [77, 2],
+      [79, 2],
+      [81, 4],
+      [84, 4],
+      [81, 4],
+    ],
+    [
+      [79, 4],
+      [83, 4],
+      [81, 2],
+      [79, 2],
+      [74, 4],
+    ],
+    [
+      [76, 4],
+      [74, 4],
+      [72, 8],
+    ],
+  ]),
+};
 export const TRACK_ORDER = ["calm", "arena", "mega", "adv", "rock"];
-let music = { on: false, timer: null, t: 0, step: 0, out: null, dry: null, echo: null, dist: null, noise: null };
+let music = {
+  on: false,
+  track: null,
+  timer: null,
+  t: 0,
+  step: 0,
+  out: null,
+  dry: null,
+  echo: null,
+  dist: null,
+  noise: null,
+};
 function buildMusicGraph() {
   if (!music.noise) {
     const nb = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.5), ac.sampleRate),
@@ -527,6 +602,20 @@ function musicStep(tr, i, t, sd, fast) {
     if (k === 4 || k === 12) nz(t, { freq: 1400, q: 0.6, vol: 0.06, dec: 0.12 });
     return;
   }
+  if (tr.style === "title") {
+    // меню: мягкое арпеджио, бас, светлая мелодия с эхом, лёгкие барабаны без сбивки в конце петли
+    voice(root + 36 + ch[[0, 1, 2, 1][k % 4]], t, sd * 0.9, { type: "triangle", cut: 3200, vol: 0.045 });
+    if (k === 0) ch.forEach((c) => voice(root + 24 + c, t, sd * 15, { type: "sine", vol: 0.035, att: 0.15 }));
+    if (k % 4 === 0) voice(root + 12, t, sd * (k % 8 ? 2 : 3.5), { type: "triangle", cut: 1600, vol: 0.22 });
+    if (lead) {
+      voice(lead[0], t, lead[1] * sd, { type: "square", cut: 2600, vol: 0.06, att: 0.02, vib: 3, to: "echo" });
+      voice(lead[0] - 12, t, lead[1] * sd, { type: "triangle", cut: 2000, vol: 0.045, att: 0.02 });
+    }
+    if (k === 0 || k === 8) kickD(t, 0.6);
+    if (k === 12) nz(t, { freq: 1800, q: 0.7, vol: 0.08, dec: 0.12 });
+    if (k % 4 === 2) nz(t, { freq: 7000, q: 0.6, vol: 0.025, dec: 0.03, type: "highpass" });
+    return;
+  }
   if (tr.style === "orch") {
     const os = [0, 0, 7, 12, 0, 0, 7, 12, 0, 0, 7, 12, 0, 7, 12, 7][k];
     voice(root + 24 + os, t, sd * 0.7, { type: "sawtooth", cut: 1900, vol: 0.07 });
@@ -607,7 +696,7 @@ function musicStep(tr, i, t, sd, fast) {
   if (i >= 120 && i % 2 === 0) snareD(t, 0.45 + (i - 120) * 0.06);
 }
 function scheduleMusic(until) {
-  const tr = TRACKS[settings.track] || TRACKS.calm,
+  const tr = music.track,
     fast = !!(G && G.enraged);
   const sd = 60 / (tr.bpm * (fast ? 1.15 : 1)) / 4;
   while (music.t < until) {
@@ -619,12 +708,14 @@ function scheduleMusic(until) {
 function musicTick() {
   if (music.on && ac) scheduleMusic(ac.currentTime + 0.2);
 }
-export function startMusic() {
+/** Без аргумента играет трек боя, выбранный кнопкой «Музыка»; "title" — музыка титульного экрана. */
+export function startMusic(id) {
   if (!settings.music || settings.muted || music.on) return;
   try {
     ensureAC();
     if (ac.state !== "running") ac.resume();
     buildMusicGraph();
+    music.track = id === "title" ? TITLE_TRACK : TRACKS[settings.track] || TRACKS.calm;
     music.on = true;
     music.t = ac.currentTime + 0.08;
     music.step = 0;

@@ -51,6 +51,7 @@ import "./ui/screens/intro.js";
 import "./ui/screens/awards.js";
 import "./ui/screens/teacher.js";
 import "./ui/screens/trophies.js";
+import "./ui/screens/title.js";
 
 import { $ } from "./lib/dom.js";
 import { P, save } from "./state/profile.ts";
@@ -67,11 +68,11 @@ import { toast } from "./ui/toast.js";
 import { show } from "./ui/screens.js";
 import { home, renderHome } from "./ui/screens/home.js";
 import { openShop } from "./ui/screens/shop.js";
-import { askName, showStory } from "./ui/screens/intro.js";
 import { renderAwards } from "./ui/screens/awards.js";
 import { renderTrophies } from "./ui/screens/trophies.js";
 import { pull, setOnRemote } from "./net/sync.ts";
 import { syncJoinButtons } from "./ui/screens/join.js";
+import { backToGame, setOnEnter, showTitle } from "./ui/screens/title.js";
 
 $("btn-campaign").onclick = () => {
   if (!blockedToday()) startCampaign(frontier());
@@ -106,7 +107,7 @@ $("btn-again").onclick = () => {
 };
 $("btn-home").onclick = home;
 $("btn-quit").onclick = home;
-$("btn-back").onclick = home;
+$("btn-back").onclick = backToGame;
 $("opt0").onclick = () => answer(0);
 $("opt1").onclick = () => answer(1);
 $("typer").onsubmit = (ev) => {
@@ -121,6 +122,19 @@ const muteLabel = () => {
   ["btn-music", "btn-music-home"].forEach(
     (id) => ($(id).textContent = "Музыка: " + (settings.music ? (TRACKS[settings.track] || TRACKS.calm).name : "выкл")),
   );
+  $("btn-title-music").textContent = "Музыка: " + (settings.music && !settings.muted ? "вкл" : "выкл");
+};
+$("btn-title-music").onclick = () => {
+  const on = !(settings.music && !settings.muted);
+  settings.music = on;
+  if (on) settings.muted = false;
+  saveSettings();
+  muteLabel();
+  stopMusic();
+  if (on && $("s-title").classList.contains("started")) {
+    unlockAudio();
+    setTimeout(() => startMusic("title"), 450);
+  }
 };
 $("btn-mute").onclick = $("btn-mute-home").onclick = () => {
   settings.muted = !settings.muted;
@@ -188,25 +202,28 @@ syncJoinButtons();
 setOnRemote(() => {
   syncJoinButtons();
   if (!$("s-home").hidden) renderHome();
+  if (!$("s-title").hidden) showTitle();
 });
-if (P.name) {
-  renderHome();
-  if (!P.storySeen) showStory();
+// при первом входе с титула: достижения, которые могли открыться после обновления, и старый подарок
+setOnEnter(() => {
   setTimeout(() => {
     checkAch();
-    renderHome();
+    if (!$("s-home").hidden) renderHome();
   }, 1200);
-} else askName();
-if (P.lepToast) {
-  delete P.lepToast;
-  save();
-  setTimeout(
-    () =>
-      toast(
-        "Ралина передала тебе подарки за победу: лепёшку с каймаком (+1 сердце) и татарский национальный костюм с тюбетейкой! Смотри в гардеробе.",
-        "ach",
-      ),
-    1500,
-  );
-}
+  if (P.lepToast) {
+    delete P.lepToast;
+    save();
+    setTimeout(
+      () =>
+        toast(
+          "Ралина передала тебе подарки за победу: лепёшку с каймаком (+1 сердце) и татарский национальный костюм с тюбетейкой! Смотри в гардеробе.",
+          "ach",
+        ),
+      1500,
+    );
+  }
+});
+showTitle();
 pull();
+// меню разработчика: только в npm run dev, из сборки вырезается целиком
+if (import.meta.env.DEV) import("./dev/panel.js");

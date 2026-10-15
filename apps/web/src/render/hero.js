@@ -6,6 +6,9 @@ import { COSTUMES, COSTUME_KEY } from "../content/costumes.js";
 import { shadeHex } from "./color.js";
 import { heroLook } from "../state/profile.ts";
 
+// guns and blasters are drawn level, the rest lean forward (see the weapon block)
+const LEVEL_WEAPONS = ["dualblaster", "railgun", "annihilator", "rocket", "blackhole", "blaster", "cannon"];
+
 export function drawHero(cv, eq, wrap, fr = 0) {
   // 1px margin on every side so outlines at the edges (pet, wings, weapons) are never clipped
   const W = 30,
@@ -827,272 +830,266 @@ export function drawHero(cv, eq, wrap, fr = 0) {
   // weapon (rises and falls a little, like breathing)
   x.translate(0, breathe);
   const wx = ox + 16;
-  switch (eq.weapon) {
-    case "dualblaster":
-      R(wx - 1, oy + 8, 6, 2, "#d62839");
-      R(wx + 5, oy + 8, 3, 1, "#2b2b3a");
-      P(wx + 1, oy + 8, "#ffd23f");
-      R(wx, oy + 10, 1, 1, "#2b2b3a");
-      R(wx - 1, oy + 11, 6, 2, "#d62839");
-      R(wx + 5, oy + 11, 3, 1, "#2b2b3a");
-      P(wx + 1, oy + 11, "#ffd23f");
-      R(wx, oy + 13, 2, 2, "#2b2b3a");
-      P(wx + 4, oy + 9, "#ff7a1a");
-      P(wx + 4, oy + 12, "#ff7a1a");
-      break;
-    case "railgun":
-      R(wx - 3, oy + 10, 11, 2, "#2a2f4a");
-      R(wx - 3, oy + 9, 11, 1, "#45d1e6");
-      R(wx - 3, oy + 12, 11, 1, "#45d1e6");
-      for (let k = 0; k < 5; k++) P(wx - 2 + k * 2, oy + 10, "#a8f0ff");
-      R(wx + 7, oy + 9, 1, 4, "#ffffff");
-      R(wx - 1, oy + 13, 2, 2, "#2b2b3a");
-      P(wx, oy + 8, "#2a2f4a");
-      break;
-    case "annihilator":
-      R(wx - 3, oy + 8, 11, 6, "#1b1b1b");
-      R(wx - 3, oy + 9, 11, 1, "#ff4fd8");
-      R(wx - 3, oy + 12, 11, 1, "#ff4fd8");
-      R(wx, oy + 10, 3, 2, "#ffffff");
-      P(wx - 1, oy + 10, "#ff4fd8");
-      P(wx + 3, oy + 11, "#ff4fd8");
-      R(wx + 7, oy + 7, 1, 8, "#ff4fd8");
-      R(wx, oy + 6, 2, 2, "#2a2f4a");
-      P(wx + 1, oy + 6, "#ff3b3b");
-      R(wx - 1, oy + 14, 2, 2, "#2b2b3a");
-      P(wx - 3, oy + 7, "#ff4fd8");
-      break;
-    case "comet":
-      R(wx, oy - 2, 1, 16, "#9aa7bd");
-      R(wx - 1, oy - 4, 3, 3, "#45d1e6");
-      P(wx, oy - 5, "#ffffff");
-      P(wx, oy - 3, "#ffffff");
-      P(wx - 2, oy - 2, "#a8f0ff");
-      P(wx + 2, oy - 1, "#a8f0ff");
-      P(wx - 2, oy + 1, "#45d1e6");
-      P(wx + 2, oy + 3, "#a8f0ff");
-      R(wx, oy + 12, 1, 2, "#4a5670");
-      break;
-    case "blackhole":
-      R(wx - 2, oy + 8, 8, 5, "#1b1446");
-      R(wx + 3, oy + 7, 4, 7, "#7a4fd6");
-      R(wx + 4, oy + 9, 2, 3, "#000000");
-      P(wx + 3, oy + 7, "#c77dff");
-      P(wx + 6, oy + 13, "#c77dff");
-      P(wx + 7, oy + 10, "#ff4fd8");
-      P(wx - 1, oy + 9, "#c77dff");
-      P(wx + 1, oy + 11, "#c77dff");
-      R(wx - 1, oy + 13, 2, 2, "#2a2238");
-      break;
-    case "novasword":
-      R(wx, oy - 5, 3, 16, "#fff3a0");
-      R(wx + 1, oy - 5, 1, 16, "#ffffff");
-      P(wx - 1, oy - 3, "#ffd23f");
-      P(wx + 3, oy, "#ff7a1a");
-      P(wx - 1, oy + 3, "#ff7a1a");
-      P(wx + 3, oy + 6, "#ffd23f");
-      R(wx - 2, oy + 11, 7, 1, "#f0a000");
-      P(wx + 1, oy + 11, "#45d1e6");
-      R(wx + 1, oy + 12, 1, 2, "#6b4e31");
-      break;
-    case "scythe":
-      R(wx, oy - 2, 1, 16, "#3d2a6b");
-      R(wx - 6, oy - 3, 7, 1, "#c77dff");
-      R(wx - 7, oy - 2, 2, 1, "#c77dff");
-      R(wx - 8, oy - 1, 1, 2, "#c77dff");
-      R(wx - 5, oy - 2, 5, 1, "#f3e0ff");
-      P(wx + 1, oy - 3, "#ff4fd8");
-      break;
-    case "greatsword":
-      R(wx, oy - 3, 3, 14, "#ff7a1a");
-      R(wx + 1, oy - 3, 1, 14, "#ffd23f");
-      P(wx - 1, oy - 1, "#d62839");
-      P(wx + 3, oy + 2, "#d62839");
-      P(wx - 1, oy + 5, "#ffd23f");
-      P(wx + 3, oy + 7, "#ff7a1a");
-      P(wx + 1, oy - 4, "#ffd23f");
-      R(wx - 2, oy + 11, 7, 1, "#3b2a20");
-      R(wx + 1, oy + 12, 1, 2, "#6b4e31");
-      break;
-    case "rocket":
-      R(wx - 3, oy + 9, 10, 3, "#4a6b3a");
-      R(wx - 3, oy + 9, 10, 1, "#5d8a48");
-      R(wx + 5, oy + 10, 2, 1, "#d62839");
-      P(wx + 7, oy + 10, "#ffd23f");
-      P(wx, oy + 8, "#2b2b3a");
-      P(wx + 1, oy + 8, "#2b2b3a");
-      R(wx - 1, oy + 12, 2, 2, "#2b2b3a");
-      P(wx - 3, oy + 10, "#2b2b3a");
-      break;
-    case "galaxystaff":
-      R(wx, oy, 1, 14, "#2a2238");
-      R(wx - 2, oy - 4, 5, 4, "#3d2a6b");
-      R(wx - 3, oy - 2, 7, 1, "#c77dff");
-      P(wx - 1, oy - 3, "#ffffff");
-      P(wx + 1, oy - 2, "#ffd23f");
-      P(wx, oy - 4, "#c77dff");
-      P(wx + 1, oy - 4, "#ffffff");
-      P(wx - 1, oy - 1, "#45d1e6");
-      break;
-    case "gravhammer":
-      R(wx, oy + 3, 2, 10, "#2a2238");
-      R(wx - 3, oy - 2, 8, 5, "#1f2440");
-      R(wx - 2, oy - 1, 6, 3, "#7a4fd6");
-      R(wx, oy, 2, 1, "#ff4fd8");
-      P(wx - 4, oy, "#c77dff");
-      P(wx + 5, oy, "#c77dff");
-      P(wx, oy - 3, "#c77dff");
-      break;
-    case "dragonblade":
-      R(wx, oy - 4, 2, 15, "#e3e8f0");
-      R(wx + 1, oy - 4, 1, 15, "#9aa7bd");
-      [2, 5, 8].forEach((k) => P(wx, oy + k, "#ff7a1a"));
-      R(wx - 2, oy + 11, 6, 1, "#2b9348");
-      P(wx - 2, oy + 10, "#2b9348");
-      P(wx + 3, oy + 10, "#2b9348");
-      P(wx, oy + 11, "#ffd23f");
-      R(wx, oy + 12, 2, 1, "#1b5e30");
-      break;
-    case "absolute":
-      R(wx - 1, oy - 4, 3, 12, "#fff3a0");
-      R(wx, oy - 4, 1, 15, "#f0a000");
-      [
-        [-2, -2],
-        [-2, 1],
-        [-2, 4],
-        [2, -1],
-        [2, 2],
-        [2, 5],
-      ].forEach(([a, b]) => P(wx + a, oy + b, "#ffd84a"));
-      R(wx, oy + 11, 1, 2, "#ffffff");
-      P(wx, oy - 5, "#ffffff");
-      P(wx - 3, oy - 3, "#fff3a0");
-      P(wx + 3, oy, "#fff3a0");
-      break;
-    case "ruler":
-      R(wx, oy - 1, 2, 14, "#f5d76e");
-      for (let k = 0; k < 7; k++) P(wx, oy + k * 2, "#8a6d1e");
-      break;
-    case "pen":
-      P(wx, oy + 1, "#e3e8f0");
-      R(wx, oy + 2, 2, 10, "#1f4fd1");
-      R(wx + 1, oy + 3, 1, 5, "#0b1640");
-      R(wx, oy + 12, 2, 1, "#0b1640");
-      break;
-    case "spikebat":
-      R(wx, oy + 9, 2, 4, "#8a5a2b");
-      R(wx - 1, oy + 1, 4, 8, "#a8743f");
-      R(wx, oy, 2, 1, "#a8743f");
-      [
-        [wx - 2, oy + 2],
-        [wx - 2, oy + 5],
-        [wx - 2, oy + 8],
-        [wx + 3, oy + 2],
-        [wx + 3, oy + 5],
-        [wx + 3, oy + 8],
-        [wx, oy - 1],
-        [wx + 1, oy - 1],
-      ].forEach(([a, b]) => P(a, b, "#e3e8f0"));
-      break;
-    case "blaster":
-      R(wx - 1, oy + 10, 6, 3, "#4a5670");
-      R(wx + 5, oy + 11, 3, 1, "#2b2b3a");
-      P(wx + 1, oy + 11, "#45d1e6");
-      P(wx + 2, oy + 11, "#45d1e6");
-      R(wx, oy + 13, 2, 2, "#2b2b3a");
-      break;
-    case "firestaff":
-      R(wx, oy, 1, 14, "#6b4e31");
-      R(wx - 1, oy - 3, 3, 3, "#ff7a1a");
-      P(wx, oy - 2, "#ffd23f");
-      P(wx - 1, oy - 4, "#d62839");
-      P(wx + 1, oy - 4, "#ffd23f");
-      P(wx, oy - 4, "#ff7a1a");
-      break;
-    case "lasersword":
-      R(wx, oy + 11, 2, 2, "#4a5670");
-      R(wx - 1, oy + 10, 4, 1, "#9aa7bd");
-      R(wx, oy - 3, 2, 13, "#7ff0ff");
-      R(wx, oy - 3, 1, 13, "#ffffff");
-      break;
-    case "hammer":
-      R(wx, oy + 3, 2, 10, "#6b4e31");
-      R(wx - 2, oy - 1, 6, 4, "#9aa7bd");
-      R(wx - 2, oy + 2, 6, 1, "#6f7d93");
-      P(wx, oy, "#ffd23f");
-      P(wx + 1, oy + 1, "#ffd23f");
-      P(wx + 1, oy - 1, "#ffd23f");
-      break;
-    case "goldsword":
-      R(wx, oy - 2, 2, 12, "#ffd84a");
-      R(wx + 1, oy - 2, 1, 12, "#f0a000");
-      P(wx, oy - 3, "#ffd84a");
-      R(wx - 1, oy + 10, 4, 1, "#f0a000");
-      R(wx, oy + 11, 2, 2, "#6b4e31");
-      P(wx - 1, oy + 10, "#d62839");
-      break;
-    case "cannon":
-      R(wx - 2, oy + 9, 9, 4, "#e3e8f0");
-      R(wx - 2, oy + 10, 9, 1, "#7a4fd6");
-      R(wx + 7, oy + 9, 1, 4, "#ff4fd8");
-      R(wx - 1, oy + 13, 2, 2, "#4a5670");
-      P(wx + 2, oy + 11, "#ff4fd8");
-      break;
-    case "none":
-      break;
-    default:
-      P(wx, oy + 2, "#333333");
-      R(wx, oy + 3, 2, 1, "#e8b07a");
-      R(wx, oy + 4, 2, 8, "#ffcf3a");
-      R(wx + 1, oy + 4, 1, 8, "#e0a800");
-      R(wx, oy + 12, 2, 1, "#f28aa0");
+  const drawWeapon = () => {
+    switch (eq.weapon) {
+      case "dualblaster":
+        R(wx - 1, oy + 8, 6, 2, "#d62839");
+        R(wx + 5, oy + 8, 3, 1, "#2b2b3a");
+        P(wx + 1, oy + 8, "#ffd23f");
+        R(wx, oy + 10, 1, 1, "#2b2b3a");
+        R(wx - 1, oy + 11, 6, 2, "#d62839");
+        R(wx + 5, oy + 11, 3, 1, "#2b2b3a");
+        P(wx + 1, oy + 11, "#ffd23f");
+        R(wx, oy + 13, 2, 2, "#2b2b3a");
+        P(wx + 4, oy + 9, "#ff7a1a");
+        P(wx + 4, oy + 12, "#ff7a1a");
+        break;
+      case "railgun":
+        R(wx - 3, oy + 10, 11, 2, "#2a2f4a");
+        R(wx - 3, oy + 9, 11, 1, "#45d1e6");
+        R(wx - 3, oy + 12, 11, 1, "#45d1e6");
+        for (let k = 0; k < 5; k++) P(wx - 2 + k * 2, oy + 10, "#a8f0ff");
+        R(wx + 7, oy + 9, 1, 4, "#ffffff");
+        R(wx - 1, oy + 13, 2, 2, "#2b2b3a");
+        P(wx, oy + 8, "#2a2f4a");
+        break;
+      case "annihilator":
+        R(wx - 3, oy + 8, 11, 6, "#1b1b1b");
+        R(wx - 3, oy + 9, 11, 1, "#ff4fd8");
+        R(wx - 3, oy + 12, 11, 1, "#ff4fd8");
+        R(wx, oy + 10, 3, 2, "#ffffff");
+        P(wx - 1, oy + 10, "#ff4fd8");
+        P(wx + 3, oy + 11, "#ff4fd8");
+        R(wx + 7, oy + 7, 1, 8, "#ff4fd8");
+        R(wx, oy + 6, 2, 2, "#2a2f4a");
+        P(wx + 1, oy + 6, "#ff3b3b");
+        R(wx - 1, oy + 14, 2, 2, "#2b2b3a");
+        P(wx - 3, oy + 7, "#ff4fd8");
+        break;
+      case "comet":
+        R(wx, oy - 2, 1, 16, "#9aa7bd");
+        R(wx - 1, oy - 4, 3, 3, "#45d1e6");
+        P(wx, oy - 5, "#ffffff");
+        P(wx, oy - 3, "#ffffff");
+        P(wx - 2, oy - 2, "#a8f0ff");
+        P(wx + 2, oy - 1, "#a8f0ff");
+        P(wx - 2, oy + 1, "#45d1e6");
+        P(wx + 2, oy + 3, "#a8f0ff");
+        R(wx, oy + 12, 1, 2, "#4a5670");
+        break;
+      case "blackhole":
+        R(wx - 2, oy + 8, 8, 5, "#1b1446");
+        R(wx + 3, oy + 7, 4, 7, "#7a4fd6");
+        R(wx + 4, oy + 9, 2, 3, "#000000");
+        P(wx + 3, oy + 7, "#c77dff");
+        P(wx + 6, oy + 13, "#c77dff");
+        P(wx + 7, oy + 10, "#ff4fd8");
+        P(wx - 1, oy + 9, "#c77dff");
+        P(wx + 1, oy + 11, "#c77dff");
+        R(wx - 1, oy + 13, 2, 2, "#2a2238");
+        break;
+      case "novasword":
+        R(wx, oy - 5, 3, 16, "#fff3a0");
+        R(wx + 1, oy - 5, 1, 16, "#ffffff");
+        P(wx - 1, oy - 3, "#ffd23f");
+        P(wx + 3, oy, "#ff7a1a");
+        P(wx - 1, oy + 3, "#ff7a1a");
+        P(wx + 3, oy + 6, "#ffd23f");
+        R(wx - 2, oy + 11, 7, 1, "#f0a000");
+        P(wx + 1, oy + 11, "#45d1e6");
+        R(wx + 1, oy + 12, 1, 2, "#6b4e31");
+        break;
+      case "scythe":
+        R(wx, oy - 2, 1, 16, "#3d2a6b");
+        R(wx - 6, oy - 3, 7, 1, "#c77dff");
+        R(wx - 7, oy - 2, 2, 1, "#c77dff");
+        R(wx - 8, oy - 1, 1, 2, "#c77dff");
+        R(wx - 5, oy - 2, 5, 1, "#f3e0ff");
+        P(wx + 1, oy - 3, "#ff4fd8");
+        break;
+      case "greatsword":
+        R(wx, oy - 3, 3, 14, "#ff7a1a");
+        R(wx + 1, oy - 3, 1, 14, "#ffd23f");
+        P(wx - 1, oy - 1, "#d62839");
+        P(wx + 3, oy + 2, "#d62839");
+        P(wx - 1, oy + 5, "#ffd23f");
+        P(wx + 3, oy + 7, "#ff7a1a");
+        P(wx + 1, oy - 4, "#ffd23f");
+        R(wx - 2, oy + 11, 7, 1, "#3b2a20");
+        R(wx + 1, oy + 12, 1, 2, "#6b4e31");
+        break;
+      case "rocket":
+        R(wx - 3, oy + 9, 10, 3, "#4a6b3a");
+        R(wx - 3, oy + 9, 10, 1, "#5d8a48");
+        R(wx + 5, oy + 10, 2, 1, "#d62839");
+        P(wx + 7, oy + 10, "#ffd23f");
+        P(wx, oy + 8, "#2b2b3a");
+        P(wx + 1, oy + 8, "#2b2b3a");
+        R(wx - 1, oy + 12, 2, 2, "#2b2b3a");
+        P(wx - 3, oy + 10, "#2b2b3a");
+        break;
+      case "galaxystaff":
+        R(wx, oy, 1, 14, "#2a2238");
+        R(wx - 2, oy - 4, 5, 4, "#3d2a6b");
+        R(wx - 3, oy - 2, 7, 1, "#c77dff");
+        P(wx - 1, oy - 3, "#ffffff");
+        P(wx + 1, oy - 2, "#ffd23f");
+        P(wx, oy - 4, "#c77dff");
+        P(wx + 1, oy - 4, "#ffffff");
+        P(wx - 1, oy - 1, "#45d1e6");
+        break;
+      case "gravhammer":
+        R(wx, oy + 3, 2, 10, "#2a2238");
+        R(wx - 3, oy - 2, 8, 5, "#1f2440");
+        R(wx - 2, oy - 1, 6, 3, "#7a4fd6");
+        R(wx, oy, 2, 1, "#ff4fd8");
+        P(wx - 4, oy, "#c77dff");
+        P(wx + 5, oy, "#c77dff");
+        P(wx, oy - 3, "#c77dff");
+        break;
+      case "dragonblade":
+        R(wx, oy - 4, 2, 15, "#e3e8f0");
+        R(wx + 1, oy - 4, 1, 15, "#9aa7bd");
+        [2, 5, 8].forEach((k) => P(wx, oy + k, "#ff7a1a"));
+        R(wx - 2, oy + 11, 6, 1, "#2b9348");
+        P(wx - 2, oy + 10, "#2b9348");
+        P(wx + 3, oy + 10, "#2b9348");
+        P(wx, oy + 11, "#ffd23f");
+        R(wx, oy + 12, 2, 1, "#1b5e30");
+        break;
+      case "absolute":
+        R(wx - 1, oy - 4, 3, 12, "#fff3a0");
+        R(wx, oy - 4, 1, 15, "#f0a000");
+        [
+          [-2, -2],
+          [-2, 1],
+          [-2, 4],
+          [2, -1],
+          [2, 2],
+          [2, 5],
+        ].forEach(([a, b]) => P(wx + a, oy + b, "#ffd84a"));
+        R(wx, oy + 11, 1, 2, "#ffffff");
+        P(wx, oy - 5, "#ffffff");
+        P(wx - 3, oy - 3, "#fff3a0");
+        P(wx + 3, oy, "#fff3a0");
+        break;
+      case "ruler":
+        R(wx, oy - 1, 2, 14, "#f5d76e");
+        for (let k = 0; k < 7; k++) P(wx, oy + k * 2, "#8a6d1e");
+        break;
+      case "pen":
+        P(wx, oy + 1, "#e3e8f0");
+        R(wx, oy + 2, 2, 10, "#1f4fd1");
+        R(wx + 1, oy + 3, 1, 5, "#0b1640");
+        R(wx, oy + 12, 2, 1, "#0b1640");
+        break;
+      case "spikebat":
+        R(wx, oy + 9, 2, 4, "#8a5a2b");
+        R(wx - 1, oy + 1, 4, 8, "#a8743f");
+        R(wx, oy, 2, 1, "#a8743f");
+        [
+          [wx - 2, oy + 2],
+          [wx - 2, oy + 5],
+          [wx - 2, oy + 8],
+          [wx + 3, oy + 2],
+          [wx + 3, oy + 5],
+          [wx + 3, oy + 8],
+          [wx, oy - 1],
+          [wx + 1, oy - 1],
+        ].forEach(([a, b]) => P(a, b, "#e3e8f0"));
+        break;
+      case "blaster":
+        R(wx - 1, oy + 10, 6, 3, "#4a5670");
+        R(wx + 5, oy + 11, 3, 1, "#2b2b3a");
+        P(wx + 1, oy + 11, "#45d1e6");
+        P(wx + 2, oy + 11, "#45d1e6");
+        R(wx, oy + 13, 2, 2, "#2b2b3a");
+        break;
+      case "firestaff":
+        R(wx, oy, 1, 14, "#6b4e31");
+        R(wx - 1, oy - 3, 3, 3, "#ff7a1a");
+        P(wx, oy - 2, "#ffd23f");
+        P(wx - 1, oy - 4, "#d62839");
+        P(wx + 1, oy - 4, "#ffd23f");
+        P(wx, oy - 4, "#ff7a1a");
+        break;
+      case "lasersword":
+        R(wx, oy + 11, 2, 2, "#4a5670");
+        R(wx - 1, oy + 10, 4, 1, "#9aa7bd");
+        R(wx, oy - 3, 2, 13, "#7ff0ff");
+        R(wx, oy - 3, 1, 13, "#ffffff");
+        break;
+      case "hammer":
+        R(wx, oy + 3, 2, 10, "#6b4e31");
+        R(wx - 2, oy - 1, 6, 4, "#9aa7bd");
+        R(wx - 2, oy + 2, 6, 1, "#6f7d93");
+        P(wx, oy, "#ffd23f");
+        P(wx + 1, oy + 1, "#ffd23f");
+        P(wx + 1, oy - 1, "#ffd23f");
+        break;
+      case "goldsword":
+        R(wx, oy - 2, 2, 12, "#ffd84a");
+        R(wx + 1, oy - 2, 1, 12, "#f0a000");
+        P(wx, oy - 3, "#ffd84a");
+        R(wx - 1, oy + 10, 4, 1, "#f0a000");
+        R(wx, oy + 11, 2, 2, "#6b4e31");
+        P(wx - 1, oy + 10, "#d62839");
+        break;
+      case "cannon":
+        R(wx - 2, oy + 9, 9, 4, "#e3e8f0");
+        R(wx - 2, oy + 10, 9, 1, "#7a4fd6");
+        R(wx + 7, oy + 9, 1, 4, "#ff4fd8");
+        R(wx - 1, oy + 13, 2, 2, "#4a5670");
+        P(wx + 2, oy + 11, "#ff4fd8");
+        break;
+      case "none":
+        break;
+      default:
+        P(wx, oy + 2, "#333333");
+        R(wx, oy + 3, 2, 1, "#e8b07a");
+        R(wx, oy + 4, 2, 8, "#ffcf3a");
+        R(wx + 1, oy + 4, 1, 8, "#e0a800");
+        R(wx, oy + 12, 2, 1, "#f28aa0");
+    }
+  };
+  // guns are held level; everything else leans forward like a sword in a fighting stance:
+  // drawn upright on its own layer, then each row shifts right 1px per 2 rows above the hand (3–4 for long blades)
+  if (LEVEL_WEAPONS.includes(eq.weapon)) drawWeapon();
+  else {
+    const oc = document.createElement("canvas");
+    oc.width = CW;
+    oc.height = CH;
+    cx = oc.getContext("2d");
+    cx.setTransform(x.getTransform());
+    drawWeapon();
+    cx = x;
+    const hand = Math.round(x.getTransform().f) + oy + 12;
+    // rightmost pixel of every row; long blades get a steeper lean so the tip never leaves the canvas
+    const d = oc.getContext("2d").getImageData(0, 0, CW, CH).data,
+      right = [];
+    for (let j = 0; j < CH; j++) {
+      right[j] = -1;
+      for (let i = CW - 1; i >= 0; i--)
+        if (d[(j * CW + i) * 4 + 3]) {
+          right[j] = i;
+          break;
+        }
+    }
+    const shift = (j, t) => (t ? Math.floor((hand - j) / t) : 0);
+    const tilt = [2, 3, 4].find((t) => right.every((r, j) => r < 0 || r + shift(j, t) <= CW - 2)) || 0;
+    x.save();
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    for (let j = 0; j < CH; j++) x.drawImage(oc, 0, j, CW, 1, shift(j, tilt), j, CW, 1);
+    x.restore();
   }
   R(ox + 14, oy + 13, 4, 1, C.skin);
   R(ox + 4, oy + 13, 2, 1, C.skin);
   x.translate(0, -breathe);
   // pet
-  if (PET_SPR[eq.pet]) {
-    const frames = [PET_SPR[eq.pet], PET_SPR2[eq.pet] || PET_SPR[eq.pet]];
-    const spr = frames[Math.floor(fr / 3) % 2],
-      hop = fr % 10 === 5 ? 1 : 0;
-    const rows = spr
-        .trim()
-        .split("\n")
-        .map((r) => r.trim()),
-      pal = PET_PAL[eq.pet];
-    const fly = eq.pet === "drone" ? 6 + (Math.floor(fr / 4) % 2) : 0; // the drone hovers
-    const by = H - rows.length - hop - fly;
-    rows.forEach((r, yy) =>
-      [...r].forEach((ch, xx) => {
-        if (pal[ch]) P(xx - 10, by + yy, pal[ch]);
-      }),
-    );
-    // matching tubeteika for the pet, only while the hero wears one
-    const cap = eq.helmet === "tubeteika" && PET_CAP[eq.pet] && PET_CAP[eq.pet][Math.floor(fr / 3) % 2];
-    if (cap) {
-      const [cx0, cy0, w] = cap,
-        X = cx0 - 10,
-        Y = by + cy0;
-      const mid = X + Math.floor((w - 1) / 2);
-      R(X + 1, Y - 1, w - 2, 1, "#1b6b3a");
-      if (w >= 5) P(mid, Y - 1, "#d62839"); // green velvet top, red flower
-      if (w >= 5) P(mid, Y - 2, "#1b6b3a"); // little dome
-      R(X, Y, w, 1, "#ffd23f");
-      P(X, Y, "#0f4a28");
-      P(X + w - 1, Y, "#0f4a28"); // gold embroidered band
-    }
-  }
+  paintPet(R, P, eq, fr, H);
   // whole-figure outline, classic pixel-art style
-  {
-    x.setTransform(1, 0, 0, 1, 0, 0);
-    const d = x.getImageData(0, 0, CW, CH).data,
-      has = (i, j) => i >= 0 && j >= 0 && i < CW && j < CH && d[(j * CW + i) * 4 + 3] > 0;
-    x.fillStyle = "rgba(20,26,51,.85)";
-    for (let j = 0; j < CH; j++)
-      for (let i = 0; i < CW; i++)
-        if (!has(i, j) && (has(i - 1, j) || has(i + 1, j) || has(i, j - 1) || has(i, j + 1))) x.fillRect(i, j, 1, 1);
-    x.setTransform(1, 0, 0, 1, LX, TOP);
-  }
+  outlineAll(x, CW, CH);
+  x.setTransform(1, 0, 0, 1, LX, TOP);
   // aura: animated per type (fr = animation frame)
   if (AURA_COL[eq.aura]) {
     const cols = AURA_COL[eq.aura],
@@ -1191,4 +1188,105 @@ export function drawHero(cv, eq, wrap, fr = 0) {
     wrap.classList.toggle("pulse", !!gc);
     if (gc) wrap.style.setProperty("--glow", gc);
   }
+}
+
+/** Питомец в координатах героя (x от -10, стоит на нижней линии H). Общая часть drawHero и drawPet. */
+function paintPet(R, P, eq, fr, H) {
+  if (!PET_SPR[eq.pet]) return;
+  const frames = [PET_SPR[eq.pet], PET_SPR2[eq.pet] || PET_SPR[eq.pet]];
+  const spr = frames[Math.floor(fr / 3) % 2],
+    hop = fr % 10 === 5 ? 1 : 0;
+  const rows = spr
+      .trim()
+      .split("\n")
+      .map((r) => r.trim()),
+    pal = PET_PAL[eq.pet];
+  const fly = eq.pet === "drone" ? 6 + (Math.floor(fr / 4) % 2) : 0; // the drone hovers
+  const by = H - rows.length - hop - fly;
+  rows.forEach((r, yy) =>
+    [...r].forEach((ch, xx) => {
+      if (pal[ch]) P(xx - 10, by + yy, pal[ch]);
+    }),
+  );
+  // matching tubeteika for the pet, only while the hero wears one
+  const cap = eq.helmet === "tubeteika" && PET_CAP[eq.pet] && PET_CAP[eq.pet][Math.floor(fr / 3) % 2];
+  if (cap) {
+    const [cx0, cy0, w] = cap,
+      X = cx0 - 10,
+      Y = by + cy0;
+    const mid = X + Math.floor((w - 1) / 2);
+    R(X + 1, Y - 1, w - 2, 1, "#1b6b3a");
+    if (w >= 5) P(mid, Y - 1, "#d62839"); // green velvet top, red flower
+    if (w >= 5) P(mid, Y - 2, "#1b6b3a"); // little dome
+    R(X, Y, w, 1, "#ffd23f");
+    P(X, Y, "#0f4a28");
+    P(X + w - 1, Y, "#0f4a28"); // gold embroidered band
+  }
+}
+/** Тёмный контур 1px вокруг всего, что нарисовано на холсте. */
+function outlineAll(x, CW, CH) {
+  x.setTransform(1, 0, 0, 1, 0, 0);
+  const d = x.getImageData(0, 0, CW, CH).data,
+    has = (i, j) => i >= 0 && j >= 0 && i < CW && j < CH && d[(j * CW + i) * 4 + 3] > 0;
+  x.fillStyle = "rgba(20,26,51,.85)";
+  for (let j = 0; j < CH; j++)
+    for (let i = 0; i < CW; i++)
+      if (!has(i, j) && (has(i - 1, j) || has(i + 1, j) || has(i, j - 1) || has(i, j + 1))) x.fillRect(i, j, 1, 1);
+}
+const petRows = (pet) =>
+  PET_SPR[pet]
+    .trim()
+    .split("\n")
+    .map((r) => r.trim());
+const petCanvasW = (pet) => {
+  const w = (s) =>
+    s
+      ? Math.max(
+          ...s
+            .trim()
+            .split("\n")
+            .map((r) => r.trim().length),
+        )
+      : 0;
+  return Math.max(14, w(PET_SPR[pet]) + 2, w(PET_SPR2[pet]) + 2);
+};
+/** Где у питомца пасть (ствол, нос) в долях холста drawPet: самая правая точка верхней половины
+ *  спрайта без первых двух строк (уши, рожки, пропеллеры). Оттуда летят огонь, лазер, снаряд. */
+export function petMouth(pet) {
+  if (!PET_SPR[pet]) return { x: 0.8, y: 0.8 };
+  const rows = petRows(pet),
+    fly = pet === "drone" ? 6 : 0;
+  let mx = -1,
+    my = 0;
+  for (let y = 2; y < Math.max(3, Math.ceil(rows.length / 2)); y++)
+    for (let x = rows[y].length - 1; x > mx; x--)
+      if (rows[y][x] !== ".") {
+        mx = x;
+        my = y;
+        break;
+      }
+  const H = 27,
+    TOP = 4;
+  return { x: (1 + mx + 0.5) / petCanvasW(pet), y: (TOP + H - rows.length - fly + my + 0.5) / (H + 1 + TOP) };
+}
+/** Питомец отдельно от героя (в бою он действует сам): тот же масштаб пикселя, та же нижняя линия и
+ *  то же место, что в холсте героя (левый край холстов совпадает). Ширина — по питомцу + 1 px под контур. */
+export function drawPet(cv, eq, fr = 0) {
+  const H = 27,
+    TOP = 4,
+    CW = petCanvasW(eq.pet),
+    CH = H + 1 + TOP;
+  cv.width = CW;
+  cv.height = CH;
+  const x = cv.getContext("2d");
+  x.setTransform(1, 0, 0, 1, 0, 0);
+  x.clearRect(0, 0, CW, CH);
+  x.setTransform(1, 0, 0, 1, 11, TOP); // как в drawHero: пиксель питомца xx − 10 попадает в x = 1 + xx
+  const R = (a, b, w, h, c) => {
+    x.fillStyle = c;
+    x.fillRect(a, b, w, h);
+  };
+  const P = (a, b, c) => R(a, b, 1, 1, c);
+  paintPet(R, P, eq, fr, H);
+  outlineAll(x, CW, CH);
 }

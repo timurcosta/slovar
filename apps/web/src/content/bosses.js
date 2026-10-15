@@ -169,7 +169,7 @@ export const BOSSES = CAMPAIGN.map(([name, spr, pal, f, ab, pool], i) => ({
   taunts: TAUNTS[pal],
 }));
 const TOWER_PREFIX = ["Злой", "Огненный", "Ледяной", "Теневой", "Мега", "Ржавый", "Кислотный", "Звёздный"];
-const TOWER_FILTER = [
+export const TOWER_FILTER = [
   "hue-rotate(0deg) saturate(1.4)",
   "hue-rotate(320deg) saturate(1.6)",
   "hue-rotate(180deg)",

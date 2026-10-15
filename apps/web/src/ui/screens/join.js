@@ -5,19 +5,19 @@ import { BACKEND, join, linkedName } from "../../net/sync.ts";
 import { show } from "../screens.js";
 import { toast } from "../toast.js";
 import { renderHome } from "./home.js";
-import { askName, showStory } from "./intro.js";
+import { showStory } from "./intro.js";
+import { showTitle } from "./title.js";
 
 const LEAD = $("join-lead").textContent;
 let joinBack = "s-home",
   busy = false;
 
 export function syncJoinButtons() {
-  $("btn-name-join").hidden = !BACKEND;
   $("btn-join").hidden = !BACKEND;
   $("btn-join").textContent = linkedName() ? "У учителя ✓" : "Код учителя";
 }
 
-function openJoin(back) {
+export function openJoin(back) {
   joinBack = back;
   const n = linkedName();
   $("join-lead").textContent = n
@@ -34,10 +34,9 @@ function openJoin(back) {
   }, 60);
 }
 
-$("btn-name-join").onclick = () => openJoin("s-name");
 $("btn-join").onclick = () => openJoin("s-home");
 $("btn-join-back").onclick = () => {
-  if (joinBack === "s-name" && !P.name) askName();
+  if (joinBack === "s-title" || !P.name) showTitle();
   else {
     renderHome();
     show("s-home");
