@@ -226,7 +226,7 @@ $("btn-gift").onclick = () => {
   $("gift-msg").className = "msg okm";
   $("gift-msg").textContent = `Выдано ${n} монет`;
 };
-$("btn-save").onclick = () => {
+$("btn-save-words").onclick = () => {
   const lines = $("custom")
     .value.split(/\n|,/)
     .map((s) => s.trim())

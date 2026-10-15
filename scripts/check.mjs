@@ -158,6 +158,15 @@ const SCENARIOS = [
       await p.click("#btn-teacher-1");
       await tick(p);
       await shot("06-teacher");
+      for (const tab of ["limits", "stats", "pin", "guide", "words"]) {
+        await p.click(`#ttabs .tab[data-tt="${tab}"]`);
+        await tick(p);
+        await shot(`06-teacher-${tab}`);
+      }
+      await p.fill("#custom", "м(о)локо\nс(о)бака\nбез скобок");
+      await p.click("#btn-save-words");
+      await tick(p);
+      await shot("06b-teacher-words");
       await p.click("#btn-back");
       await p.click("#btn-tower");
       await tick(p);
