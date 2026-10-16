@@ -14,7 +14,7 @@ import {
 import { ITEM, ITEMS, RARITY, SLOTS, UPGRADES, showcaseEquip, upCost } from "../../content/items.js";
 import { shownDmg } from "../../content/rules.ts";
 import { COSTUMES, COSTUME_KEY } from "../../content/costumes.js";
-import { MERCHANT_BLINK, MERCHANT_LINES, MERCHANT_PAL, merchantSprite } from "../../content/merchant.js";
+import { MERCHANT_LINES, MERCHANT_PAL, merchantSprite, merchantTable } from "../../content/merchant.js";
 import { plural } from "../../lib/text.js";
 import { drawHero } from "../../render/hero.js";
 import { drawSprite } from "../../render/sprite.js";
@@ -68,7 +68,7 @@ function keeperSay(text, happy) {
   keeperSleep = false;
   if (happy) {
     keeperHappy = Date.now() + 2200;
-    const c = $("keeper-cat");
+    const c = $("keeper-cv");
     c.classList.remove("hop");
     void c.offsetWidth;
     c.classList.add("hop");
@@ -83,13 +83,10 @@ export function drawKeeper(fr = keeperFr) {
     $("keeper-say").textContent = line(MERCHANT_LINES.sleep);
   }
   const happy = Date.now() < keeperHappy,
-    blink = keeperSleep || (!happy && fr % 19 >= 17);
-  let pal = MERCHANT_PAL;
-  if (blink) {
-    pal = { ...pal };
-    for (const [k, v] of Object.entries(MERCHANT_BLINK)) pal[k] = MERCHANT_PAL[v];
-  }
-  drawSprite($("keeper-cv"), merchantSprite((fr >> 2) & 1, happy), pal);
+    blink = keeperSleep || (!happy && fr % 19 >= 17),
+    f = (fr >> 2) & 1;
+  drawSprite($("keeper-cv"), merchantSprite(f, happy ? "happy" : blink ? "blink" : "open"), MERCHANT_PAL);
+  drawSprite($("keeper-table"), merchantTable(f), MERCHANT_PAL);
 }
 const RARITY_STEP = [400, 1500, 5000, 15000];
 function keeperOnItem(i) {

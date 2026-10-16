@@ -347,6 +347,14 @@ const SCENARIOS = [
           await tick(p);
           await shot(`03-shop-${tab}`);
         }
+        if (tab === "costume") {
+          // карточка татарского костюма: герой только в нём (на примерке камзол закрыт бронёй)
+          await p.evaluate(() =>
+            document.querySelector('#items [data-try="tatarc"]').scrollIntoView({ block: "center" }),
+          );
+          await tick(p);
+          await shot("03-shop-costume-tatar");
+        }
       }
       await p.click("#btn-shop-back");
       await p.click("#btn-awards");

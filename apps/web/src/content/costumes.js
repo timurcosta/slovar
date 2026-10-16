@@ -70,7 +70,7 @@ export const COSTUMES = {
     eye: "#1d2f5c",
     mouth: "#b5485a",
     shirt: "#ffffff",
-    pants: "#3a3a5a",
+    pants: "#2a2a40",
     shoe: "#2b9348",
   },
   gold: {

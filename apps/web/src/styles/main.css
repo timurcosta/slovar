@@ -1914,6 +1914,7 @@ body.hurt .sheet {
   padding: 26px 12px 0;
 }
 .keeper-cat {
+  position: relative;
   flex: none;
   background: none;
   border: 0;
@@ -1922,11 +1923,17 @@ body.hurt .sheet {
   line-height: 0;
 }
 .keeper-cat canvas {
-  width: 124px;
+  width: 168px;
   height: auto;
   image-rendering: pixelated;
 }
-.keeper-cat.hop {
+/* прилавок (пиала, лапка, чак-чак) — тот же размер поверх кота, но не прыгает */
+#keeper-table {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+#keeper-cv.hop {
   animation: keeper-hop 0.45s steps(4);
 }
 @keyframes keeper-hop {
@@ -1977,13 +1984,13 @@ body.hurt .sheet {
   border-top: 3px solid var(--ink);
 }
 @media (prefers-reduced-motion: reduce) {
-  .keeper-cat.hop {
+  #keeper-cv.hop {
     animation: none;
   }
 }
 @media (max-width: 380px) {
   .keeper-cat canvas {
-    width: 96px;
+    width: 128px;
   }
   .keeper-say {
     font-size: 14px;

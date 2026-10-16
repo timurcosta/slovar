@@ -445,21 +445,22 @@ export function drawHero(cv, eq, wrap, fr = 0) {
       M(ox + 6, oy + 19, 3, 1, "#45d1e6");
       break;
     case "tatar":
-      R(ox + 6, oy + 10, 8, 4, "#7a1f2b");
-      R(ox + 9, oy + 9, 2, 3, "#ffffff"); // velvet kamzol over a white shirt
-      R(ox + 8, oy + 10, 1, 4, "#f0a000");
-      R(ox + 11, oy + 10, 1, 4, "#f0a000");
-      P(ox + 9, oy + 12, "#d62839");
-      P(ox + 10, oy + 12, "#d62839"); // gold trim, embroidered collar
-      P(ox + 7, oy + 11, "#ffd84a");
-      P(ox + 12, oy + 11, "#ffd84a");
-      P(ox + 7, oy + 13, "#f0a000");
-      P(ox + 12, oy + 13, "#f0a000"); // ornament
-      M(ox + 4, oy + 12, 2, 1, "#d62839");
-      M(ox + 5, oy + 9, 1, 1, "#e6e6e6"); // embroidered cuffs
-      R(ox + 6, oy + 14, 8, 1, "#2b9348");
-      P(ox + 12, oy + 15, "#2b9348");
-      P(ox + 12, oy + 16, "#ffd23f"); // sash with tassel
+      // green velvet kamzol with gold borders over a white embroidered shirt
+      R(ox + 6, oy + 10, 8, 4, "#17573a");
+      R(ox + 6, oy + 13, 8, 1, "#0e3d28");
+      R(ox + 9, oy + 9, 2, 5, "#ffffff"); // shirt in the opening
+      R(ox + 8, oy + 10, 1, 4, "#ffd23f");
+      R(ox + 11, oy + 10, 1, 4, "#ffd23f"); // gold borders
+      P(ox + 9, oy + 9, "#e0304a");
+      P(ox + 10, oy + 9, "#e0304a"); // embroidered collar
+      P(ox + 7, oy + 11, "#ffd23f");
+      P(ox + 12, oy + 11, "#ffd23f");
+      P(ox + 7, oy + 12, "#e0304a");
+      P(ox + 12, oy + 12, "#e0304a"); // gold and red embroidery
+      M(ox + 4, oy + 12, 2, 1, "#178a5c"); // embroidered cuffs
+      R(ox + 7, oy + 14, 6, 1, "#ffd23f");
+      P(ox + 9, oy + 14, "#e0304a");
+      P(ox + 10, oy + 14, "#e0304a"); // gold sash with a red clasp
       M(ox + 7, oy + 17, 2, 2, "#2b9348");
       M(ox + 7, oy + 18, 1, 1, "#d62839");
       M(ox + 8, oy + 17, 1, 1, "#ffd23f"); // ichigi boots with tulip pattern
@@ -804,22 +805,24 @@ export function drawHero(cv, eq, wrap, fr = 0) {
     }
   });
   if (eq.helmet === "tubeteika") {
-    // green velvet cap with gold and red embroidery
-    R(ox + 7, oy + 1, 6, 1, "#1b6b3a");
-    R(ox + 6, oy + 2, 8, 1, "#1b6b3a");
-    R(ox + 6, oy + 3, 8, 1, "#0f4a28");
+    // Kazan tubeteika: a low velvet cylinder on the crown — flat top with a sheen,
+    // embroidered green sides (gold scrolls, red centre, white beads), gold band at the bottom
+    R(ox + 7, oy - 1, 6, 1, "#1f9e6a");
+    R(ox + 7, oy - 1, 2, 1, "#5fdca0");
+    R(ox + 6, oy, 8, 2, "#178a5c");
+    P(ox + 6, oy, "#3fc48a");
+    P(ox + 6, oy + 1, "#3fc48a");
+    R(ox + 13, oy, 1, 2, "#0f5e3f");
+    P(ox + 9, oy, "#ffd23f");
+    P(ox + 10, oy, "#ffd23f");
     P(ox + 8, oy + 1, "#ffd23f");
+    P(ox + 9, oy + 1, "#e0304a");
+    P(ox + 10, oy + 1, "#e0304a");
     P(ox + 11, oy + 1, "#ffd23f");
-    P(ox + 9, oy + 1, "#d62839");
-    P(ox + 10, oy + 1, "#d62839");
-    P(ox + 7, oy + 2, "#ffd23f");
-    P(ox + 9, oy + 2, "#ffffff");
-    P(ox + 10, oy + 2, "#ffd23f");
-    P(ox + 12, oy + 2, "#ffffff");
-    P(ox + 7, oy + 3, "#ffd23f");
-    P(ox + 9, oy + 3, "#d62839");
-    P(ox + 10, oy + 3, "#ffd23f");
-    P(ox + 12, oy + 3, "#d62839");
+    P(ox + 7, oy, "#ffffff");
+    P(ox + 12, oy, "#ffffff");
+    R(ox + 6, oy + 2, 8, 1, "#ffd23f");
+    P(ox + 13, oy + 2, "#c99a12");
   }
   if (eq.helmet === "band") {
     R(ox + 6, oy + 3, 8, 1, "#d62839");
@@ -1214,13 +1217,15 @@ function paintPet(R, P, eq, fr, H) {
     const [cx0, cy0, w] = cap,
       X = cx0 - 10,
       Y = by + cy0;
+    // a tiny velvet cylinder like the hero's: light flat top, green side with a gold dot, gold band
     const mid = X + Math.floor((w - 1) / 2);
-    R(X + 1, Y - 1, w - 2, 1, "#1b6b3a");
-    if (w >= 5) P(mid, Y - 1, "#d62839"); // green velvet top, red flower
-    if (w >= 5) P(mid, Y - 2, "#1b6b3a"); // little dome
+    R(X + 1, Y - 2, w - 2, 1, "#1f9e6a");
+    P(X + 1, Y - 2, "#5fdca0");
+    R(X, Y - 1, w, 1, "#178a5c");
+    P(mid, Y - 1, "#ffd23f");
+    if (w >= 5) P(mid + 1, Y - 1, "#e0304a");
     R(X, Y, w, 1, "#ffd23f");
-    P(X, Y, "#0f4a28");
-    P(X + w - 1, Y, "#0f4a28"); // gold embroidered band
+    P(X + w - 1, Y, "#c99a12");
   }
 }
 /** Тёмный контур 1px вокруг всего, что нарисовано на холсте. */
