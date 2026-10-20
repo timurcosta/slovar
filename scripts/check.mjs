@@ -386,6 +386,9 @@ const SCENARIOS = [
       const arrived = p.waitForURL((u) => u.href.startsWith(GAME_URL) && !u.hash);
       await tick(p, 4000);
       await arrived;
+      // адрес без кода — ещё не конец: игра убирает код (replaceState), берёт прогресс и перезагружается.
+      // Заставку она показывает только после перезагрузки (на медленной машине CI evaluate попадал в неё)
+      await p.waitForSelector("#s-title:not([hidden])");
       await p.evaluate(() => document.fonts.ready);
       await enter(p);
       await shot("01-login"); // герой со старого адреса уже здесь, кода пока нет — играем гостем
