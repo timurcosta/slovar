@@ -3,7 +3,7 @@
 import type { JoinResponse, MeResponse, ProgressConflict, ProgressResponse } from "@repetitor/shared";
 import { HttpError, request } from "./http.ts";
 import { LS } from "../state/storage.ts";
-import { P, onSave, replaceProfile } from "../state/profile.ts";
+import { P, onSave, replaceProfile, resetProfile } from "../state/profile.ts";
 import { migrateProfile } from "../state/migrations.ts";
 import { setStats, stats } from "../state/stats.ts";
 import { saveSettings, settings } from "../state/settings.ts";
@@ -150,6 +150,33 @@ export async function join(code: string): Promise<string> {
     await push();
   }
   return r.name;
+}
+
+/** «Выйти»: устройство бывает общим (учитель дала поиграть со своего телефона). Сначала отправляем
+ * прогресс, потом стираем ученика с устройства: иначе следующий игрок продолжит чужого героя, а войдя
+ * по своему коду, отправит его к себе. Без сети не выходим — неотправленное потерялось бы. */
+export async function logout(): Promise<boolean> {
+  if (!linkedName()) return true;
+  clearTimeout(timer);
+  timer = undefined;
+  if (LS.get(K.dirty, false)) await push();
+  if (LS.get(K.dirty, false)) return false;
+  LS.set(K.token, null);
+  LS.set(K.name, null);
+  LS.set(K.rev, 0);
+  LS.set(TASKS_KEY, []);
+  setGuest(false);
+  resetProfile();
+  LS.set("sb2_profile", P);
+  setStats({});
+  LS.set("sb_stats", {});
+  // слова и лимиты задал учитель этому ученику; звук и музыка — устройства, их оставляем
+  settings.words = "auto";
+  delete settings.lim;
+  saveSettings();
+  setCustomRaw("");
+  LS.set("sb_custom", "");
+  return true;
 }
 
 onSave(schedule);

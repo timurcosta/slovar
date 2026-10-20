@@ -909,6 +909,27 @@ if (wanted("online")) {
       stable.tasks.forEach((x, i) => (text = text.replaceAll(x.id, `task-${i + 1}`)));
       fs.writeFileSync(path.join(outDir, f), text);
     }
+    // учитель дала поиграть со своего телефона: ученик выходит, на устройстве никого, прогресс у учителя
+    await k.click("#btn-prefs");
+    await tick(k);
+    await kid.shot("10-prefs-logout");
+    await k.click("#btn-logout");
+    await kid.shot("11-logout-confirm");
+    const reloaded = k.waitForEvent("load");
+    await k.click("#btn-logout");
+    await reloaded;
+    await enter(k);
+    await kid.shot("12-after-logout");
+    expect(
+      (await k.locator("#login:not([hidden])").count()) && (await k.locator("#login-hero").isHidden()),
+      "после выхода не спросили «Кто играет?» или на устройстве остался герой",
+    );
+    const out = await kid.dump("online-kid-logout");
+    expect(
+      !out.sb_token && !out.sb_tasks.length && out.sb2_profile.xp === 0 && out.sb_settings.words === "auto",
+      "после выхода на устройстве остались данные ученика",
+    );
+    expect(((await store.listStudents())[0].profile?.xp ?? 0) > 0, "после выхода прогресс пропал с сервера");
   } catch (e) {
     errors.push(`[online] шаг упал: ${e.message.split("\n")[0]}`);
     await tutor.shot("FAILED");

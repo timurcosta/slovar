@@ -4,7 +4,7 @@ import { P, resetProfile, save } from "../../state/profile.ts";
 import { setStats } from "../../state/stats.ts";
 import { LS } from "../../state/storage.ts";
 import { levelOf } from "../../progress/levels.ts";
-import { isGuest, join, linkedName, setGuest } from "../../net/sync.ts";
+import { isGuest, join, linkedName, logout, setGuest } from "../../net/sync.ts";
 import { toast } from "../toast.js";
 import { renderHome } from "./home.js";
 import { enterGame } from "./title.js";
@@ -12,9 +12,11 @@ import { enterGame } from "./title.js";
 let busy = false,
   backFocus = null;
 
-/** «Войти по коду» внизу главной — только тем, кто ещё не вошёл: остальным прогресс сохраняется сам. */
+/** В настройках: «Войти по коду» — тем, кто ещё не вошёл (остальным прогресс сохраняется сам), «Выйти» — вошедшим. */
 export function syncJoinButtons() {
   $("btn-join").hidden = !!linkedName();
+  $("btn-logout").hidden = !linkedName();
+  armLogout(false);
 }
 
 const GUEST_SUB =
@@ -120,6 +122,38 @@ $("join-form").onsubmit = async (ev) => {
       e && e.status === 404
         ? "Такого кода нет. Проверь буквы и цифры."
         : "Для входа нужен интернет. Проверь его и попробуй ещё раз. Потом играть можно и без интернета.";
+  } finally {
+    busy = false;
+  }
+};
+
+/** «Выйти»: телефон общий, ученик уходит, на устройстве никого. Ребёнок может нажать случайно, а код помнит
+ * не всегда — поэтому со второго нажатия. */
+let logoutArmed = false;
+function armLogout(on, sub) {
+  const name = linkedName() || "";
+  logoutArmed = on;
+  $("btn-logout").classList.toggle("danger", on);
+  $("logout-t").textContent = on ? "Точно выйти?" : `Выйти: играет ${name}`;
+  $("logout-sub").textContent =
+    sub ||
+    (on
+      ? `Нажми ещё раз. Вернуться к герою можно только по коду от учителя.`
+      : `Если играет не ${name}. Прогресс останется у учителя.`);
+}
+$("btn-prefs").addEventListener("click", () => armLogout(false));
+$("btn-logout").onclick = async () => {
+  if (busy) return;
+  if (!logoutArmed) {
+    armLogout(true);
+    return;
+  }
+  busy = true;
+  $("logout-sub").textContent = "Отправляю прогресс учителю…";
+  try {
+    // прогресс дошёл, ученика на устройстве больше нет: заново с заставки, там спросят «Кто играет?»
+    if (await logout()) location.reload();
+    else armLogout(false, "Нет интернета: прогресс ещё не дошёл до учителя. Выйти можно, когда появится сеть.");
   } finally {
     busy = false;
   }
