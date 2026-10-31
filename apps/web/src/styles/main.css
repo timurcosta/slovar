@@ -613,6 +613,25 @@ textarea:focus-visible {
   padding: 0 4%;
   border-bottom: 3px dotted var(--grid);
 }
+/* тёмный фон сцены (render/arena.js): окно в рамке, под бойцами и пузырём */
+.stage.scene {
+  isolation: isolate;
+  border-bottom: none;
+  box-shadow: 0 0 0 3px var(--ink);
+}
+#stage-bg {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.stage.scene #stage-bg {
+  display: block;
+}
 /* без питомца слева у холста героя пустая полоса под питомца (10 из 42 px) — убираем её из раскладки */
 /* питомец в бою на своём холсте поверх полосы питомца в холсте героя: левые края совпадают,
    поэтому стоит там же, где на остальных экранах; ширину ставит drawFighters */
@@ -844,33 +863,6 @@ textarea:focus-visible {
   pointer-events: none;
   z-index: 3;
 }
-.slash {
-  width: 60px;
-  height: 60px;
-  border-top: 6px solid currentColor;
-  border-radius: 50%;
-  animation: slash 0.28s forwards;
-}
-.slash.saber {
-  width: 68px;
-  height: 68px;
-  border-top-width: 7px;
-  filter: drop-shadow(0 0 6px #45d1e6) drop-shadow(0 0 2px #ffffff);
-}
-.slash.x2 {
-  border-top-width: 3px;
-  animation: slash2 0.3s 0.06s both;
-}
-@keyframes slash2 {
-  0% {
-    opacity: 1;
-    transform: scaleX(-1) rotate(-80deg) scale(0.6);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleX(-1) rotate(40deg) scale(1.1);
-  }
-}
 .stage .fighter:first-child {
   position: relative;
   z-index: 2;
@@ -1096,23 +1088,6 @@ textarea:focus-visible {
   100% {
     transform: none;
     filter: none;
-  }
-}
-.slash.wide {
-  width: 110px;
-  height: 110px;
-  border-top-width: 10px;
-  filter: drop-shadow(0 0 8px #c77dff);
-  animation: slashW 0.35s forwards;
-}
-@keyframes slashW {
-  0% {
-    opacity: 1;
-    transform: rotate(-120deg) scale(0.5);
-  }
-  100% {
-    opacity: 0;
-    transform: rotate(60deg) scale(1.15);
   }
 }
 .quake {
@@ -2426,16 +2401,6 @@ body.kb .arena-in {
     transform: translate(-3px, 1px);
   }
 }
-@keyframes slash {
-  0% {
-    opacity: 1;
-    transform: rotate(-80deg) scale(0.6);
-  }
-  100% {
-    opacity: 0;
-    transform: rotate(40deg) scale(1.1);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   #pet-cv,
   .wpn,
@@ -3158,11 +3123,40 @@ body.on-title .sheet::before {
     transform: rotate(8deg) translateY(-2px);
   }
 }
+/* сундук pixelfx прямо на окне (chestFx): место под сундук, холст больше него — монеты разлетаются свободно */
+.chestbox {
+  position: relative;
+  width: 150px;
+  height: 90px;
+  flex: none;
+}
+.overlay .chestbox .chestfx {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 332px;
+  height: 120px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.chestbox .chest {
+  display: none;
+}
 .chestrow {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
+}
+.overlay .chestrow .loot {
+  align-items: center;
+  text-align: center;
+}
+.overlay .loot.pending {
+  visibility: hidden;
+  animation: none;
 }
 .overlay .loot {
   display: flex;

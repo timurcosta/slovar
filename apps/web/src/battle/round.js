@@ -24,7 +24,10 @@ import {
   bossDrain,
   bossSteal,
   droneVolley,
+  formFx,
   fx,
+  guardFx,
+  healFx,
   petAttack,
   petHitDelay,
   petRunsIn,
@@ -399,7 +402,7 @@ function superStrike(done) {
       btn.remove();
       if (G.shieldLeft > 0) {
         G.shieldLeft--;
-        vfx.guard([h.x + h.w * 0.92, to[1]]);
+        guardFx([h.x + h.w * 0.92, to[1]]);
         sfx.block();
         pop("ЩИТ!", "shield", "22%");
       } else {
@@ -901,6 +904,7 @@ function changeForm(f) {
   if (f.ab === "charge") G.charge = G.charge || 0;
   const b = rel(bossCv);
   vfx.transform([b.x + b.w / 2, b.y + b.h / 2]);
+  formFx();
   sfx.morph();
   duckMusic(1800);
   replay($("boss-wrap"), "morphing");
@@ -1107,7 +1111,7 @@ function resolve(ok, timeout) {
     G.hpLag = dmg * lagK;
     // питомец ближнего боя подбегает после удара героя (герой его ждёт), стрелок стреляет со своего места
     const petRun = !blocked && petRunsIn();
-    const delay = fx(g.fx, g.fxCol, petRun);
+    const delay = fx(g.fx, g.fxCol, petRun, crit && !blocked);
     const petAt = petRun ? petStartAt(delay) : delay + 140,
       petHit = petAt + petHitDelay();
     if (!blocked) later(petAttack, petAt);
@@ -1177,6 +1181,7 @@ function resolve(ok, timeout) {
       later(() => {
         pop("+1 сердце", "heal", "22%");
         sfx.heal();
+        healFx();
       }, 350);
       fb.textContent = "Зелье! Плюс сердце";
     }
@@ -1187,6 +1192,7 @@ function resolve(ok, timeout) {
         later(() => {
           pop("Оскар мурлычет! +1", "heal", "22%");
           sfx.heal();
+          healFx();
         }, 600);
       }
     }
@@ -1197,6 +1203,7 @@ function resolve(ok, timeout) {
         later(() => {
           pop("Феникс лечит!", "heal", "22%");
           sfx.heal();
+          healFx();
         }, 600);
       }
     }
@@ -1207,6 +1214,7 @@ function resolve(ok, timeout) {
         later(() => {
           pop("Танк чинит! +1", "heal", "22%");
           sfx.heal();
+          healFx();
         }, 600);
       }
     }

@@ -4,3 +4,4 @@ shots/
 package-lock.json
 .data/
 dist-killswitch/
+apps/web/src/vendor/

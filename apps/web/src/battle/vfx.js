@@ -2,6 +2,10 @@
 // шлейфами, искры, дым, взрывы, лучи, молнии, спираль рельсы. Координаты на входе — как у rel()
 // (CSS px от угла арены), внутри — пиксели эффекта. Цикл крутится, только пока есть что рисовать.
 import { $, replay } from "../lib/dom.js";
+import { createFrame, clearFrame, createFx, composite, hex } from "../vendor/pixelfx/core/index.js";
+import * as smallExplosion from "../vendor/pixelfx/fx/explosions/small-explosion.js";
+import * as fireballFx from "../vendor/pixelfx/fx/fire/fireball.js";
+import * as meteor from "../vendor/pixelfx/fx/fire/meteor.js";
 
 let PX = 3,
   cv = null,
@@ -37,6 +41,7 @@ function ensure() {
   // rel() считает от внешнего края арены, canvas стоит внутри рамки
   ox = ar.clientLeft;
   oy = ar.clientTop;
+  ensureQ(ar, hero);
 }
 /** CSS px арены → пиксели эффекта. */
 const P = (x, y) => [(x - ox) / PX, (y - oy) / PX];
@@ -45,6 +50,9 @@ function tick(now) {
   const dt = Math.min(50, now - (last || now));
   last = now;
   ctx.clearRect(0, 0, W, H);
+  if (qimg) qimg.data.fill(0);
+  if (limg) limg.data.fill(0);
+  qdrawn = false;
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     it.age += dt;
@@ -56,6 +64,11 @@ function tick(now) {
     }
     it.step(it.age / it.life, dt, it.age);
   }
+  if (qdrawn || qshown) {
+    qctx.putImageData(qimg, 0, 0);
+    lctx.putImageData(limg, 0, 0);
+  }
+  qshown = qdrawn;
   if (items.length) raf = requestAnimationFrame(tick);
   else {
     raf = 0;
@@ -68,6 +81,290 @@ function add(life, step, delay = 0, done) {
   if (!ctx) ensure();
   items.push({ life, step, age: -delay, done });
   if (!raf) raf = requestAnimationFrame(tick);
+}
+
+// ---------- pixelfx ----------
+// Эффекты из vendor/pixelfx (MIT) рисуют в свой кадр: буфер цвета и буфер свечения. В тёмном окне сцены — как у
+// pixelfx: цвет на одном холсте, свечение на другом, который складывается с тем, что под ним (plus-lighter).
+// Вне окна арена — белая бумага (paper): яркое свечение становится сплошными пикселями, ореол — полупрозрачным,
+// сплошные пятна получают тёмный контур, как у героя. Их персонаж ростом 38 пикселей, наш 27: пиксель эффекта —
+// 27/38 пикселя героя (QK), округлён до пикселя экрана, и эффекты соразмерны бойцам как в галерее pixelfx.
+let qcv = null,
+  qctx = null,
+  lcv = null, // свечение в окне сцены: отдельный холст, складывается со всем, что под ним (plus-lighter)
+  lctx = null,
+  limg = null,
+  qimg = null,
+  QX = 3,
+  qdrawn = false,
+  qshown = false;
+const QK = 0.71,
+  INK = [0x14, 0x1a, 0x33];
+function ensureQ(ar, hero) {
+  const dpr = window.devicePixelRatio || 1;
+  if (!items.length && hero) QX = Math.max(1, Math.round((hero / 42) * QK * dpr)) / dpr;
+  if (!qcv || !ar.contains(qcv)) {
+    qcv = document.createElement("canvas");
+    qcv.className = "vfx";
+    ar.appendChild(qcv);
+    qctx = qcv.getContext("2d");
+    lcv = document.createElement("canvas");
+    lcv.className = "vfx";
+    lcv.style.mixBlendMode = CSS.supports("mix-blend-mode", "plus-lighter") ? "plus-lighter" : "screen";
+    ar.appendChild(lcv);
+    lctx = lcv.getContext("2d");
+    qimg = null;
+  }
+  // арена бывает скрыта (экран сменился, пока ждал таймер): холст 1×1, эффекты не рисуются
+  const w = Math.max(1, Math.ceil(ar.clientWidth / QX)),
+    h = Math.max(1, Math.ceil(ar.clientHeight / QX));
+  if (qcv.width !== w || qcv.height !== h || !qimg) {
+    qcv.width = lcv.width = w;
+    qcv.height = lcv.height = h;
+    qimg = qctx.createImageData(w, h);
+    limg = lctx.createImageData(w, h);
+  }
+  qcv.style.width = lcv.style.width = w * QX + "px";
+  qcv.style.height = lcv.style.height = h * QX + "px";
+  // окно сцены с тёмным фоном (render/arena.js): внутри него свечение как задумано в pixelfx
+  const st = $("stage");
+  if (st && st.classList.contains("scene")) {
+    const a = ar.getBoundingClientRect(),
+      r = st.getBoundingClientRect();
+    scene = [r.left - a.left, r.top - a.top, r.right - a.left, r.bottom - a.top].map((v, i) =>
+      Math.round((v - (i % 2 ? oy : ox)) / QX),
+    );
+  } else scene = null;
+}
+/** Сколько CSS px в пикселе pixelfx. */
+export const qx = () => (ensure(), QX);
+/** CSS px арены → пиксели pixelfx. */
+const Q = (x, y) => [(x - ox) / QX, (y - oy) / QX];
+let tmp = null,
+  solid = null,
+  thick = null,
+  scene = null;
+const inScene = (i, w, sc) => {
+  const x = i % w,
+    y = (i / w) | 0;
+  return x >= sc[0] && x < sc[2] && y >= sc[1] && y < sc[3];
+};
+/**
+ * Кадр эффекта поверх qimg; soft — сила дыма и тумана. На бумаге сплошное — с контуром, ореол — полупрозрачный;
+ * в тёмном окне сцены — как у pixelfx над пустотой: свечение прибавляется к цвету и становится прозрачностью.
+ */
+function paper(f, soft, out = qimg.data, sc = scene) {
+  const { w, h, color: C, light: L } = f,
+    n = w * h;
+  if (out === qimg.data && (w !== qimg.width || h !== qimg.height)) return; // арена сменила размер посреди эффекта
+  if (!tmp || tmp.length < n * 4) {
+    tmp = new Uint8ClampedArray(n * 4);
+    solid = new Uint8Array(n);
+    thick = new Uint8Array(n);
+  }
+  tmp.fill(0, 0, n * 4);
+  solid.fill(0, 0, n);
+  thick.fill(0, 0, n);
+  for (let i = 0; i < n; i++) {
+    const c = C[i],
+      l = L[i] & 0xffffff;
+    let ca = c >>> 24;
+    if (!ca && !l) continue;
+    if (ca && ca < 200) ca = ca * soft;
+    const lr = l & 255,
+      lg = (l >>> 8) & 255,
+      lb = (l >>> 16) & 255,
+      m = Math.max(lr, lg, lb),
+      j = i * 4;
+    if (sc && inScene(i, w, sc)) {
+      // как composite() у pixelfx над фоном: цвет как есть (дым полупрозрачный), свечение прибавляется
+      const raw = c >>> 24;
+      if (raw >= 8) {
+        tmp[j] = c & 255;
+        tmp[j + 1] = (c >>> 8) & 255;
+        tmp[j + 2] = (c >>> 16) & 255;
+        tmp[j + 3] = raw;
+      }
+      if (m) {
+        const L = limg.data;
+        L[j] += lr;
+        L[j + 1] += lg;
+        L[j + 2] += lb;
+        L[j + 3] = 255;
+      }
+      continue;
+    }
+    if (ca >= 8) {
+      tmp[j] = (c & 255) + lr;
+      tmp[j + 1] = ((c >>> 8) & 255) + lg;
+      tmp[j + 2] = ((c >>> 16) & 255) + lb;
+      tmp[j + 3] = ca;
+      if (ca > 200) solid[i] = 1;
+    } else if (m > 24) {
+      // свечение: яркое ядро — сплошное, ореол — полупрозрачный, тускнеет быстрее, чем на тёмном фоне
+      const k = 255 / m,
+        a = m > 150 ? 255 : 230 * Math.pow((m - 24) / 126, 1.6);
+      tmp[j] = lr * k;
+      tmp[j + 1] = lg * k;
+      tmp[j + 2] = lb * k;
+      tmp[j + 3] = a;
+      if (m > 150) solid[i] = 1;
+    }
+  }
+  // контур только у толстых пятен (есть сплошной квадрат 2×2): искры, пыль и тонкие кольца остаются без него,
+  // иначе превращаются в сор и двойные штрихи
+  for (let i = w; i < n - w; i++) {
+    const x = i % w;
+    thick[i] =
+      solid[i] &&
+      ((x < w - 1 && solid[i + 1] && ((solid[i - w] && solid[i - w + 1]) || (solid[i + w] && solid[i + w + 1]))) ||
+        (x > 0 && solid[i - 1] && ((solid[i - w] && solid[i - w - 1]) || (solid[i + w] && solid[i + w - 1]))))
+        ? 1
+        : 0;
+  }
+  for (let i = 0; i < n; i++) {
+    if (tmp[i * 4 + 3] || i % w === 0 || i % w === w - 1 || i < w || i >= n - w || (sc && inScene(i, w, sc))) continue;
+    const a = thick[i - 1],
+      b = thick[i + 1],
+      u = thick[i - w],
+      d = thick[i + w];
+    if (a || b || u || d) {
+      const j = i * 4;
+      tmp[j] = INK[0];
+      tmp[j + 1] = INK[1];
+      tmp[j + 2] = INK[2];
+      tmp[j + 3] = 255;
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    const j = i * 4,
+      a = tmp[j + 3];
+    if (!a) continue;
+    if (a === 255 || !out[j + 3]) {
+      out[j] = tmp[j];
+      out[j + 1] = tmp[j + 1];
+      out[j + 2] = tmp[j + 2];
+      out[j + 3] = a;
+    } else {
+      const k = a / 255;
+      for (let c = 0; c < 3; c++) out[j + c] = tmp[j + c] * k + out[j + c] * (1 - k);
+      out[j + 3] = Math.max(a, out[j + 3]);
+    }
+  }
+  qdrawn = true;
+}
+/**
+ * Эффекты pixelfx на отдельном холсте cv (w×h пикселей): поверх тёмного фона bg — как в галерее pixelfx, без bg —
+ * прозрачно, под белую бумагу (сундук на окне победы).
+ * list: [{mod, at: [x, y] в пикселях холста, delay мс, until с, hold с — замереть, ...опции}]. Крутится, пока холст
+ * на странице.
+ */
+export function playOn(cv, w, h, bg, list) {
+  cv.width = w;
+  cv.height = h;
+  const c = cv.getContext("2d"),
+    img = c.createImageData(w, h),
+    frame = createFrame(w, h),
+    back = bg ? hex(bg) : null,
+    live = list.map(({ mod, at, delay = 0, until = Infinity, hold = Infinity, ...o }) => ({
+      fx: createFx(mod, { ...o, x: at[0], y: at[1] }),
+      delay,
+      until,
+      hold,
+      age: 0,
+    }));
+  let last = 0;
+  const step = (now) => {
+    if (!cv.isConnected) return;
+    const dt = Math.min(50, now - (last || now));
+    last = now;
+    clearFrame(frame);
+    let alive = 0;
+    for (const e of live) {
+      e.age += dt;
+      if (e.age < e.delay) {
+        alive++;
+        continue;
+      }
+      if (e.fx.t < e.hold) e.fx.update(dt / 1000); // hold: замереть на этом кадре (открытый сундук)
+      if (e.fx.t >= e.until) e.fx.stop();
+      if (e.fx.done()) continue;
+      alive++;
+      e.fx.draw(frame);
+    }
+    if (back !== null) composite(frame, img.data, back);
+    else {
+      img.data.fill(0);
+      paper(frame, 0.15, img.data, null); // без фона — под бумагу, с контуром, дым почти убран
+    }
+    c.putImageData(img, 0, 0);
+    if (alive) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+/** Направить эффект pixelfx (он смотрит вправо) из from в to: зеркало, если цель левее, и поворот. */
+export function aim(from, to) {
+  const dx = to[0] - from[0],
+    dy = to[1] - from[1];
+  return dx < 0 ? { flip: true, angle: Math.atan2(-dy, -dx) } : { angle: Math.atan2(dy, dx) };
+}
+/** Пиксели движка vfx → CSS px арены (для pfx). */
+const css = (x, y) => [x * PX + ox, y * PX + oy];
+/** Ступени цвета от тёмного к белому — палитра pixelfx из одного цвета оружия. */
+export function shades(col) {
+  const n = parseInt(col.slice(1), 16),
+    rgb = [n >> 16, (n >> 8) & 255, n & 255],
+    dark = [0x14, 0x1a, 0x33];
+  const hex = (c) => "#" + c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+  const mix = (a, k) => rgb.map((v, i) => v + (a[i] - v) * k);
+  return [
+    mix(dark, 0.75),
+    mix(dark, 0.5),
+    mix(dark, 0.25),
+    rgb,
+    mix([255, 255, 255], 0.35),
+    mix([255, 255, 255], 0.7),
+    [255, 255, 255],
+  ].map(hex);
+}
+/**
+ * Эффект pixelfx в точке арены (CSS px, как rel()). anchor — какая точка эффекта (в его пикселях от начала)
+ * встаёт в at; from — с какой секунды эффекта начать (пропустить замах); until — когда начать гаснуть;
+ * soft — сила дыма и тумана (0 — убрать); move: {to, ms} — лететь из at в to (снаряды-петли pixelfx);
+ * delay — мс до старта; остальное уходит в опции эффекта (palette, flip, angle, seed...). Возвращает мс до старта.
+ */
+export function pfx(mod, at, { anchor = [0, 0], from = 0, until = Infinity, soft = 0.6, delay = 0, move, ...o } = {}) {
+  ensure();
+  if (qimg.width < 2) return delay;
+  const fl = o.flip ? -1 : 1,
+    D = mod.meta.duration,
+    place = ([x, y]) => {
+      const [qx, qy] = Q(x, y);
+      return [Math.round(qx - anchor[0] * fl), Math.round(qy - anchor[1])];
+    },
+    [x0, y0] = place(at),
+    [x1, y1] = move ? place(move.to) : [x0, y0];
+  const fx = createFx(mod, { ...o, x: x0, y: y0 });
+  if (from) fx.update(from);
+  const life = (Math.min(D, until + 0.3) - from) * 1000;
+  const frame = createFrame(qimg.width, qimg.height);
+  add(
+    life,
+    (k, dt, age) => {
+      if (move) {
+        const m = Math.min(1, age / move.ms);
+        fx.options.x = Math.round(lerp(x0, x1, m));
+        fx.options.y = Math.round(lerp(y0, y1, m));
+      }
+      fx.update(dt / 1000);
+      if (fx.t >= until) fx.stop();
+      clearFrame(frame);
+      fx.draw(frame);
+      paper(frame, soft);
+    },
+    delay,
+  );
+  return delay;
 }
 
 const px = (x, y, c, s = 1) => {
@@ -181,33 +478,11 @@ function charge(x, y, cols, ms, r = 18, n = 16) {
     disc(x, y, Math.max(0, r2 - 1), "#ffffff");
   });
 }
-/** Взрыв: вспышка, огненный шар, обломки, дым, ударная волна, тряска. */
-function explosion(x, y, big = false, cols = ["#ffffff", "#fff3a0", "#ffd23f", "#ff7a1a", "#d62839", "#5a2a3a"]) {
-  const s = big ? 1.6 : 1;
-  flash("#fff7e0", big ? 220 : 120, big ? 0.75 : 0.4);
-  // огненный шар растёт и тает прозрачностью (не темнеет в бурое пятно)
-  add(big ? 460 : 320, (k) => {
-    const r = Math.round(lerp(3, 13 * s, Math.sqrt(k)));
-    ctx.globalAlpha = k < 0.55 ? 1 : (1 - k) / 0.45;
-    disc(x, y, r, ramp(cols.slice(2, 5), k));
-    disc(x, y, Math.round(r * 0.65), ramp(cols.slice(0, 4), k));
-    if (k < 0.35) disc(x, y, Math.round(r * 0.3), "#ffffff");
-    ctx.globalAlpha = 1;
-  });
-  burstParticles(x, y, { n: big ? 40 : 22, cols, speed: 140 * s, life: big ? 650 : 450, size: [1, 2], drag: 3 });
-  burstParticles(x, y, {
-    n: big ? 12 : 6,
-    cols: ["#ffd23f", "#7a5a3a", "#3a2a2a"],
-    speed: 120 * s,
-    life: 700,
-    size: 2,
-    grav: 260,
-    up: 60,
-    drag: 0.6,
-  });
-  smoke(x, y, big ? 10 : 5, big ? 5 : 3, big ? 1000 : 750);
-  ring(x, y, 4, 22 * s, ["#ffffff", "#ffd23f", "#ff7a1a"], big ? 380 : 280, 1);
-  if (big) ring(x, y, 2, 30 * s, ["#fff3a0", "#ff7a1a"], 480, 1, 60);
+/** Взрыв (pixelfx): вспышка, огненный шар, обломки, дым, тряска; cols — свои цвета (от светлого к тёмному). */
+function explosion(x, y, big = false, cols = null) {
+  flash("#fff7e0", big ? 160 : 90, big ? 0.5 : 0.3);
+  const o = { anchor: [0, -10], size: big ? 0.65 : 0.45, from: 0.08, until: 0.75, soft: 0.35 };
+  pfx(smallExplosion, css(x, y), cols ? { ...o, palette: [...cols].reverse() } : o);
   shake();
 }
 function sparks(x, y, cols, n = 12, speed = 90) {
@@ -272,33 +547,16 @@ export function fireball(
   { big = false, cols = ["#ffffff", "#fff3a0", "#ffd23f", "#ff7a1a", "#d62839"] } = {},
 ) {
   ensure();
-  const [x0, y0] = P(...from),
-    [x1, y1] = P(...to);
-  const fly = 340,
-    arc = Math.min(30, Math.abs(x1 - x0) * 0.25),
-    r = big ? 6 : 4;
-  charge(x0, y0, cols.slice(1), 140, 10, 8);
-  add(
-    fly,
-    (k, dt, age) => {
-      const x = lerp(x0, x1, k),
-        y = lerp(y0, y1, k) - Math.sin(k * Math.PI) * arc;
-      if (Math.random() < 0.9) {
-        let fx = x + rnd(-1, 1),
-          fy = y + rnd(-1, 1);
-        add(rnd(200, 320), (kk, d) => {
-          fy -= (d / 1000) * 18;
-          px(fx, fy, ramp(cols.slice(1).concat("#5a2a3a"), kk), kk < 0.3 ? 2 : 1);
-        });
-      }
-      const flick = Math.floor(age / 40) % 2;
-      disc(x, y, r + flick, cols[3]);
-      disc(x, y, r, cols[2]);
-      disc(x + 1, y - 1, Math.max(1, r - 2), cols[0]);
-    },
-    140,
-    () => explosion(x1, y1, big),
-  );
+  const fly = 340;
+  charge(...P(...from), cols.slice(1), 140, 10, 8);
+  pfx(fireballFx, from, {
+    move: { to, ms: fly },
+    until: fly / 1000,
+    radius: big ? 7 : 5,
+    delay: 140,
+    ...aim(from, to),
+  });
+  setTimeout(() => explosion(...P(...to), big), 140 + fly);
   return 140 + fly;
 }
 
@@ -447,77 +705,25 @@ export function annihilate(from, to, chargeMs = 380, beamMs = 460) {
   return chargeMs + beamMs / 5;
 }
 
-/** Молния с неба в цель (босса или героя). cols: [ореол, свет, ядро]. */
-export function lightning(to, top = 0, cols = ["#ff7a1a", "#ffd23f", "#ffffff"]) {
-  ensure();
-  const [x1, y1] = P(...to);
-  const y0 = Math.max(0, top / PX);
-  const pts = [];
-  for (let y = y0, x = x1 + rnd(-10, 10); y < y1; y += rnd(5, 9)) {
-    pts.push([x, y]);
-    x += rnd(-6, 6);
-  }
-  pts.push([x1, y1]);
-  const branches = pts.slice(2, -2).filter(() => Math.random() < 0.35);
-  flash("#1b1446", 80, 0.5);
-  add(300, (k, dt, age) => {
-    if (Math.floor(age / 45) % 3 === 2) return; // мерцание
-    for (let i = 1; i < pts.length; i++) {
-      line(...pts[i - 1], ...pts[i], cols[0], 6);
-      line(...pts[i - 1], ...pts[i], cols[1], 4);
-      line(...pts[i - 1], ...pts[i], cols[2], 2);
-    }
-    branches.forEach(([bx, by], i) => {
-      line(bx, by, bx + (i % 2 ? 9 : -9), by + 8, cols[1], 2);
-      line(bx + (i % 2 ? 9 : -9), by + 8, bx + (i % 2 ? 12 : -12), by + 14, "#fff3a0", 1);
-    });
-  });
-  flash("#ffffff", 160, 0.6, 40);
-  setTimeout(() => explosion(x1, y1, false, ["#ffffff", "#ffffff", cols[2], cols[1], cols[0], "#3a2a4a"]), 60);
-  return 60;
-}
-
 /** Комета сверху по дуге с ледяным хвостом, удар — ледяные осколки. */
 export function comet(from, to) {
   ensure();
-  const [x0, y0] = P(...from),
-    [x1, y1] = P(...to);
   const ice = ["#ffffff", "#a8f0ff", "#45d1e6", "#2a6bd6"];
-  const sx = x0 + 10,
-    sy = 2;
-  const fly = 380;
-  charge(x0, y0, ice, 120, 12, 10);
-  add(
-    fly,
-    (k) => {
-      const x = lerp(sx, x1, k),
-        y = lerp(sy, y1, k * k);
-      if (Math.random() < 0.9) {
-        let fx = x + rnd(-2, 2),
-          fy = y + rnd(-2, 2);
-        add(rnd(250, 420), (kk, d) => {
-          fy += (d / 1000) * 10;
-          px(fx, fy, ramp(ice, kk), kk < 0.4 ? 3 : 2);
-        });
-      }
-      for (let t = 1; t < 12; t++) {
-        const kk = Math.max(0, k - t * 0.018);
-        px(lerp(sx, x1, kk), lerp(sy, y1, kk * kk), ramp(ice, t / 12), t < 5 ? 4 : 2);
-      }
-      disc(x, y, 5, "#2a6bd6");
-      disc(x, y, 4, "#45d1e6");
-      disc(x, y, 3, "#a8f0ff");
-      disc(x - 1, y - 1, 1, "#ffffff");
-    },
-    120,
-    () => {
-      flash("#a8f0ff", 180, 0.5);
-      burstParticles(x1, y1, { n: 30, cols: ice, speed: 160, life: 560, size: [1, 3], grav: 120, drag: 2 });
-      ring(x1, y1, 3, 26, ice, 380, 2);
-      shake();
-    },
-  );
-  return 120 + fly;
+  charge(...P(...from), ice, 120, 12, 10);
+  // метеор падает слева сверху и бьёт в 0.62 с своего времени: с 0.2 с до удара 0.42 с
+  pfx(meteor, to, {
+    anchor: [0, -6],
+    from: 0.2,
+    until: 0.9,
+    soft: 0.2,
+    light: 0.5,
+    palette: ["#10204a", ...[...ice].reverse()],
+  });
+  setTimeout(() => {
+    flash("#a8f0ff", 180, 0.5);
+    shake();
+  }, 420);
+  return 420;
 }
 
 /** Чёрная дыра: тёмный шар с орбитами, у босса закручивается воронка и затягивает частицы. */
@@ -586,69 +792,7 @@ export function laser(from, to, col = "#ff3b3b", big = false) {
   return 40;
 }
 
-/** Искры и пыль от удара в ближнем бою. */
-export function meleeHit(at, col, heavy = false) {
-  ensure();
-  const [x, y] = P(...at);
-  sparks(x, y, ["#ffffff", col || "#ffd23f", "#ffd23f"], heavy ? 20 : 12, heavy ? 120 : 90);
-  ring(x, y, 2, heavy ? 18 : 10, ["#ffffff", col || "#ffd23f"], 240, 1);
-  if (heavy) {
-    smoke(x, y + 8, 5, 3, 600);
-    flash("#ffffff", 90, 0.25);
-  }
-}
-
-/** Вспышка звезды (новамеч): кольца и лучи во все стороны. */
-export function starburst(at, cols = ["#ffffff", "#fff3a0", "#ffd23f", "#ff7a1a"]) {
-  ensure();
-  const [x, y] = P(...at);
-  flash("#fff3a0", 200, 0.6);
-  add(380, (k) => {
-    const r = 4 + k * 26;
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2 + k;
-      line(
-        x + Math.cos(a) * r * 0.3,
-        y + Math.sin(a) * r * 0.3,
-        x + Math.cos(a) * r,
-        y + Math.sin(a) * r,
-        ramp(cols, k),
-        1,
-      );
-    }
-  });
-  ring(x, y, 2, 26, cols, 420, 2);
-  burstParticles(x, y, { n: 24, cols, speed: 140, life: 500, size: [1, 2] });
-  shake();
-}
-
 // ---------- питомцы ----------
-
-/** Котик: три царапины одна за другой, клочки шерсти. */
-export function claws(at) {
-  ensure();
-  const [x, y] = P(...at);
-  [-6, 0, 6].forEach((dx, i) =>
-    add(
-      420,
-      (k) => {
-        const len = Math.min(1, k * 5) * 16;
-        ctx.globalAlpha = k < 0.6 ? 1 : (1 - k) / 0.4;
-        const x0 = x + dx + 6,
-          y0 = y - 9;
-        line(x0, y0, x0 - len * 0.55, y0 + len, "#d62839", 3);
-        line(x0, y0, x0 - len * 0.55, y0 + len, "#ffffff", 1);
-        ctx.globalAlpha = 1;
-      },
-      i * 70,
-      () => {},
-    ),
-  );
-  setTimeout(() => {
-    burstParticles(x, y, { n: 10, cols: ["#ffffff", "#c9c9d6", "#8a8aa0"], speed: 70, life: 500, size: 2, grav: 60 });
-    sparks(x, y, ["#ffffff", "#ffd23f"], 8, 80);
-  }, 160);
-}
 
 /** Робопёс: челюсти с зубами смыкаются на боссе. */
 export function bite(at) {
@@ -676,33 +820,6 @@ export function bite(at) {
     sparks(x, y, ["#ffffff", "#ff3b3b", "#ffd23f"], 14, 100);
     ring(x, y, 2, 12, ["#ffffff", "#ff3b3b"], 220);
   }, 130);
-}
-
-/** Дыхание дракона: конус пламени от пасти до босса. */
-export function breath(from, to, cols, ms = 380) {
-  ensure();
-  const [x0, y0] = P(...from),
-    [x1, y1] = P(...to);
-  const fire = ["#ffffff", cols[0], cols[1], cols[1], "#5a2a3a"];
-  const dist = Math.hypot(x1 - x0, y1 - y0);
-  add(ms, (k) => {
-    for (let n = 0; n < 6; n++) {
-      const a = Math.atan2(y1 - y0, x1 - x0) + rnd(-0.18, 0.18),
-        v = dist / rnd(0.2, 0.28); // долетает до босса за ~0,25 с на любом экране
-      let fx = x0,
-        fy = y0;
-      add(rnd(280, 360), (kk, d) => {
-        fx += (Math.cos(a) * v * d) / 1000;
-        fy += (Math.sin(a) * v * d) / 1000 - (d / 1000) * 8;
-        px(fx, fy, ramp(fire, kk), kk < 0.2 ? 1 : kk < 0.6 ? 3 : 2);
-      });
-    }
-    disc(x0, y0, 2 + (Math.floor(k * 12) % 2), cols[1]);
-  });
-  setTimeout(() => {
-    burstParticles(x1, y1, { n: 18, cols: fire, speed: 90, life: 500, size: [1, 3], up: 40 });
-    flash(cols[1], 140, 0.25);
-  }, 220);
 }
 
 /** Дрон: мигающий прицел, потом лазер. */
@@ -1043,6 +1160,40 @@ export function tongue(from, to, cols) {
 }
 
 /** Бумажный самолётик (шпаргалка): летит волной, на герое — клочки бумаги. */
+/** Рой пчёл: n полосатых пчёлок летят зигзагом из from в to, крылышки мелькают. Возвращает мс до попадания. */
+export function swarm(from, to, n = 7) {
+  ensure();
+  const [x0, y0] = P(...from),
+    [x1, y1] = P(...to),
+    fly = 520,
+    gap = 45,
+    dir = x1 < x0 ? -1 : 1;
+  for (let i = 0; i < n; i++) {
+    const ph = rnd(0, 6),
+      amp = rnd(3, 7),
+      dy = rnd(-5, 5);
+    add(
+      fly,
+      (k, dt, age) => {
+        const e = k * k * (3 - 2 * k),
+          x = Math.round(lerp(x0, x1, e) + Math.sin(k * 9 + ph) * 2),
+          y = Math.round(lerp(y0, y1 + dy, e) + Math.sin(k * 14 + ph) * amp * (1 - k)),
+          up = Math.floor(age / 40) % 2;
+        // пчёлка в квадратиках 2×2, чтобы рой было видно издалека
+        const b = (i, j, c) => px(x + i * 2 * dir, y + j * 2, c, 2);
+        b(2, 0, "#2a2238"); // голова
+        b(1, 0, "#ffd23f");
+        b(0, 0, "#2a2238");
+        b(-1, 0, "#ffd23f");
+        b(-2, 0, "#2a2238"); // жало
+        b(0, -1 - up, "#ffffff"); // крылышки
+        b(-1, -1 - up, "#d6f3ff");
+      },
+      i * gap,
+    );
+  }
+  return fly + ((n - 1) * gap) / 2;
+}
 export function plane(from, to, cols, n = 1) {
   ensure();
   const [x0, y0] = P(...from),
@@ -1079,19 +1230,6 @@ export function plane(from, to, cols, n = 1) {
     );
   }
   return fly + (n - 1) * gap;
-}
-
-/** Щит героя отбил удар: голубая дуга и искры. */
-export function guard(at) {
-  ensure();
-  const [x, y] = P(...at);
-  add(320, (k) => {
-    ctx.globalAlpha = 1 - k;
-    for (let a = -1.1; a <= 1.1; a += 0.08) px(x + Math.cos(a) * 9, y + Math.sin(a) * 12, "#a8f0ff", 2);
-    for (let a = -0.9; a <= 0.9; a += 0.1) px(x + Math.cos(a) * 7, y + Math.sin(a) * 10, "#ffffff", 1);
-    ctx.globalAlpha = 1;
-  });
-  sparks(x, y, ["#ffffff", "#a8f0ff", "#45d1e6"], 14, 110);
 }
 
 /** Нить жизни от героя к боссу (вампир). */
