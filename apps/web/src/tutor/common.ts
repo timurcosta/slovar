@@ -1,7 +1,7 @@
 // Общее для страниц кабинета: запросы к API, даты, мелкие помощники.
 import type { Student, WordStats } from "@repetitor/shared";
 import { today } from "../lib/date.js";
-import { LEARN_N } from "../content/rules.ts";
+import { isLearned } from "../content/rules.ts";
 import { W12, W34 } from "../topics/words/lists.js";
 import { parseEntry, parseList } from "../topics/words/parse.ts";
 import { HttpError, request } from "../net/http.ts";
@@ -49,7 +49,7 @@ export function seen(iso: string | null): string {
   return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
 }
 
-export const learned = (s: Student) => Object.values(s.stats || {}).filter((w) => w.right >= LEARN_N).length;
+export const learned = (s: Student) => Object.values(s.stats || {}).filter(isLearned).length;
 export const hardWords = (s: Pick<Student, "stats">) =>
   Object.entries(s.stats || ({} as WordStats))
     .filter(([, w]) => w.wrong > 0)

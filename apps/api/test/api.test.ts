@@ -152,6 +152,20 @@ for (const [kind, makeStore] of factories) {
       expect(seen.lastSeenAt).toBe("2026-10-15T10:00:00.000Z");
     });
 
+    it("статистика слов хранится целиком, с новыми и старыми полями", async () => {
+      const { call, tutor } = await setup();
+      const t = await tutor();
+      const st = (await call("POST", "/tutor/students", { name: "Оля" }, t)).body as Student;
+      const k = (await call("POST", "/join", { code: st.code })).body.token;
+      const stats = {
+        берёза: { right: 4, wrong: 1, last: 1760522400000, streak: 3, typed: 2, lastWrong: 1760436000000 },
+        молоко: { right: 3, wrong: 0 },
+      };
+      expect((await call("PUT", "/me/progress", { profile: profile(10), stats, baseRev: 0 }, k)).status).toBe(200);
+      expect(((await call("GET", "/me", undefined, k)).body as MeResponse).stats).toEqual(stats);
+      expect(((await call("GET", `/tutor/students/${st.id}`, undefined, t)).body as Student).stats).toEqual(stats);
+    });
+
     it("при устаревшем rev отвечает 409 с данными сервера", async () => {
       const { call, tutor } = await setup();
       const t = await tutor();

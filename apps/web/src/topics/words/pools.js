@@ -1,6 +1,7 @@
 // Наборы слов для боя: по классам, слова учителя, работа над ошибками, новые слова.
 import { W12, W34 } from "./lists.js";
 import { parseEntry, parseList } from "./parse.ts";
+import { errorWords } from "./schedule.ts";
 import { stats } from "../../state/stats.ts";
 import { LS } from "../../state/storage.ts";
 import { settings } from "../../state/settings.ts";
@@ -25,15 +26,9 @@ export function poolFor(b) {
   if (settings.words === "ab") return PAB;
   return b.pool === "a" ? PA : b.pool === "b" ? PB : PAB;
 }
-// words the pupil got wrong most (weighted: mistakes count more than later correct answers)
+// работа над ошибками: недавние и частые ошибки (errorWords в schedule.ts)
 export function errWords() {
-  const all = PAB.concat(settings.words === "custom" ? customPool() : []);
-  const byWord = new Map(all.map((e) => [e.word, e]));
-  return Object.entries(stats)
-    .filter(([w, s]) => s.wrong > 0 && byWord.has(w) && s.wrong * 2 > s.right)
-    .sort((a, b) => b[1].wrong * 2 - b[1].right - (a[1].wrong * 2 - a[1].right))
-    .slice(0, 25)
-    .map(([w]) => byWord.get(w));
+  return errorWords(PAB.concat(settings.words === "custom" ? customPool() : []), stats, Date.now());
 }
 export function newWords() {
   const base =

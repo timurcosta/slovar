@@ -28,6 +28,11 @@ const dayVal = (k) => {
   const d = ensureDay();
   return k === "min" ? Math.floor(d.sec / 60) : d[k];
 };
+/** Сколько новых слов ещё можно сегодня по лимиту учителя (Infinity — без лимита). */
+export function freshLeft() {
+  const L = lims();
+  return L.fresh > 0 ? Math.max(0, L.fresh - ensureDay().fresh) : Infinity;
+}
 export function limitReason() {
   const L = lims();
   for (const [k, n] of LIM_KEYS)

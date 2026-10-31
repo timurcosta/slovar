@@ -144,7 +144,7 @@ Vite, ES-модули, без фреймворка. `index.html` — разме�
 ### Состояние
 
 - `P` — профиль игрока (сохраняется целиком), `G` — текущий забег (`null` вне боя), `settings`,
-  `stats` — `{слово: {right, wrong}}`. Типы — в `state/types.ts`.
+  `stats` — `{слово: {right, wrong, last?, streak?, typed?, lastWrong?}}` (`WordStat`). Типы — в `state/types.ts`.
 - Любое изменение `P` → `save()`. Экраны перерисовываются явно (`renderHome()`, `renderShop()`, `renderHUD()`).
 
 ## Сервер и синхронизация

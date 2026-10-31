@@ -32,7 +32,7 @@ export function renderTrophies() {
   P.troph = P.troph || {};
   const got = TROPHIES.filter((t) => P.troph[t.id]).length;
   $("tr-count").textContent =
-    `Получено ${got} из ${TROPHIES.length}. Выучено слов: ${learnedCount()} из ${PAB.length}. Слово считается выученным после ${LEARN_N} верных ответов.`;
+    `Получено ${got} из ${TROPHIES.length}. Выучено слов: ${learnedCount()} из ${PAB.length}. Слово считается выученным после ${LEARN_N} верных ответов подряд.`;
   $("trophies").innerHTML = TROPHIES.map((t) => {
     const v = Math.min(trophyVal(t), trophyGoal(t)),
       on = !!P.troph[t.id];

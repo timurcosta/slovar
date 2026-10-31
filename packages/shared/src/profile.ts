@@ -112,7 +112,24 @@ export interface Profile {
   xpv: number;
 }
 
-export type WordStats = Record<string, { right: number; wrong: number }>;
+/**
+ * Статистика одного слова. Поля кроме right/wrong появились в октябре 2026 и необязательны:
+ * у старых сохранений их нет, тогда «выучено» считается по right (isLearned в content/rules.ts).
+ */
+export interface WordStat {
+  right: number;
+  wrong: number;
+  /** Время последнего ответа, мс (Date.now()). */
+  last?: number;
+  /** Верных подряд; ошибка обнуляет. */
+  streak?: number;
+  /** Сколько раз верно вписал слово целиком (режим «Пишу сам»). */
+  typed?: number;
+  /** Время последней ошибки, мс. */
+  lastWrong?: number;
+}
+
+export type WordStats = Record<string, WordStat>;
 
 export interface Settings {
   timer: boolean;

@@ -5,12 +5,13 @@ import { PALS, SPR } from "../content/sprites.js";
 import { drawBoss, drawSprite } from "../render/sprite.js";
 import { shownDmg } from "../content/rules.ts";
 import { poolFor } from "../topics/words/pools.js";
-import { stat } from "../state/stats.ts";
+import { buildQueue, requeueMiss } from "../topics/words/schedule.ts";
+import { stat, stats } from "../state/stats.ts";
 import { P, save } from "../state/profile.ts";
 import { settings } from "../state/settings.ts";
 import { gear } from "../progress/gear.js";
 import { quest } from "../progress/daily.js";
-import { limitReason } from "../progress/limits.js";
+import { freshLeft, limitReason } from "../progress/limits.js";
 import { addCoins, addXP, refreshCoins } from "../progress/rewards.js";
 import { checkAch } from "../progress/achievements.js";
 import { noiseSweep, sfx, tone } from "../audio/sfx.js";
@@ -440,6 +441,16 @@ function continueOrLose(next) {
   G.hearts <= 0 ? endGame(false) : next();
 }
 
+/**
+ * Очередь слов боя. Кампания и башня — по интервальным повторениям (schedule.ts): сначала пора повторить,
+ * потом несколько новых. Тренировки ошибок и новых слов и задания — свой набор, просто перемешанный.
+ */
+export function wordQueue(b) {
+  const pool = poolFor(b);
+  if (b.pool === "train") return shuffle(pool);
+  return buildQueue(pool, stats, Date.now(), { random: Math.random, freshLeft: freshLeft() });
+}
+
 export function nextQ() {
   G.hpLag = 0; // все удары прошлого ответа уже показаны
   if (G.kind !== "task") {
@@ -457,7 +468,7 @@ export function nextQ() {
     });
     return;
   }
-  if (!G.queue.length) G.queue = shuffle(poolFor(G.boss));
+  if (!G.queue.length) G.queue = wordQueue(G.boss);
   const e = G.kind === "task" ? taskNext() : G.queue.shift();
   const slot = pick(e.slots);
   const s = e.segs[slot];
@@ -1098,7 +1109,7 @@ function resolve(ok, timeout) {
       dmg = 0;
       blocked = true;
     }
-    stat(e.word, "right");
+    stat(e.word, "right", !!G.type);
     // в задании жизни — сердечки монстров: любой удар снимает ровно одно (TASK_U), числа урона те же
     const lagK = G.kind === "task" && dmg ? TASK_U / dmg : 1;
     // урон делится: свою долю питомец наносит сам, своей атакой; полоска жизней падает в момент каждого удара
@@ -1262,9 +1273,14 @@ function resolve(ok, timeout) {
   } else {
     G.streak = 0;
     G.bossMistakes++;
-    stat(e.word, "wrong");
+    stat(e.word, "wrong", !!G.type);
     G.mistakes[e.word] = (G.mistakes[e.word] || 0) + 1;
-    G.queue.splice(Math.min(2, G.queue.length), 0, e);
+    // слово с ошибкой вернётся в этом же бою через 3–6 вопросов; у заданий свои правила (taskrules.ts)
+    if (G.kind === "task") G.queue.splice(Math.min(2, G.queue.length), 0, e);
+    else {
+      if (!G.queue.length) G.queue = wordQueue(G.boss);
+      G.queue = requeueMiss(G.queue, e, Math.random);
+    }
     say(pick(G.boss.taunts).replace(/\{name\}/g, P.name || "герой"));
     const shown = e.segs
       .map((s, k) => (s.t !== undefined ? esc(s.t) : G.type || k === slot ? `<u>${esc(s.c)}</u>` : esc(s.c)))

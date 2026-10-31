@@ -1,14 +1,14 @@
 // Забег: старт кампании, башни и тренировок, босс, победа, конец игры. G — состояние забега.
 import { $, TOUCH, esc } from "../lib/dom.js";
 import { plural } from "../lib/text.js";
-import { pick, shuffle } from "../lib/random.js";
+import { pick } from "../lib/random.js";
 import { ITEM, ITEMS, RARITY, showcaseEquip } from "../content/items.js";
 import { AB, BOSSES, FORMS, LORE, WIN_LORE, defeatedWord, towerBoss } from "../content/bosses.js";
 import { PALS, SPR } from "../content/sprites.js";
 import { shownDmg } from "../content/rules.ts";
 import { drawHero } from "../render/hero.js";
 import { drawBoss, drawSprite } from "../render/sprite.js";
-import { errWords, newWords, poolFor } from "../topics/words/pools.js";
+import { errWords, newWords } from "../topics/words/pools.js";
 import { P, giftRalina, save } from "../state/profile.ts";
 import { settings } from "../state/settings.ts";
 import { gear } from "../progress/gear.js";
@@ -19,7 +19,7 @@ import { checkAch } from "../progress/achievements.js";
 import { sfx, tone } from "../audio/sfx.js";
 import { duckMusic, nextBattleTrack, stopMusic } from "../audio/music.js";
 import { bossCv, drawFighters, heroCv, renderHUD } from "./hud.js";
-import { clearRound, later, nextQ, renderCharge } from "./round.js";
+import { clearRound, later, nextQ, renderCharge, wordQueue } from "./round.js";
 import { rel } from "./effects.js";
 import * as vfx from "./vfx.js";
 import { DIFF_NAME, applyDiff, diffMul } from "./difficulty.js";
@@ -183,7 +183,7 @@ export function startBoss(b) {
   G.final = G.forms.length > 0 && b.pool === "b"; // у финальных боссов своя музыка
   G.hp = b.hp0 ?? b.hp;
   G.hpLag = 0;
-  G.queue = shuffle(poolFor(b));
+  G.queue = wordQueue(b);
   G.shieldLeft = g.shield;
   G.armorLeft = b.ab.includes("armor") ? 2 : 0;
   $("boss-shields").innerHTML = '<i class="shield"></i>'.repeat(G.armorLeft);

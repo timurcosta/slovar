@@ -15,7 +15,14 @@ const OLD = {
 
 describe("код сохранения", () => {
   it("упаковка и распаковка возвращают те же данные", async () => {
-    const data = { v: 1 as const, p: OLD, s: { берёза: { right: 3, wrong: 1 } } };
+    const data = {
+      v: 1 as const,
+      p: OLD,
+      s: {
+        берёза: { right: 3, wrong: 1 },
+        молоко: { right: 4, wrong: 1, last: 1760522400000, streak: 3, typed: 1, lastWrong: 1760436000000 },
+      },
+    };
     const code = await packSave(data);
     expect(code.startsWith("SBZ")).toBe(true);
     expect(code).toMatch(/^[A-Za-z0-9_-]+$/); // безопасно для адреса (#import=…)
