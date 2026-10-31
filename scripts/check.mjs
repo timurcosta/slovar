@@ -668,25 +668,42 @@ const SCENARIOS = [
         await p.click("#btn-fight");
         await tick(p, 300);
       };
+      /** Пока ждём подлянку, Math.random = 0.1: подлянка «с шансом» срабатывает всегда, прогон не зависит от порядка событий. */
+      const luck = (on) =>
+        p.evaluate((on) => {
+          if (on) {
+            window.__rnd = Math.random;
+            Math.random = () => 0.1;
+          } else if (window.__rnd) {
+            Math.random = window.__rnd;
+            delete window.__rnd;
+          }
+        }, on);
       // Ластик: миньоны садятся на кнопки; не отвечаем — по таймеру босс подбегает и кусает
+      await luck(true);
       await fight(4);
       await until(".minion");
+      await luck(false);
       await tick(p, 600);
       await shot("01-minions");
       await until("#feedback:has(u)");
       await tick(p, 240);
       await shot("02-attack-bite");
       // Медуза: пузыри и луч
+      await luck(true);
       await fight(13);
       await until(".bubblecover");
+      await luck(false);
       await tick(p, 500);
       await shot("03-bubbles");
       await until("#feedback:has(u)");
       await tick(p, 170);
       await shot("04-attack-zap");
       // Хамелеон: напёрстки посреди перемешивания
+      await luck(true);
       await fight(20);
       await until(".cupcover");
+      await luck(false);
       await tick(p, 700);
       await shot("05-cups");
       // Кактус: два щита, потом удар срезает жизни ниже трети — превращение
