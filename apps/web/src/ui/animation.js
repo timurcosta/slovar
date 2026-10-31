@@ -19,7 +19,8 @@ const HERO_ANIM = [
   { cv: $("shop-hero"), wrap: $("shop-aura"), eq: () => (tryOn ? { ...P.equip, [ITEM[tryOn].slot]: tryOn } : P.equip) },
 ];
 export let heroFrame = 0;
-if (!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+// Без разметки игры (тесты, кабинет) анимацию не запускаем: effects.js тянет этот модуль в тесты слов.
+if ($("home-hero") && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) {
   setInterval(() => {
     if (document.hidden) return;
     heroFrame++;

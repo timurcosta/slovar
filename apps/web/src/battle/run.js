@@ -4,6 +4,7 @@ import { plural } from "../lib/text.js";
 import { pick } from "../lib/random.js";
 import { ITEM, ITEMS, RARITY, showcaseEquip } from "../content/items.js";
 import { AB, BOSSES, FORMS, LORE, WIN_LORE, defeatedWord, towerBoss } from "../content/bosses.js";
+import { arenaOf } from "../content/arenas.js";
 import { PALS, SPR } from "../content/sprites.js";
 import { shownDmg } from "../content/rules.ts";
 import { drawHero } from "../render/hero.js";
@@ -20,7 +21,7 @@ import { sfx, tone } from "../audio/sfx.js";
 import { duckMusic, nextBattleTrack, stopMusic } from "../audio/music.js";
 import { bossCv, drawFighters, heroCv, renderHUD } from "./hud.js";
 import { TYPE_TIME, clearRound, later, nextQ, renderCharge, wordQueue } from "./round.js";
-import { rel } from "./effects.js";
+import { chestFx, rel, victoryFx } from "./effects.js";
 import * as vfx from "./vfx.js";
 import { DIFF_NAME, applyDiff, diffMul } from "./difficulty.js";
 import { toast } from "../ui/toast.js";
@@ -133,37 +134,49 @@ export function startTower() {
 export const abilChips = (ab) =>
   ab.map((a) => `<span class="chip${a === "enrage" ? " red" : ""}" title="${esc(AB[a].d)}">${AB[a].n}</span>`).join("");
 const CHEST_PAL = { 1: PALS.chest, 2: PALS.chest2, 3: PALS.chest3 };
+// свет из сундука без вещи: обычный — голубой, большой — фиолетовый, задания — золотой
+const CHEST_GLOW = { 1: "#45d1e6", 2: "#c77dff", 3: "#ffd23f" };
 /** Сундук на экране победы: трясётся, открывается, потом видно монеты и вещь в рамке её редкости. */
 export function openChest(chest, tier, rewardHTML) {
   const pal = CHEST_PAL[tier] || PALS.chest;
   drawSprite($("chest-cv"), SPR.chest, pal);
+  chestFx(
+    $("chest-cv"),
+    chest.item ? RARITY(chest.item.price)[1] : CHEST_GLOW[tier] || CHEST_GLOW[1],
+    !!chest.item,
+    900,
+  );
   [0, 160, 320, 480].forEach((ms) => later(() => tone(190 + ms / 4, 0.06, "square", 0.03, 120), ms));
+  // награда под сундуком сразу занимает своё место (невидимой): при открытии ничего не сдвигается
+  const loot = $("chest-loot");
+  let item = "";
+  if (chest.item) {
+    const [rn, rc] = RARITY(chest.item.price);
+    item = `<div class="lootitem" style="--rc:${rc}"><canvas id="loot-cv"></canvas><div><span class="rar">${rn}</span><b>${esc(chest.item.name)}</b>
+        <button class="btn small gold" id="btn-equip-new">Надеть</button></div></div>`;
+  }
+  loot.innerHTML = rewardHTML + item;
+  loot.classList.add("pending");
+  loot.hidden = false;
+  if (chest.item) {
+    drawHero($("loot-cv"), showcaseEquip(P.equip, chest.item));
+    $("btn-equip-new").onclick = () => {
+      P.equip[chest.item.slot] = chest.item.id;
+      save();
+      drawFighters();
+      $("btn-equip-new").textContent = "Надето!";
+      $("btn-equip-new").disabled = true;
+      renderHUD();
+    };
+  }
   later(() => {
-    const cv = $("chest-cv"),
-      loot = $("chest-loot");
-    if (!cv || !loot) return;
+    const cv = $("chest-cv");
+    if (!cv || !loot.isConnected) return;
     drawSprite(cv, SPR.chestOpen, pal);
     cv.classList.replace("shaking", "opened");
-    loot.hidden = false;
-    let item = "";
-    if (chest.item) {
-      const [rn, rc] = RARITY(chest.item.price);
-      item = `<div class="lootitem" style="--rc:${rc}"><canvas id="loot-cv"></canvas><div><span class="rar">${rn}</span><b>${esc(chest.item.name)}</b>
-        <button class="btn small gold" id="btn-equip-new">Надеть</button></div></div>`;
-    }
-    loot.innerHTML = rewardHTML + item;
-    if (chest.item) {
-      drawHero($("loot-cv"), showcaseEquip(P.equip, chest.item));
-      sfx.fanfare(true);
-      $("btn-equip-new").onclick = () => {
-        P.equip[chest.item.slot] = chest.item.id;
-        save();
-        drawFighters();
-        $("btn-equip-new").textContent = "Надето!";
-        $("btn-equip-new").disabled = true;
-        renderHUD();
-      };
-    } else sfx.coin();
+    loot.classList.remove("pending");
+    if (chest.item) sfx.fanfare(true);
+    else sfx.coin();
   }, 900);
 }
 /** Строка о бонусах снаряжения за этого босса: чтобы «+25% монет» было видно, а не только написано. */
@@ -188,6 +201,7 @@ export function startBoss(b) {
   b = applyDiff(b);
   const g = gear();
   G.boss = b;
+  G.scene = arenaOf(b, G.kind);
   G.forms = b.forms || FORMS[b.name] || [];
   G.formN = 0;
   G.final = G.forms.length > 0 && b.pool === "b"; // у финальных боссов своя музыка
@@ -327,6 +341,7 @@ export function bossDown() {
   $("boss-wrap").classList.remove("angry");
   // босс рассыпается на свои пиксели
   vfx.shatter(bossCv, rel(bossCv), $("boss-wrap").style.filter);
+  victoryFx();
   bossCv.className = "shattered";
   $("boss-charge").hidden = true;
   sfx.fanfare(G.kind === "campaign" && b.idx === BOSSES.length - 1);

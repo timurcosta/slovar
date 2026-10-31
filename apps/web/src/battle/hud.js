@@ -9,12 +9,28 @@ import { G } from "./run.js";
 import { heartSVG } from "../ui/icons.js";
 import { PET_SPR } from "../content/pets.js";
 import { drawHero, drawPet } from "../render/hero.js";
+import { drawArena } from "../render/arena.js";
 
 export const bossCv = $("boss-cv"),
   heroCv = $("hero-cv"),
   petCv = $("pet-cv");
 /** Герой и питомец в бою. Питомец на своём холсте и действует сам: не едет с героем при замахе. */
+/** Тёмный фон сцены по теме боя (G.scene), пиксель фона = пиксель героя. */
+export function drawStage(fr = 0) {
+  const st = $("stage");
+  st.classList.toggle("scene", !!(G && G.scene));
+  if (!G || !G.scene) return;
+  const px = heroCv.getBoundingClientRect().width / 42 || 4;
+  drawArena(
+    $("stage-bg"),
+    G.scene,
+    Math.max(8, Math.round(st.clientWidth / px)),
+    Math.max(8, Math.round(st.clientHeight / px)),
+    fr,
+  );
+}
 export function drawFighters(fr = 0) {
+  drawStage(fr);
   drawHero(heroCv, { ...P.equip, pet: "nopet", ...(G && G.swinging ? { weapon: "none" } : {}) }, $("hero-aura"), fr);
   petCv.hidden = !PET_SPR[P.equip.pet];
   $("stage").classList.toggle("nopet", petCv.hidden);

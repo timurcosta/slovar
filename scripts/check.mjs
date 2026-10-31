@@ -343,6 +343,12 @@ for (const e of VETERAN_HIST) {
 }
 const VETERAN_LOG = { hist: VETERAN_HIST, dlog: VETERAN_DLOG };
 
+// всё оружие и питомцы: у каждого свой удар (сценарий weapons)
+const WEAPONS = [
+  ["pencil", "spikebat", "lasersword", "hammer", "goldsword", "scythe", "dragonblade", "novasword"],
+  ["firestaff", "blaster", "dualblaster", "rocket", "railgun", "annihilator", "comet", "blackhole"],
+].flat();
+const PETS = ["cat", "robodog", "minidragon", "darkdragon", "stardragon", "drone", "cyberwolf", "phoenixpet"];
 /** Титульный экран: «Нажми, чтобы начать», меню, «Играть». */
 async function enter(p, shot) {
   await tick(p, 1500);
@@ -685,8 +691,16 @@ const SCENARIOS = [
       await shot("05-cups");
       // Кактус: два щита, потом удар срезает жизни ниже трети — превращение
       await fight(6);
-      for (let n = 0; n < 15 && !(await has("#boss-wrap.form2")); n++) {
-        await p.click("#opt0");
+      // третий верный подряд — крит, он убил бы Кактуса сразу: перед ним ждём, пока выйдет время
+      for (let n = 0, streak = 0; n < 15 && !(await has("#boss-wrap.form2")); n++) {
+        if (streak === 2) {
+          await until("#feedback:has(u)");
+          streak = 0;
+        } else {
+          await p.click("#opt0");
+          await tick(p, 100);
+          streak = (await has("#feedback:has(u)")) ? 0 : streak + 1;
+        }
         for (let t = 0; t < 26 && !(await has("#boss-wrap.form2")); t++) await tick(p, 100);
       }
       await until("#boss-wrap.form2", 3000);
@@ -824,6 +838,75 @@ const SCENARIOS = [
       await shot("08-trophies-medal");
       const pr = (await p.evaluate(() => JSON.parse(localStorage.getItem("sb2_profile")))).tasks["t-double"];
       expect(pr?.done === "2026-10-15" && pr.medal === 1 && pr.guard === 1, "задание не засчитано после Хранителя");
+    },
+  },
+  {
+    // удары оружием и питомцами (эффекты pixelfx): у каждого кадр замаха, попадания и хвоста, потом крит.
+    // Свои слова «о, не а», чтобы знать верную кнопку.
+    name: "weapons",
+    kid: {
+      name: "Тест",
+      profile: {
+        ...VETERAN,
+        owned: { ...VETERAN.owned, ...Object.fromEntries([...WEAPONS, ...PETS].map((w) => [w, 1])) },
+      },
+    },
+    storage: { sb_settings: { words: "custom" }, sb_custom: "к(о/а)рова\nм(о/а)локо\nс(о/а)бака\nв(о/а)рона" },
+    run: async (p, shot) => {
+      await enter(p);
+      await tick(p, 1100);
+      const right = async () => {
+        const opts = await p.locator("#opts .opt span").allTextContents();
+        await p.click(`#opt${Math.max(0, opts.indexOf("о"))}`);
+      };
+      const equip = async (slot, id) => {
+        await p.click("#btn-shop");
+        await tick(p);
+        await p.click(`#tabs .tab[data-s="${slot}"]`);
+        await tick(p);
+        await p.click(`[data-eq="${id}"]`);
+        await tick(p);
+        await p.click("#btn-shop-back");
+        await tick(p);
+      };
+      /** Бой с первым боссом, верный ответ и кадры через times мс (от предыдущего кадра). */
+      const hit = async (name, times) => {
+        await p.click("#map .bcard[data-i='0']");
+        await tick(p);
+        await p.click("#btn-fight");
+        await tick(p, 800);
+        await right();
+        for (let i = 0; i < times.length; i++) {
+          await tick(p, times[i]);
+          await shot(`${name}-${i + 1}`);
+        }
+      };
+      const quit = async () => {
+        await tick(p, 2000);
+        await p.click("#btn-quit");
+        await tick(p, 600);
+      };
+      await equip("pet", "nopet");
+      for (const w of WEAPONS) {
+        await equip("weapon", w);
+        await hit(w, [260, 120, 250]);
+        if (w === "pencil") {
+          // третий верный подряд — крит
+          for (let i = 0; i < 2; i++) {
+            await tick(p, 2000);
+            await right();
+          }
+          await tick(p, 330);
+          await shot("crit");
+        }
+        await quit();
+      }
+      await equip("weapon", "pencil");
+      for (const pet of PETS) {
+        await equip("pet", pet);
+        await hit(`pet-${pet}`, [550, 200, 250]);
+        await quit();
+      }
     },
   },
   // маленький телефон (iPhone SE и узкие Android): всё должно влезать по ширине
