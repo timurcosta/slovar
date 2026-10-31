@@ -73,6 +73,8 @@ export function freshProfile(): Profile {
     days: { last: "", streak: 0 },
     best: 0,
     tasks: {},
+    hist: [],
+    dlog: {},
   };
 }
 
@@ -134,6 +136,9 @@ export function migrateProfile(stored: Partial<Profile> | null, legacyHero?: { x
   }
 
   P.unlocked = Math.min(P.unlocked || 0, bossNames.length - 1);
+  // журнал боёв и итоги дней (октябрь 2026): у старых сохранений их нет, битые заменяются пустыми
+  if (!Array.isArray(P.hist)) P.hist = [];
+  if (!P.dlog || typeof P.dlog !== "object" || Array.isArray(P.dlog)) P.dlog = {};
   P.tot = Object.assign(freshProfile().tot, P.tot);
   P.up = Object.assign({ str: 0, hp: 0, time: 0, gold: 0 }, P.up);
 

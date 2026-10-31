@@ -6,6 +6,7 @@
 // Страницы отдаёт маленький локальный сервер (ES-модули не грузятся по file://) вместе с настоящим API
 // из apps/api с базой в памяти, как шлюз в облаке. У каждого сценария свой сервер и своя база.
 import { chromium } from "playwright";
+import { createHash } from "crypto";
 import fs from "fs";
 import http from "http";
 import path from "path";
@@ -55,6 +56,67 @@ async function serve(docRoot, api) {
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   return { server, base: `http://127.0.0.1:${server.address().port}/` };
 }
+
+/**
+ * Шрифты Google грузятся по сети, каждый начертание и набор букв — отдельным файлом и только когда
+ * нужен. Если файл пришёл позже скриншота, текст рисуется другим начертанием, а заставка меряет землю
+ * по логотипу: прогоны расходились. Поэтому все объявленные шрифты грузятся сразу, до сценария.
+ */
+const loadFonts = (p) =>
+  p.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all([...document.fonts].map((f) => f.load().catch(() => {})));
+  });
+/**
+ * Шрифты Google — из кэша на диске (node_modules/.cache/check-fonts, первый прогон качает): сеть то отдаёт файл
+ * позже скриншота, то обрывает его, и текст рисуется другим шрифтом. Nunito у Google — один вариативный файл на все
+ * начертания (600, 800, 900 ссылаются на один адрес), и Chromium брал толщину того начертания, которым текст
+ * нарисован первым: текст был то тоньше, то толще. Поэтому у каждого начертания свой адрес (?w=800), файл тот же.
+ */
+const FONT_CACHE = path.resolve("node_modules/.cache/check-fonts");
+async function cachedFonts(route) {
+  const url = route.request().url(),
+    css = url.startsWith("https://fonts.googleapis.com/"),
+    file = path.join(FONT_CACHE, createHash("sha1").update(url).digest("hex") + (css ? ".css" : ".woff2"));
+  try {
+    if (!fs.existsSync(file)) {
+      const r = await route.fetch({ url: url.replace(/\?w=\d+$/, "") });
+      if (!r.ok()) throw new Error(`${r.status()} ${url}`);
+      let body = await r.body();
+      if (css)
+        body = body.toString().replace(/@font-face\s*{[^}]*}/g, (face) => {
+          const w = /font-weight:\s*(\d+)/.exec(face)?.[1];
+          return w ? face.replace(/url\(([^)]+)\)/, `url($1?w=${w})`) : face;
+        });
+      fs.mkdirSync(FONT_CACHE, { recursive: true });
+      fs.writeFileSync(file, body);
+    }
+    await route.fulfill({
+      body: fs.readFileSync(file),
+      contentType: css ? "text/css; charset=utf-8" : "font/woff2",
+      headers: { "access-control-allow-origin": "*" },
+    });
+  } catch {
+    await route.continue().catch(() => {}); // нет сети и нет кэша: как без подмены
+  }
+}
+/**
+ * Время ответов (WordStat.last, lastWrong) и начала боёв (BattleLog.t): ответ по таймеру приходит через
+ * кадры, а между таймерами часов Playwright успевают сеть и шрифты, поэтому миллисекунды плавают от
+ * прогона к прогону. В дампах — минуты от NOW: «NOW+3m». Токен ученика несёт случайный id — без него.
+ */
+const stableTimes = (key, v) =>
+  key === "sb_token" && typeof v === "string"
+    ? "<токен>"
+    : typeof v === "number" && v > 1e12 && (key === "last" || key === "lastWrong" || key === "t")
+      ? `NOW${v >= NOW.getTime() ? "+" : "-"}${Math.round(Math.abs(v - NOW.getTime()) / 60000)}m`
+      : v;
+/** Код ученика случайный: на скриншотах — постоянный (маска по краю цепляла первую букву). */
+const fixCode = (p) =>
+  p.evaluate(() => {
+    const c = document.querySelector("#code");
+    if (c) c.textContent = "ABC234";
+  });
 
 const DIST = path.dirname(page_);
 const NOW = new Date("2026-10-15T10:00:00");
@@ -217,6 +279,70 @@ const VETERAN = {
   up: { str: 5, hp: 2, time: 1, gold: 1 },
   tot: { correct: 800, typed: 120, bosses: 40, flawless: 9, bought: 20, crits: 300 },
 };
+// журнал боёв прокачанного ученика (Profile.hist, dlog): несколько дней до NOW, разные бои, ошибки и выученные слова
+const DAY_MS = 86400000;
+const dayKey = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const daysAgo = (n) => dayKey(new Date(NOW.getTime() - n * DAY_MS));
+/** Бой: n дней назад в hh:mm, ответы — строка слов через пробел, «!» после слова — ошибка, «+» — вписал. */
+function vlog(n, hm, k, m, b, w, s, words, l, f) {
+  const [h, mi] = hm.split(":").map(Number),
+    t = new Date(NOW.getTime() - n * DAY_MS);
+  t.setHours(h, mi, 0, 0);
+  const a = words.split(" ").map((x) => [x.replace(/[!+]$/, ""), x.endsWith("!") ? 0 : x.endsWith("+") ? 2 : 1]);
+  return { t: t.getTime(), s, k, m, b, ...(f ? { f } : {}), w, a, ...(l ? { l } : {}) };
+}
+const VETERAN_HIST = [
+  vlog(6, "17:05", "campaign", "pick", "Кактус Колючка", 1, 260, "берёза молоко ворона! собака ворона корова пенал", [
+    "молоко",
+  ]),
+  vlog(
+    4,
+    "16:40",
+    "tower",
+    "grow",
+    "Злой Кракозябр",
+    0,
+    410,
+    "карандаш+ тетрадь! ученик ворона! ворона класс аллея!",
+    null,
+    12,
+  ),
+  vlog(4, "16:52", "err", "grow", "Тень Ошибок", 1, 300, "ворона аллея тетрадь ворона+ аллея", ["ворона"]),
+  vlog(
+    2,
+    "18:10",
+    "task",
+    "grow",
+    "Удвоенные согласные",
+    1,
+    520,
+    "класс+ аллея+ группа! группа миллион коллекция класс+",
+  ),
+  vlog(1, "15:30", "new", "pick", "Книга Знаний", 1, 180, "огород пальто! пальто сапоги"),
+  vlog(1, "15:36", "campaign", "type", "Тыква Тыквус", 1, 340, "берёза+ молоко+ собака+ корова+ пенал+", [
+    "собака",
+    "корова",
+  ]),
+];
+/** Итоги по дням за 12 недель: ровный узор, чтобы календарь был заполнен и прогоны совпадали. */
+const VETERAN_DLOG = {};
+for (let n = 83; n >= 7; n--)
+  if ((n * 5) % 7 < 4) {
+    const s = 90 + ((n * 137) % 1300);
+    VETERAN_DLOG[daysAgo(n)] = { s, r: Math.round(s / 20), x: n % 5, n: 1 + (n % 3), t: n % 4, l: n % 3 ? 0 : 1 };
+  }
+for (const e of VETERAN_HIST) {
+  const k = dayKey(new Date(e.t)),
+    d = (VETERAN_DLOG[k] ||= { s: 0, r: 0, x: 0, n: 0, t: 0, l: 0 });
+  d.s += e.s;
+  d.n++;
+  for (const [, v] of e.a) v ? d.r++ : d.x++;
+  d.t += e.a.filter(([, v]) => v === 2).length;
+  d.l += e.l?.length || 0;
+}
+const VETERAN_LOG = { hist: VETERAN_HIST, dlog: VETERAN_DLOG };
+
 /** Титульный экран: «Нажми, чтобы начать», меню, «Играть». */
 async function enter(p, shot) {
   await tick(p, 1500);
@@ -320,7 +446,11 @@ const SCENARIOS = [
   },
   {
     name: "veteran",
-    kid: { name: "Тест", profile: VETERAN, stats: { берёза: { right: 3, wrong: 2 }, ворона: { right: 1, wrong: 4 } } },
+    kid: {
+      name: "Тест",
+      profile: { ...VETERAN, ...VETERAN_LOG },
+      stats: { берёза: { right: 3, wrong: 2 }, ворона: { right: 1, wrong: 4 } },
+    },
     run: async (p, shot) => {
       await enter(p, shot);
       await tick(p, 1100);
@@ -421,7 +551,7 @@ const SCENARIOS = [
       // адрес без кода — ещё не конец: игра убирает код (replaceState), берёт прогресс и перезагружается.
       // Заставку она показывает только после перезагрузки (на медленной машине CI evaluate попадал в неё)
       await p.waitForSelector("#s-title:not([hidden])");
-      await p.evaluate(() => document.fonts.ready);
+      await loadFonts(p);
       await enter(p);
       await shot("01-login"); // герой со старого адреса уже здесь, кода пока нет — играем гостем
       await p.click("#btn-guest-new"); // «Начать новым героем» спрашивает ещё раз, герой цел
@@ -436,7 +566,7 @@ const SCENARIOS = [
       // новый запуск игры (выбор гостя живёт до закрытия): снова «Кто играет?», герой на месте
       await p.evaluate(() => sessionStorage.removeItem("sb_guest"));
       await p.reload();
-      await p.evaluate(() => document.fonts.ready);
+      await loadFonts(p);
       await enter(p);
       expect(await p.locator("#login:not([hidden])").count(), "гость при новом запуске не спросили, кто играет");
       await shot("04-relaunch-login");
@@ -706,7 +836,7 @@ const SCENARIOS = [
 const tick = (p, ms = 400) => p.clock.runFor(ms);
 
 const errors = [];
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ["--disable-lcd-text", "--disable-gpu"] });
 
 /**
  * Новая вкладка с фиксированными временем и случайностью и заранее заданным localStorage (только на
@@ -714,6 +844,7 @@ const browser = await chromium.launch();
  */
 async function openPage(label, url, storage = {}, viewport = { width: 390, height: 844 }, setup = async () => {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, locale: "ru-RU" });
+  await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, cachedFonts);
   await setup(ctx);
   const p = await ctx.newPage();
   p.on("pageerror", (e) => errors.push(`[${label}] ${e.message}`));
@@ -723,7 +854,9 @@ async function openPage(label, url, storage = {}, viewport = { width: 390, heigh
     const expected =
       (label.startsWith("online") && /Failed to load resource: .* (404|409)/.test(m.text())) ||
       (label === "offline" && /Failed to load resource: net::ERR_FAILED/.test(m.text()));
-    if (m.type() === "error" && !expected && !/fonts\.g/.test(m.text())) errors.push(`[${label}] console: ${m.text()}`);
+    // шрифты Google — внешняя сеть: их сбой не ошибка игры (адрес у такой ошибки только в location)
+    const fonts = /fonts\.g/.test(m.text() + " " + (m.location()?.url || ""));
+    if (m.type() === "error" && !expected && !fonts) errors.push(`[${label}] console: ${m.text()}`);
   });
   await p.clock.install({ time: NOW });
   await p.clock.pauseAt(new Date(NOW.getTime() + 1000)); // время идёт только через tick()
@@ -745,9 +878,10 @@ async function openPage(label, url, storage = {}, viewport = { width: 390, heigh
     [storage, new URL(url).origin],
   );
   await p.goto(url);
-  await p.evaluate(() => document.fonts.ready);
-  const shot = async (name, mask = []) =>
+  await loadFonts(p);
+  const shot = async (name, mask = [], opts = {}) =>
     p.screenshot({
+      ...opts,
       path: path.join(outDir, `${label}-${name}.png`),
       animations: "disabled",
       // полоска таймера идёт по реальным кадрам rAF, её край дрожит на 1px
@@ -761,7 +895,7 @@ async function openPage(label, url, storage = {}, viewport = { width: 390, heigh
           .map((k) => [k, JSON.parse(localStorage.getItem(k))]),
       ),
     );
-    fs.writeFileSync(path.join(outDir, `${file}-storage.json`), JSON.stringify(ls, null, 2));
+    fs.writeFileSync(path.join(outDir, `${file}-storage.json`), JSON.stringify(ls, stableTimes, 2));
     return ls;
   };
   return { ctx, p, shot, dump };
@@ -846,7 +980,8 @@ if (wanted("online")) {
     await t.click("#add button[type=submit]");
     await t.waitForSelector("#code");
     const code = (await t.textContent("#code")).trim();
-    await tutor.shot("03-new-student", ["#code"]);
+    await fixCode(t);
+    await tutor.shot("03-new-student");
 
     await tick(k, 1500);
     await k.click("#title-press");
@@ -878,9 +1013,16 @@ if (wanted("online")) {
       await k.click(opt);
       await tick(k, 2500);
     }
+    // вышел из боя: бой с ответами записан в журнал (Profile.hist) и уходит учителю
+    await k.click("#btn-quit");
+    await tick(k, 600);
     const battlePush = progress(k);
     await tick(k, 30_000);
     await battlePush;
+    const kidLog = (await k.evaluate(() => JSON.parse(localStorage.getItem("sb2_profile")))).hist;
+    expect(kidLog?.length === 1 && kidLog[0].a.length === 3 && kidLog[0].w === 0, "бой не записан в журнал");
+    // слова с ошибками в этом бою: их кабинет выделяет в истории
+    const kidMiss = (kidLog?.[0]?.a ?? []).filter(([, v]) => v === 0);
     const rec = (await store.listStudents())[0];
     expect(rec?.profile?.name === "Маша", "на сервере нет профиля Маши");
     expect((rec?.profile?.tot?.correct ?? 0) + Object.keys(rec?.stats ?? {}).length > 0, "на сервер не дошли ответы");
@@ -891,6 +1033,15 @@ if (wanted("online")) {
     await t.click("tr[data-id]");
     await t.waitForSelector(".ttabs");
     await tutor.shot("05-student");
+    // история: только что сыгранный бой с его словами
+    await t.click('.ttab[href$="/history"]');
+    await t.waitForSelector(".hcal");
+    await tutor.shot("05a-history");
+    const histText = await t.textContent(".hlist");
+    expect(
+      (await t.locator(".hb").count()) === 1 && kidMiss.length && kidMiss.every(([w]) => histText.includes(w)),
+      "в истории кабинета нет только что сыгранного боя",
+    );
     // задания: одно сразу (свои слова и слово из поиска по словарю), второе — с завтра
     await t.click('.ttab[href$="/tasks"]');
     await t.waitForSelector("#tform");
@@ -928,6 +1079,7 @@ if (wanted("online")) {
     const pulled = k.waitForResponse((r) => r.url().endsWith("/api/me"));
     await k.reload();
     await pulled;
+    await loadFonts(k);
     await enter(k);
     await tick(k, 1100);
     await kid.shot("06-note");
@@ -968,7 +1120,8 @@ if (wanted("online")) {
     );
     await t.click('.ttab[href$="/login"]');
     await t.waitForSelector("#copy");
-    await tutor.shot("08-login-tab", ["#code"]);
+    await fixCode(t);
+    await tutor.shot("08-login-tab");
     await t.goto(online.base + "tutor.html#/");
     await t.waitForSelector("tr[data-id]");
     await tutor.shot("09-list-task");
@@ -978,7 +1131,7 @@ if (wanted("online")) {
     expect(ls.sb_custom === "м(о)локо\nс(о)бака", "ученик не получил свои слова репетитора");
     expect(ls.sb_settings?.answer === "grow", "ученик не получил режим ответа «по росту»");
     const { code: _c, id: _i, ...stable } = (await store.listStudents())[0];
-    fs.writeFileSync(path.join(outDir, "online-server.json"), JSON.stringify(stable, null, 2));
+    fs.writeFileSync(path.join(outDir, "online-server.json"), JSON.stringify(stable, stableTimes, 2));
     // id заданий случайные: заменяем на порядковые, чтобы прогоны сравнивались побайтно
     for (const f of ["online-server.json", "online-kid-storage.json"]) {
       let text = fs.readFileSync(path.join(outDir, f), "utf8");
@@ -997,6 +1150,7 @@ if (wanted("online")) {
     const pulled2 = k.waitForResponse((r) => r.url().endsWith("/api/me"));
     await k.reload();
     await pulled2;
+    await loadFonts(k);
     await enter(k);
     await tick(k, 1100);
     await kid.shot("09b-home-type");
@@ -1020,6 +1174,7 @@ if (wanted("online")) {
     const reloaded = k.waitForEvent("load");
     await k.click("#btn-logout");
     await reloaded;
+    await loadFonts(k);
     await enter(k);
     await kid.shot("12-after-logout");
     expect(
@@ -1036,6 +1191,26 @@ if (wanted("online")) {
       "после выхода на устройстве остались данные ученика",
     );
     expect(((await store.listStudents())[0].profile?.xp ?? 0) > 0, "после выхода прогресс пропал с сервера");
+    // ученик с журналом за 12 недель: «Дней за неделю» в списке, заполненный календарь и бои по дням
+    await addKid(store, { name: "Тест", code: "VET234", profile: { ...VETERAN, ...VETERAN_LOG } });
+    await t.goto(online.base + "tutor.html#/");
+    await t.waitForFunction(() => document.querySelectorAll("tr[data-id]").length === 2);
+    await tutor.shot("11-list-week");
+    await t.click('tr[data-id="kid-VET234"]');
+    await t.waitForSelector(".ttabs");
+    await tutor.shot("12-overview-week");
+    expect((await t.textContent("#tab")).includes("За 7 дней: 4 дня"), "в обзоре нет строки «за 7 дней»");
+    await t.click('.ttab[href$="/history"]');
+    await t.waitForSelector(".hcal");
+    await tutor.shot("13-history", [], { fullPage: true });
+    await t.setViewportSize({ width: 390, height: 844 });
+    await tutor.shot("14-history-phone", [], { fullPage: true });
+    expect(
+      (await t.locator(".hcal-g .hc:not(.h0):not(.future)").count()) > 30 &&
+        (await t.locator(".hday").count()) === 4 &&
+        (await t.locator(".hword.good").count()) === 4,
+      "история прокачанного ученика неполная",
+    );
   } catch (e) {
     errors.push(`[online] шаг упал: ${e.message.split("\n")[0]}`);
     await tutor.shot("FAILED");

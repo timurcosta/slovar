@@ -60,5 +60,6 @@ setInterval(() => {
   if (!G || $("s-game").hidden || document.hidden || !$("boss-over").hidden) return;
   const d = ensureDay();
   d.sec++;
+  if (G.log) G.log.s++; // секунды боя для журнала (battle/run.js)
   if (d.sec % 10 === 0) save();
 }, 1000);

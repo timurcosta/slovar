@@ -1,14 +1,16 @@
-// Страница ученика: вкладки «Обзор», «Задания», «Слова и лимиты», «Вход».
-// Адрес вкладки: #/s/:id (обзор), #/s/:id/tasks, #/s/:id/words, #/s/:id/login.
+// Страница ученика: вкладки «Обзор», «История», «Задания», «Слова и лимиты», «Вход».
+// Адрес вкладки: #/s/:id (обзор), #/s/:id/history, #/s/:id/tasks, #/s/:id/words, #/s/:id/login.
 import type { AnswerMode, Student, TutorSettings } from "@repetitor/shared";
 import { esc } from "../lib/dom.js";
 import { parseEntry } from "../topics/words/parse.ts";
 import { TITLES, levelOf } from "../progress/levels.ts";
 import { TOTAL_WORDS, api, app, hardWords, learned, msg, q, rawOf, seen, todayOf } from "./common.ts";
 import { renderTasksTab, setPrefill, tasksSummary } from "./tasks.ts";
+import { renderHistoryTab, weekLine } from "./history.ts";
 
 const TABS: [string, string][] = [
   ["", "Обзор"],
+  ["history", "История"],
   ["tasks", "Задания"],
   ["words", "Слова и лимиты"],
   ["login", "Вход"],
@@ -71,6 +73,7 @@ export async function renderStudent(id: string, tab: string) {
   const root = q("#tab");
   const reload = () => renderStudent(s.id, tab);
   if (tab === "tasks") renderTasksTab(root, s, reload);
+  else if (tab === "history") renderHistoryTab(root, s);
   else if (tab === "words") wordsTab(root, s);
   else if (tab === "login") loginTab(root, s);
   else overviewTab(root, s, lvl);
@@ -87,6 +90,7 @@ function overviewTab(root: HTMLElement, s: Student, lvl: number) {
           ? `<div class="stats">${tile("Минут", Math.floor(d.sec / 60))}${tile("Верных", d.correct)}${tile("Ошибок", d.mistakes)}${tile("Новых слов", d.fresh)}</div>`
           : `<p class="note">Сегодня ещё не играл(а).</p>`
       }
+      ${s.profile ? `<p class="note">${esc(weekLine(s))} <a class="link" href="${tabUrl(s.id, "history")}">История →</a></p>` : ""}
       ${s.profile ? `<p class="note">${esc(TITLES[lvl - 1])} · дней подряд: ${s.profile.days?.streak ?? 0} · верных ответов всего: ${s.profile.tot?.correct ?? 0}</p>` : ""}
     </div>
     <div class="panel">

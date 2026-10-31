@@ -29,6 +29,8 @@ import { confetti } from "../ui/confetti.js";
 import { heroCard, home } from "../ui/screens/home.js";
 import { monsters } from "../progress/taskrules.ts";
 import { taskDown } from "./task.js";
+import * as journal from "../progress/history.ts";
+import { today } from "../lib/date.js";
 
 /** Время на ответ для окна знакомства: «по росту» бывает и выбор, и ввод (ввод дольше в TYPE_TIME раз). */
 function introTime(b, g) {
@@ -114,6 +116,7 @@ export function startTraining(kind) {
 /** Бой с любым боссом как есть (меню разработчика). */
 export function startCustom(b) {
   newRun("campaign");
+  G.sandbox = true; // песочница не пишется в журнал боёв
   G.bossIdx = b.idx || 0;
   startBoss(b);
 }
@@ -203,6 +206,15 @@ export function startBoss(b) {
   G.stolen = 0;
   G.bonus0 = { c: G.coinsBonus, x: G.xpBonus };
   G.bossMistakes = 0;
+  G.log = G.sandbox
+    ? null
+    : journal.startLog(
+        Date.now(),
+        G.kind === "training" ? G.trainKind : G.kind,
+        G.answer,
+        G.kind === "task" ? G.task.title : b.name,
+        G.kind === "tower" ? b.floor : 0,
+      );
   G.angryShown = false;
   $("boss-wrap").classList.remove("angry");
   bossCv.className = "";
@@ -260,7 +272,19 @@ export function startBoss(b) {
   };
   $("btn-fight").focus();
 }
+/** Ответ в журнал текущего боя: ok — верно, learned — слово стало выученным (stat). */
+export function logAnswer(word, ok, learned) {
+  if (G && G.log) journal.logAnswer(G.log, word, ok, !!G.type, learned);
+}
+/** Конец боя (одного босса) для журнала: победа, поражение, выход, лимит. Бой без ответов не пишется. */
+function finishLog(won) {
+  const log = G && G.log;
+  if (!log) return;
+  G.log = null;
+  if (journal.writeLog(P, log, won, today())) save();
+}
 export function bossDown() {
+  finishLog(true);
   if (G.kind === "task") return taskDown();
   clearRound();
   const b = G.boss,
@@ -462,6 +486,7 @@ export function endGame(won) {
 export function stopGame(drop = true) {
   document.body.classList.remove("kb");
   stopMusic();
+  finishLog(false);
   if (G) {
     clearRound();
     G.timers.forEach(clearTimeout);

@@ -18,7 +18,7 @@ import { noiseSweep, sfx, tone } from "../audio/sfx.js";
 import { duckMusic, startMusic } from "../audio/music.js";
 import { ATTACK } from "../content/bosses.js";
 import { bossCv, heroCv, renderHUD } from "./hud.js";
-import { G, abilChips, bossDown, endGame, limitStop } from "./run.js";
+import { G, abilChips, bossDown, endGame, limitStop, logAnswer } from "./run.js";
 import {
   PET_RUN,
   bossAttack,
@@ -1136,7 +1136,7 @@ function resolve(ok, timeout) {
       dmg = 0;
       blocked = true;
     }
-    stat(e.word, "right", !!G.type);
+    logAnswer(e.word, true, stat(e.word, "right", !!G.type));
     // в задании жизни — сердечки монстров: любой удар снимает ровно одно (TASK_U), числа урона те же
     const lagK = G.kind === "task" && dmg ? TASK_U / dmg : 1;
     // урон делится: свою долю питомец наносит сам, своей атакой; полоска жизней падает в момент каждого удара
@@ -1300,7 +1300,7 @@ function resolve(ok, timeout) {
   } else {
     G.streak = 0;
     G.bossMistakes++;
-    stat(e.word, "wrong", !!G.type);
+    logAnswer(e.word, false, stat(e.word, "wrong", !!G.type));
     G.mistakes[e.word] = (G.mistakes[e.word] || 0) + 1;
     // слово с ошибкой вернётся в этом же бою через 3–6 вопросов; у заданий свои правила (taskrules.ts)
     if (G.kind === "task") G.queue.splice(Math.min(2, G.queue.length), 0, e);

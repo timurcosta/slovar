@@ -4,6 +4,7 @@ import { esc } from "../lib/dom.js";
 import { levelOf } from "../progress/levels.ts";
 import { TOKEN, api, app, hardWords, learned, msg, seen, todayOf } from "./common.ts";
 import { taskCell } from "./tasks.ts";
+import { weekDays } from "./history.ts";
 
 export async function renderList(onLogout: () => void) {
   app.innerHTML = `<section class="screen"><h1>Ученики</h1><p class="note">Загружаю…</p></section>`;
@@ -24,6 +25,7 @@ export async function renderList(onLogout: () => void) {
         <td class="n">${p ? levelOf(p.xp) : "—"}</td>
         <td>${esc(seen(s.lastSeenAt))}</td>
         <td class="n">${d ? `${Math.floor(d.sec / 60)} мин · ${d.correct} верно` : "—"}</td>
+        <td class="n">${p ? weekDays(s) : "—"}</td>
         <td class="n">${learned(s)}</td>
         <td class="n${hardWords(s).length ? " bad" : ""}">${hardWords(s).length}</td>
         <td class="tcell ${task.cls}">${esc(task.text)}</td>
@@ -44,7 +46,7 @@ export async function renderList(onLogout: () => void) {
       ${
         list.length
           ? `<div class="panel tutor-scroll"><table class="tutor-table">
-              <thead><tr><th>Имя</th><th class="n">Уровень</th><th>Последний раз</th><th class="n">Сегодня</th><th class="n">Выучено</th><th class="n">Трудных слов</th><th>Задание</th></tr></thead>
+              <thead><tr><th>Имя</th><th class="n">Уровень</th><th>Последний раз</th><th class="n">Сегодня</th><th class="n">Дней за неделю</th><th class="n">Выучено</th><th class="n">Трудных слов</th><th>Задание</th></tr></thead>
               <tbody>${rows}</tbody></table></div>`
           : `<p class="note">Добавьте первого ученика: он получит код, по которому войдёт в игру.</p>`
       }
