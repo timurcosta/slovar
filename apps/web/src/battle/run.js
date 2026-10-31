@@ -19,7 +19,7 @@ import { checkAch } from "../progress/achievements.js";
 import { sfx, tone } from "../audio/sfx.js";
 import { duckMusic, nextBattleTrack, stopMusic } from "../audio/music.js";
 import { bossCv, drawFighters, heroCv, renderHUD } from "./hud.js";
-import { clearRound, later, nextQ, renderCharge, wordQueue } from "./round.js";
+import { TYPE_TIME, clearRound, later, nextQ, renderCharge, wordQueue } from "./round.js";
 import { rel } from "./effects.js";
 import * as vfx from "./vfx.js";
 import { DIFF_NAME, applyDiff, diffMul } from "./difficulty.js";
@@ -30,6 +30,11 @@ import { heroCard, home } from "../ui/screens/home.js";
 import { monsters } from "../progress/taskrules.ts";
 import { taskDown } from "./task.js";
 
+/** Время на ответ для окна знакомства: «по росту» бывает и выбор, и ввод (ввод дольше в TYPE_TIME раз). */
+function introTime(b, g) {
+  const t = (type) => Math.round(Math.max(3.5, b.time * (type ? TYPE_TIME : 1)) + g.time);
+  return G.answer === "grow" ? `${t(false)} с, слово целиком ${t(true)} с` : `${t(G.type)} с`;
+}
 const loreText = (t) => esc(t.replace(/\{name\}/g, P.name || "герой"));
 export let G = null;
 export function newRun(kind) {
@@ -52,10 +57,12 @@ export function newRun(kind) {
     items: [],
     timers: [],
     ints: [],
-    type: settings.play === "type",
+    // режим ответа боя: задал репетитор (settings.answer) или выбрал ученик на главной; type — режим текущего вопроса
+    answer: settings.answer || (settings.play === "type" ? "type" : "pick"),
     healCount: 0,
     qid: 0,
   };
+  G.type = G.answer === "type";
   $("opts").hidden = G.type;
   $("typer").hidden = !G.type;
   document.body.classList.toggle("kb", TOUCH && G.type);
@@ -231,7 +238,7 @@ export function startBoss(b) {
     ${b.intro || ""}
     ${b.diff ? `<p class="note"><b>${b.diff === "b" ? "Сложный" : "Средний"} режим:</b> босс злее обычного</p>` : ""}
     ${b.ab.length ? `<ul>${b.ab.map((a) => `<li>${AB[a].n}: ${esc(AB[a].d)}</li>`).join("")}</ul>` : b.training || b.task ? "" : b.spr === "ralina" ? "<p>Добрая, но строгая. Разминка перед настоящими монстрами! Победишь, и она тебя чем-то угостит.</p>" : "<p>Разминка!</p>"}
-    ${b.task ? "" : `<p class="note">Жизни ${shownDmg(b.hp)} · время ${Math.round((b.time + g.time) * (G.type ? 1.8 : 1))} с · слова: ${DIFF_NAME[settings.words] || "по боссам"}</p>`}
+    ${b.task ? "" : `<p class="note">Жизни ${shownDmg(b.hp)} · время ${introTime(b, g)} · слова: ${DIFF_NAME[settings.words] || "по боссам"}</p>`}
     <button class="btn primary" id="btn-fight">Бой!</button>`;
   drawBoss($("intro-cv"), b);
   $("intro-cv").style.filter = b.filter || "";
@@ -249,15 +256,7 @@ export function startBoss(b) {
     ov.hidden = true;
     $("opts").hidden = G.type;
     $("typer").hidden = !G.type;
-    nextQ();
-    if (G.type && TOUCH && !G.scrolled) {
-      G.scrolled = true;
-      setTimeout(() => {
-        try {
-          $("typer").scrollIntoView({ block: "end" });
-        } catch (e) {}
-      }, 400);
-    }
+    nextQ(); // режим ответа на слово ставит nextQ (setTyping), там же прокрутка к полю ввода
   };
   $("btn-fight").focus();
 }

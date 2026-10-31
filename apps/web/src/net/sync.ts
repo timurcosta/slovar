@@ -60,6 +60,9 @@ function adopt(me: MeResponse, takeProgress: boolean) {
     LS.set("sb_custom", s.customWords);
   }
   if (s.lim) settings.lim = { ...s.lim };
+  // режим ответа: репетитор может и снять его — тогда снова решает ученик
+  if (s.answer) settings.answer = s.answer;
+  else delete settings.answer;
   saveSettings();
   if (takeProgress && me.profile) {
     replaceProfile(migrateProfile(me.profile));
@@ -170,9 +173,10 @@ export async function logout(): Promise<boolean> {
   LS.set("sb2_profile", P);
   setStats({});
   LS.set("sb_stats", {});
-  // слова и лимиты задал учитель этому ученику; звук и музыка — устройства, их оставляем
+  // слова, лимиты и режим ответа задал учитель этому ученику; звук и музыка — устройства, их оставляем
   settings.words = "auto";
   delete settings.lim;
+  delete settings.answer;
   saveSettings();
   setCustomRaw("");
   LS.set("sb_custom", "");

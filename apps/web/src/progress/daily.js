@@ -2,6 +2,7 @@
 import { today, yesterday } from "../lib/date.js";
 import { hash, rng } from "../lib/random.js";
 import { P, save } from "../state/profile.ts";
+import { settings } from "../state/settings.ts";
 import { addCoins, grantChest } from "./rewards.js";
 import { towerOpen } from "./unlocks.js";
 import { checkAch } from "./achievements.js";
@@ -21,7 +22,10 @@ export function ensureDaily() {
   const d = today();
   if (P.daily && P.daily.date === d) return;
   const r = rng(hash(d));
-  const pool = Object.keys(QUESTS).filter((t) => !QUESTS[t].needTower || towerOpen());
+  // репетитор задал «только выбор буквы»: вписывать слова негде, такое задание не выполнить
+  const pool = Object.keys(QUESTS).filter(
+    (t) => (!QUESTS[t].needTower || towerOpen()) && !(t === "typed" && settings.answer === "pick"),
+  );
   const picked = [];
   while (picked.length < 3 && pool.length) picked.push(pool.splice((r() * pool.length) | 0, 1)[0]);
   P.daily = {

@@ -3,7 +3,7 @@ import { $, TOUCH, esc, replay } from "../lib/dom.js";
 import { pick, shuffle } from "../lib/random.js";
 import { PALS, SPR } from "../content/sprites.js";
 import { drawBoss, drawSprite } from "../render/sprite.js";
-import { shownDmg } from "../content/rules.ts";
+import { shownDmg, typeFor } from "../content/rules.ts";
 import { poolFor } from "../topics/words/pools.js";
 import { buildQueue, requeueMiss } from "../topics/words/schedule.ts";
 import { stat, stats } from "../state/stats.ts";
@@ -451,6 +451,30 @@ export function wordQueue(b) {
   return buildQueue(pool, stats, Date.now(), { random: Math.random, freshLeft: freshLeft() });
 }
 
+/** Как отвечать на слово: вписать целиком (true) или выбрать букву. G.answer — режим боя (newRun). */
+export const typeMode = (e) => (G.answer === "grow" ? typeFor(stats[e.word]) : G.answer === "type");
+
+/**
+ * Режим ответа на текущий вопрос. G.type — «вписать слово» для этого вопроса: от него зависят таймер,
+ * урон, награда, подлянки. При «по росту» меняется от слова к слову, иначе весь бой один.
+ * Компактная вёрстка под экранную клавиатуру (kb) включается с первым вписываемым словом и держится до
+ * конца боя: иначе арена прыгала бы между словами.
+ */
+export function setTyping(on) {
+  G.type = on;
+  $("opts").hidden = on;
+  $("typer").hidden = !on;
+  if (!on || !TOUCH) return;
+  document.body.classList.add("kb");
+  if (G.scrolled) return;
+  G.scrolled = true;
+  setTimeout(() => {
+    try {
+      $("typer").scrollIntoView({ block: "end" });
+    } catch (e) {}
+  }, 400);
+}
+
 export function nextQ() {
   G.hpLag = 0; // все удары прошлого ответа уже показаны
   if (G.kind !== "task") {
@@ -470,6 +494,7 @@ export function nextQ() {
   }
   if (!G.queue.length) G.queue = wordQueue(G.boss);
   const e = G.kind === "task" ? taskNext() : G.queue.shift();
+  setTyping(typeMode(e));
   const slot = pick(e.slots);
   const s = e.segs[slot];
   G.cur = { e, slot, opts: shuffle([s.c, s.w]) };
@@ -979,10 +1004,12 @@ function renderTyped(typed) {
     ? `<span class="wfull okw">${esc(e.word)}</span>`
     : `<span class="wfull badw">${typed ? `<s>${esc(typed)}</s>` : ""}${body}</span>`;
 }
+/** Во столько раз больше времени, когда слово вписывается целиком. */
+export const TYPE_TIME = 1.8;
 function roundTime() {
   const g = gear(),
     b = G.boss;
-  let t = b.time * (G.type ? 1.8 : 1);
+  let t = b.time * (G.type ? TYPE_TIME : 1);
   if (b.ab.includes("haste")) t *= Math.pow(0.95, G.q - 1);
   if (G.enraged) t *= 0.65;
   return Math.max(3.5, t) + g.time;

@@ -141,8 +141,18 @@ export function renderHome() {
   requestAnimationFrame(centerMap);
   $("ios-sound").hidden = !IOS;
   document.querySelectorAll('input[name="play"]').forEach((r) => (r.checked = r.value === settings.play));
+  // режим ответа задал репетитор: вместо переключателя — что он выбрал
+  $("play-seg").hidden = !!settings.answer;
+  $("play-note").hidden = !settings.answer;
+  $("play-note").innerHTML = PLAY_NOTE[settings.answer] || "";
   syncDiff();
 }
+
+const PLAY_NOTE = {
+  pick: "Учитель задал: <b>выбираешь букву</b>",
+  type: "Учитель задал: <b>пишешь слово сам ×2</b>",
+  grow: "Учитель задал: новое слово — <b>выбор буквы</b>, знакомое — <b>пишешь сам ×2</b>",
+};
 
 export function home() {
   stopGame();

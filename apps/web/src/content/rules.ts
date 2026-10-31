@@ -31,9 +31,26 @@ export function recordAnswer(s: WordStat, ok: boolean, typed: boolean, now: numb
     s.wrong = (s.wrong || 0) + 1;
     s.streak = 0;
     s.lastWrong = now;
+    if (typed) s.missTyped = true;
+    else delete s.missTyped;
   }
   s.last = now;
   return s;
+}
+
+/** Режим «по росту»: слово вписывается целиком после стольких верных подряд. */
+export const GROW_STREAK = 2;
+
+/**
+ * Режим «по росту» (TutorSettings.answer = "grow"): вписывать ли слово целиком (true) или выбирать букву.
+ * Новое слово — выбор; серия верных >= GROW_STREAK — ввод. Ошибка при вписывании обнуляет серию, и слово
+ * один раз возвращается к выбору: после одного верного ответа (серия 1) снова ввод. После ошибки в выборе —
+ * как с новым словом, два верных выбором.
+ */
+export function typeFor(s: WordStat | undefined): boolean {
+  if (!s) return false;
+  const n = streakOf(s);
+  return n >= GROW_STREAK || (n >= 1 && !!s.missTyped);
 }
 
 /** Урон, жизни боссов и очки показываются ×10: «−100» смотрится сильнее, чем «−10». Считается всё в мелких числах. */

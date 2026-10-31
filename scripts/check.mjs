@@ -73,7 +73,7 @@ async function site() {
  * Ученик, которого учитель уже завёл. С profile — он уже входил по коду и играл на этом устройстве:
  * возвращает его localStorage (прогресс, токен входа). Без profile — ещё не входил, localStorage пуст.
  */
-async function addKid(store, { name, code = "ABC234", profile = null, stats = null, tasks = [] }) {
+async function addKid(store, { name, code = "ABC234", profile = null, stats = null, tasks = [], settings = {} }) {
   const t = NOW.toISOString(),
     id = "kid-" + code;
   await store.createStudent({
@@ -81,7 +81,7 @@ async function addKid(store, { name, code = "ABC234", profile = null, stats = nu
     name,
     code,
     codeVersion: 1,
-    settings: {},
+    settings,
     tasks,
     profile,
     stats,
@@ -98,6 +98,9 @@ async function addKid(store, { name, code = "ABC234", profile = null, stats = nu
     sb_tutor_name: name,
     sb_rev: 1,
     sb_tasks: tasks,
+    // настройки репетитора уже приходили (как после pull при прошлом запуске)
+    ...(settings.answer ? { sb_settings: { words: settings.words || "auto", answer: settings.answer } } : {}),
+    ...(settings.customWords ? { sb_custom: settings.customWords } : {}),
   };
 }
 
@@ -130,10 +133,39 @@ const TASKS = [
 ];
 /** Ответить верно: во всех словах задания верная буква — удвоенная. */
 async function answerTask(p, right = true) {
+  // «по росту» знакомое слово вписывается целиком: подсказка «с/сс» → удвоенная (или одинарная для ошибки)
+  if (await p.locator("#typer").isVisible()) {
+    const w = await p.evaluate((right) => {
+      const el = document.getElementById("word").cloneNode(true);
+      el.querySelectorAll(".trick").forEach((t) => t.remove());
+      el.querySelectorAll(".gap.hint").forEach((g) => {
+        const v = g.textContent.split("/");
+        g.textContent = v.find((x) => (x.length === 2) === right) || v[0];
+      });
+      return el.textContent;
+    }, right);
+    await p.fill("#type-in", w);
+    await p.click("#type-go");
+    return;
+  }
   const opts = await p.locator("#opts .opt span").allTextContents();
   const i = opts.findIndex((o) => (o.length === 2) === right);
   await p.click(`#opt${i < 0 ? 0 : i}`);
 }
+
+// режим «по росту»: 3 новых слова (выбор буквы) и 5 знакомых с серией 2 (вписать целиком)
+const GROW_WORDS = ["кла(сс)", "гру(пп)а", "а(лл)ея", "ми(лл)ион", "ко(лл)екция", "ра(сс)каз", "су(бб)ота", "ва(нн)а"];
+const GROW_KID = {
+  name: "Тест",
+  profile: { name: "Тест", storySeen: 1, xp: 300, coins: 50, rv: 2, xpv: 2, unlocked: 0, beaten: [] },
+  stats: Object.fromEntries(
+    ["миллион", "коллекция", "рассказ", "суббота", "ванна"].map((w) => [
+      w,
+      { right: 2, wrong: 0, streak: 2, last: new Date("2026-10-15T09:00:00").getTime() },
+    ]),
+  ),
+  settings: { answer: "grow", words: "custom", customWords: GROW_WORDS.join("\n") },
+};
 
 // «прокачанный» игрок: много вещей, кампания почти пройдена, башня открыта
 const VETERAN = {
@@ -541,6 +573,35 @@ const SCENARIOS = [
     },
   },
   {
+    // репетитор задал «по росту»: в одном бою новые слова выбором, знакомые — вписать целиком
+    name: "grow",
+    kid: GROW_KID,
+    run: async (p, shot, { expect }) => {
+      await enter(p);
+      await tick(p, 1100);
+      await shot("01-home");
+      expect(await p.locator("#play-seg").isHidden(), "переключатель режима виден, хотя режим задал репетитор");
+      await p.click("#btn-campaign");
+      await tick(p);
+      await shot("02-intro");
+      await p.click("#btn-fight");
+      await tick(p, 800);
+      const modes = [];
+      // Ралина падает с пятого удара: 3 выбором и 2 вписанных
+      for (let n = 0; n < 5; n++) {
+        const typing = await p.locator("#typer").isVisible();
+        expect(typing !== (await p.locator("#opts").isVisible()), "видны и кнопки, и поле ввода");
+        modes.push(typing ? "t" : "p");
+        if (n === 0) await shot("03-pick");
+        if (typing && modes.indexOf("t") === n) await shot("04-type");
+        await answerTask(p);
+        await tick(p, 2500);
+      }
+      expect(modes.join("") === "ppptt", `режимы вопросов: ${modes.join("")}, ждали ppptt`);
+      await shot("05-victory");
+    },
+  },
+  {
     // задание от Ралины: записка при входе, подарок, логово, монстр теряет сердечки и оживает
     name: "task",
     kid: { name: "Тест", profile: VETERAN, tasks: TASKS },
@@ -858,9 +919,11 @@ if (wanted("online")) {
     await t.click('label.mode:has(input[value="custom"])');
     await t.fill("#custom", "м(о)локо\nс(о)бака");
     await t.fill('[name="lim-min"]', "30");
+    await t.click('label.mode:has(input[name="answer"][value="grow"])');
     await t.click("#settings button[type=submit]");
     await t.waitForSelector("#set-msg.okm");
     await tutor.shot("06-settings-saved", ["#code"]);
+    expect((await store.listStudents())[0].settings.answer === "grow", "режим ответа «по росту» не дошёл до сервера");
 
     const pulled = k.waitForResponse((r) => r.url().endsWith("/api/me"));
     await k.reload();
@@ -876,6 +939,11 @@ if (wanted("online")) {
     await tick(k);
     await k.click("#btn-fight");
     await tick(k, 800);
+    // «по росту»: слова задания новые — первое слово выбором буквы
+    expect(
+      (await k.locator("#opts").isVisible()) && (await k.locator("#typer").isHidden()),
+      "«по росту»: новое слово не выбором буквы",
+    );
     for (let n = 0; n < 3; n++) {
       await answerTask(k);
       await tick(k, 2500);
@@ -887,6 +955,10 @@ if (wanted("online")) {
     await k.click("#btn-quit");
     await tick(k, 600);
     await kid.shot("09-home-after-settings");
+    expect(
+      (await k.locator("#play-seg").isHidden()) && (await k.textContent("#play-note")).includes("знакомое"),
+      "«по росту»: на главной переключатель вместо строки от учителя",
+    );
     await t.click('.ttab[href$="/tasks"]');
     await t.waitForSelector(".tcard-t");
     await tutor.shot("07-task-progress");
@@ -904,6 +976,7 @@ if (wanted("online")) {
     expect(ls.sb_settings?.words === "custom", "ученик не получил режим слов от репетитора");
     expect(ls.sb_settings?.lim?.min === 30, "ученик не получил лимит минут");
     expect(ls.sb_custom === "м(о)локо\nс(о)бака", "ученик не получил свои слова репетитора");
+    expect(ls.sb_settings?.answer === "grow", "ученик не получил режим ответа «по росту»");
     const { code: _c, id: _i, ...stable } = (await store.listStudents())[0];
     fs.writeFileSync(path.join(outDir, "online-server.json"), JSON.stringify(stable, null, 2));
     // id заданий случайные: заменяем на порядковые, чтобы прогоны сравнивались побайтно
@@ -912,6 +985,32 @@ if (wanted("online")) {
       stable.tasks.forEach((x, i) => (text = text.replaceAll(x.id, `task-${i + 1}`)));
       fs.writeFileSync(path.join(outDir, f), text);
     }
+    // репетитор ставит «Только пишет сам»: в бою сразу поле ввода
+    await t.click("tr[data-id]");
+    await t.waitForSelector(".ttabs");
+    await t.click('.ttab[href$="/words"]');
+    await t.waitForSelector("#settings");
+    await t.click('label.mode:has(input[name="answer"][value="type"])');
+    await t.click("#settings button[type=submit]");
+    await t.waitForSelector("#set-msg.okm");
+    await tutor.shot("10-answer-type", ["#code"]);
+    const pulled2 = k.waitForResponse((r) => r.url().endsWith("/api/me"));
+    await k.reload();
+    await pulled2;
+    await enter(k);
+    await tick(k, 1100);
+    await kid.shot("09b-home-type");
+    await k.click("#btn-campaign");
+    await tick(k);
+    await k.click("#btn-fight");
+    await tick(k, 800);
+    await kid.shot("09c-type-fight");
+    expect(
+      (await k.locator("#typer").isVisible()) && (await k.locator("#opts").isHidden()),
+      "«только пишет сам»: в бою нет поля ввода",
+    );
+    await k.click("#btn-quit");
+    await tick(k, 600);
     // учитель дала поиграть со своего телефона: ученик выходит, на устройстве никого, прогресс у учителя
     await k.click("#btn-prefs");
     await tick(k);
@@ -929,7 +1028,11 @@ if (wanted("online")) {
     );
     const out = await kid.dump("online-kid-logout");
     expect(
-      !out.sb_token && !out.sb_tasks.length && out.sb2_profile.xp === 0 && out.sb_settings.words === "auto",
+      !out.sb_token &&
+        !out.sb_tasks.length &&
+        out.sb2_profile.xp === 0 &&
+        out.sb_settings.words === "auto" &&
+        !out.sb_settings.answer,
       "после выхода на устройстве остались данные ученика",
     );
     expect(((await store.listStudents())[0].profile?.xp ?? 0) > 0, "после выхода прогресс пропал с сервера");

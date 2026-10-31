@@ -1,6 +1,6 @@
 // Страница ученика: вкладки «Обзор», «Задания», «Слова и лимиты», «Вход».
 // Адрес вкладки: #/s/:id (обзор), #/s/:id/tasks, #/s/:id/words, #/s/:id/login.
-import type { Student, TutorSettings } from "@repetitor/shared";
+import type { AnswerMode, Student, TutorSettings } from "@repetitor/shared";
 import { esc } from "../lib/dom.js";
 import { parseEntry } from "../topics/words/parse.ts";
 import { TITLES, levelOf } from "../progress/levels.ts";
@@ -20,6 +20,17 @@ const MODES: [string, string][] = [
   ["ab", "Все слова вперемешку"],
   ["b", "Только 3–4 класс"],
   ["custom", "Только мои слова"],
+];
+/** Режим ответа: значение, название, пояснение для репетитора. */
+const ANSWERS: [string, string, string][] = [
+  ["", "Как выберет ученик", "Переключатель «Выбор буквы | Пишу сам» на главной у ребёнка."],
+  ["pick", "Только выбор буквы", "Из двух вариантов. Проще, но угадать можно в половине случаев."],
+  ["type", "Только пишет сам", "Слово целиком с клавиатуры, награда ×2 и больше времени на ответ."],
+  [
+    "grow",
+    "По росту",
+    "Новое слово — выбором; после 2 верных подряд вписывает целиком. Ошибся при вписывании — слово один раз снова выбором.",
+  ],
 ];
 const LIMS: [string, string][] = [
   ["min", "Минут игры"],
@@ -116,6 +127,11 @@ function wordsTab(root: HTMLElement, s: Student) {
         ([v, t]) =>
           `<label class="mode"><input type="radio" name="words" value="${v}"${(set.words || "") === v ? " checked" : ""} /><span><b>${esc(t)}</b></span></label>`,
       ).join("")}
+      <h2>Как отвечает</h2>
+      ${ANSWERS.map(
+        ([v, t, d]) =>
+          `<label class="mode"><input type="radio" name="answer" value="${v}"${(set.answer || "") === v ? " checked" : ""} /><span><b>${esc(t)}${v === "grow" ? ' <em class="rec">рекомендую</em>' : ""}</b><small>${esc(d)}</small></span></label>`,
+      ).join("")}
       <h2>Мои слова</h2>
       <p class="note">Одно слово в строке, трудная буква в скобках: м(о)локо, неправильный вариант через черту: м(о/а)локо.</p>
       <textarea id="custom" rows="6" placeholder="м(о)локо&#10;с(о)бака">${esc(set.customWords ?? "")}</textarea>
@@ -139,7 +155,8 @@ function wordsTab(root: HTMLElement, s: Student) {
     const lim = Object.fromEntries(
       LIMS.map(([k]) => [k, Number(f.querySelector<HTMLInputElement>(`[name="lim-${k}"]`)!.value) || 0]),
     );
-    const settings: TutorSettings = { ...(words ? { words } : {}), customWords, lim };
+    const answer = (f.querySelector<HTMLInputElement>('input[name="answer"]:checked')?.value || "") as AnswerMode;
+    const settings: TutorSettings = { ...(words ? { words } : {}), customWords, lim, ...(answer ? { answer } : {}) };
     try {
       await api("PATCH", `/tutor/students/${s.id}`, { settings });
       s.settings = settings;

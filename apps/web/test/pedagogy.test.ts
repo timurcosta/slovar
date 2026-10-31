@@ -1,7 +1,7 @@
 // Педагогика слов: статистика ответа, «выучено», интервальные повторения, очередь боя, возврат ошибки.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { WordStat, WordStats } from "../src/state/types.ts";
-import { LEARN_N, isLearned, isSolid, recordAnswer } from "../src/content/rules.ts";
+import { GROW_STREAK, LEARN_N, isLearned, isSolid, recordAnswer, typeFor } from "../src/content/rules.ts";
 import {
   DAY,
   DUE_HEAD,
@@ -40,7 +40,9 @@ describe("recordAnswer: статистика ответа", () => {
   it("ошибка обнуляет серию и запоминает время ошибки, вписанное не считает", () => {
     const s: WordStat = { right: 2, wrong: 0, streak: 2, last: 1000, typed: 1 };
     recordAnswer(s, false, true, 5000);
-    expect(s).toEqual({ right: 2, wrong: 1, streak: 0, last: 5000, typed: 1, lastWrong: 5000 });
+    expect(s).toEqual({ right: 2, wrong: 1, streak: 0, last: 5000, typed: 1, lastWrong: 5000, missTyped: true });
+    recordAnswer(s, false, false, 6000);
+    expect(s.missTyped).toBeUndefined(); // последняя ошибка — уже в выборе буквы
   });
 
   it("запись старого сохранения: выученное после верного ответа остаётся выученным", () => {
@@ -253,5 +255,49 @@ describe("работа над ошибками", () => {
       zz: { right: 0, wrong: 9 }, // слова нет в наборе
     };
     expect(errorWords(all, stats, NOW).map((e) => e.word)).toEqual(["b", "c", "a"]);
+  });
+});
+
+describe("режим «по росту»: typeFor", () => {
+  it("новое слово — выбор, после 2 верных подряд — ввод", () => {
+    expect(GROW_STREAK).toBe(2);
+    expect(typeFor(undefined)).toBe(false);
+    const s: WordStat = { right: 0, wrong: 0 };
+    recordAnswer(s, true, false, 1000);
+    expect(typeFor(s)).toBe(false);
+    recordAnswer(s, true, false, 2000);
+    expect(typeFor(s)).toBe(true);
+  });
+
+  it("ошибка при вписывании: один раз выбор, потом снова ввод", () => {
+    const s: WordStat = { right: 3, wrong: 0, streak: 3, typed: 1, last: 1000 };
+    expect(typeFor(s)).toBe(true);
+    recordAnswer(s, false, true, 2000);
+    expect(typeFor(s)).toBe(false); // вернулся к выбору
+    recordAnswer(s, true, false, 3000);
+    expect(typeFor(s)).toBe(true); // одного верного выбора хватило
+  });
+
+  it("ошибка при вписывании и снова ошибка в выборе: два верных выбором, как у нового", () => {
+    const s: WordStat = { right: 2, wrong: 0, streak: 2, last: 1000 };
+    recordAnswer(s, false, true, 2000);
+    recordAnswer(s, false, false, 3000);
+    recordAnswer(s, true, false, 4000);
+    expect(typeFor(s)).toBe(false);
+    recordAnswer(s, true, false, 5000);
+    expect(typeFor(s)).toBe(true);
+  });
+
+  it("ошибка в выборе: серия заново, два верных выбором", () => {
+    const s: WordStat = { right: 5, wrong: 0, streak: 5, last: 1000 };
+    recordAnswer(s, false, false, 2000);
+    expect(typeFor(s)).toBe(false);
+    recordAnswer(s, true, false, 3000);
+    expect(typeFor(s)).toBe(false);
+  });
+
+  it("старое сохранение без серии — по числу верных", () => {
+    expect(typeFor({ right: 2, wrong: 4 })).toBe(true);
+    expect(typeFor({ right: 1, wrong: 0 })).toBe(false);
   });
 });

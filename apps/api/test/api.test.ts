@@ -208,7 +208,12 @@ for (const [kind, makeStore] of factories) {
         `/tutor/students/${st.id}`,
         {
           name: "Пётр",
-          settings: { words: "custom", customWords: "м(о)локо", lim: { min: 20, junk: 5, correct: -3 } },
+          settings: {
+            words: "custom",
+            customWords: "м(о)локо",
+            lim: { min: 20, junk: 5, correct: -3 },
+            answer: "grow",
+          },
         },
         t,
       );
@@ -219,7 +224,23 @@ for (const [kind, makeStore] of factories) {
         words: "custom",
         customWords: "м(о)локо",
         lim: { min: 20, fresh: 0, correct: 0, battles: 0, mistakes: 0 },
+        answer: "grow",
       });
+    });
+
+    it("режим ответа: только pick | type | grow, пустой — решает ученик", async () => {
+      const { call, tutor } = await setup();
+      const t = await tutor();
+      const st = (await call("POST", "/tutor/students", { name: "Петя" }, t)).body as Student;
+      const url = `/tutor/students/${st.id}`;
+      expect((await call("PATCH", url, { settings: { answer: "write" } }, t)).status).toBe(400);
+      const k = (await call("POST", "/join", { code: st.code })).body.token;
+      for (const answer of ["pick", "type", "grow"]) {
+        expect((await call("PATCH", url, { settings: { answer } }, t)).status).toBe(200);
+        expect(((await call("GET", "/me", undefined, k)).body as MeResponse).settings.answer).toBe(answer);
+      }
+      await call("PATCH", url, { settings: { answer: "" } }, t);
+      expect(((await call("GET", "/me", undefined, k)).body as MeResponse).settings).toEqual({});
     });
 
     it("репетитор задаёт задания, ученик их получает", async () => {

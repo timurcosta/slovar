@@ -127,6 +127,8 @@ export interface WordStat {
   typed?: number;
   /** Время последней ошибки, мс. */
   lastWrong?: number;
+  /** Последняя ошибка — при вписывании слова целиком (режим «по росту»: после неё слово один раз выбором). */
+  missTyped?: boolean;
 }
 
 export type WordStats = Record<string, WordStat>;
@@ -142,6 +144,8 @@ export interface Settings {
   /** Устаревшее поле старых версий. */
   mode?: string;
   lim?: Record<string, number>;
+  /** Режим ответа от репетитора (TutorSettings.answer); нет — как выбрал ученик в play. */
+  answer?: "pick" | "type" | "grow";
 }
 
 /** Содержимое кода сохранения. */

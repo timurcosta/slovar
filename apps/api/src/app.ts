@@ -46,6 +46,7 @@ type Env = { Variables: { auth: TokenPayload } };
 const TUTOR_TTL = 30 * 24 * 3600 * 1000;
 const WORD_MODES = ["auto", "a", "ab", "b", "custom"];
 const LIM_KEYS = ["min", "fresh", "correct", "battles", "mistakes"];
+const ANSWER_MODES = ["pick", "type", "grow"];
 
 const bad = (c: Context, error: string, status: 400 | 401 | 403 | 404 | 409 | 429 = 400) => c.json({ error }, status);
 
@@ -110,6 +111,10 @@ function cleanSettings(v: unknown): TutorSettings | null {
     out.words = String(s.words);
   }
   if (typeof s.customWords === "string") out.customWords = s.customWords.slice(0, 20000);
+  if (s.answer !== undefined && s.answer !== null && s.answer !== "") {
+    if (!ANSWER_MODES.includes(String(s.answer))) return null;
+    out.answer = String(s.answer) as TutorSettings["answer"];
+  }
   if (s.lim && typeof s.lim === "object") {
     out.lim = {};
     for (const k of LIM_KEYS) {
