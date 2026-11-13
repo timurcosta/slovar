@@ -6,6 +6,7 @@ import { parseEntry } from "../topics/words/parse.ts";
 import { TITLES, levelOf } from "../progress/levels.ts";
 import { TOTAL_WORDS, api, app, hardWords, learned, msg, q, rawOf, seen, todayOf } from "./common.ts";
 import { renderTasksTab, setPrefill, tasksSummary } from "./tasks.ts";
+import { drawHero } from "../render/hero.js";
 import { renderHistoryTab, weekLine } from "./history.ts";
 import { heroInfo } from "./hero.ts";
 
@@ -116,12 +117,30 @@ function overviewTab(root: HTMLElement, s: Student, lvl: number) {
       }
     </div>
     ${heroBlock(s, lvl)}`;
+  if (s.profile) animateHero(s.profile);
   root.querySelector<HTMLButtonElement>("#give")?.addEventListener("click", () => {
     const raws = [...root.querySelectorAll<HTMLInputElement>(".hw:checked")].map((c) => c.dataset.raw!);
     if (!raws.length) return msg(q("#give-msg"), "Отметьте хотя бы одно слово.", "err");
     setPrefill(raws.slice(0, 40));
     location.hash = tabUrl(s.id, "tasks");
   });
+}
+
+let heroTimer = 0;
+/** Герой ученика во весь рост, с вещами и питомцем; кадр каждые 170 мс, пока холст на странице. */
+function animateHero(p: NonNullable<Student["profile"]>) {
+  clearInterval(heroTimer);
+  const cv = document.getElementById("thero-cv") as HTMLCanvasElement | null,
+    wrap = document.getElementById("thero-aura");
+  if (!cv) return;
+  const eq = { ...p.equip, look: { hair: "auto", skin: "auto", eye: "auto", style: "classic", ...(p.look || {}) } };
+  let fr = 0;
+  drawHero(cv, eq, wrap, fr);
+  if (matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  heroTimer = window.setInterval(() => {
+    if (!cv.isConnected) return clearInterval(heroTimer);
+    if (!document.hidden) drawHero(cv, eq, wrap, ++fr);
+  }, 170);
 }
 
 function heroBlock(s: Student, lvl: number): string {
@@ -133,9 +152,12 @@ function heroBlock(s: Student, lvl: number): string {
         `<tr><td>${esc(r.slot)}</td><td>${r.name ? esc(r.name) : "—"}</td><td>${r.name ? `<span class="rar" style="color:${r.color}">${esc(r.rarity)}</span>` : ""}</td></tr>`,
     )
     .join("");
-  return `<details class="panel thero">
+  return `<details class="panel thero" open>
       <summary>Герой: уровень ${lvl} · ${esc(TITLES[lvl - 1])}</summary>
-      <div class="tutor-scroll"><table><tbody>${rows}</tbody></table></div>
+      <div class="thero-in">
+        <div class="thero-av" id="thero-aura"><canvas id="thero-cv" aria-label="Герой ученика"></canvas></div>
+        <div class="tutor-scroll"><table><tbody>${rows}</tbody></table></div>
+      </div>
       <p class="note">Вещей: ${h.owned} · монет: ${h.coins} · лучший этаж башни: ${h.towerBest} · боссов кампании побеждено: ${h.beaten}</p>
       <p class="note">${h.medals.length ? `Медали заданий: ${h.medals.map(esc).join(", ")}` : "Медалей за задания пока нет."}</p>
     </details>`;

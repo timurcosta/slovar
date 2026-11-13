@@ -2111,6 +2111,25 @@ body.hurt .sheet {
 .thero .rar {
   font-size: 9px;
 }
+.thero-in {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+.thero-in .tutor-scroll {
+  flex: 1 1 240px;
+}
+.thero-av {
+  flex: 0 0 auto;
+  margin: 0 auto;
+}
+#thero-cv {
+  display: block;
+  width: 252px;
+  aspect-ratio: 42 / 32;
+  image-rendering: pixelated;
+}
 .panel label {
   display: flex;
   gap: 8px;
