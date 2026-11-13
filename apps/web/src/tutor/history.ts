@@ -1,4 +1,5 @@
 // Вкладка «История» (#/s/:id/history): календарь занятий за 12 недель, итог недели и бои по дням.
+// Дни сворачиваются: раскрыты два последних, у остальных видна строка итога; старые дни — по «Показать ещё».
 // Данные — Profile.dlog (итоги дней) и Profile.hist (последние бои), расчёты в progress/history.ts.
 import type { BattleLog, DayLog, Student } from "@repetitor/shared";
 import { esc } from "../lib/dom.js";
@@ -9,6 +10,9 @@ import { plural } from "./common.ts";
 const MODE: Record<BattleLog["m"], string> = { pick: "выбор", type: "ввод", grow: "по росту" };
 const MONTHS = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 const WEEKDAYS = ["пн", "", "ср", "", "пт", "", ""];
+/** Сколько последних дней раскрыто сразу и сколько дней видно до «Показать ещё». */
+const DAYS_OPEN = 2,
+  DAYS_FIRST = 7;
 
 export const minutes = (sec: number) => Math.round(sec / 60);
 const minText = (sec: number) => (sec > 0 && sec < 60 ? "меньше минуты" : `${minutes(sec)} мин`);
@@ -39,13 +43,6 @@ export function dayTitle(key: string, now = today()): string {
 const dayTotals = (d: DayLog) =>
   `${minText(d.s)} · ${d.n} ${plural(d.n, ["бой", "боя", "боёв"])} · верно ${d.r} · ошибок ${d.x}${d.l ? ` · выучено ${d.l}` : ""}`;
 
-/** Короткая строка для обзора: «За 7 дней: 3 дня, 25 минут». */
-export function weekLine(s: Student): string {
-  const w = summary(s.profile?.dlog, today());
-  if (!w.days) return "За 7 дней не играл(а).";
-  return `За 7 дней: ${w.days} ${plural(w.days, ["день", "дня", "дней"])}, ${minutes(w.sec)} ${plural(minutes(w.sec), ["минута", "минуты", "минут"])}.`;
-}
-
 function calendarHTML(dlog: Record<string, DayLog> | undefined, now: string): string {
   const cols = calendar(dlog, now);
   // подпись месяца — над первой неделей месяца; у первой колонки, только если месяц в ней не кончается
@@ -64,7 +61,7 @@ function calendarHTML(dlog: Record<string, DayLog> | undefined, now: string): st
           if (x.future) return `<i class="hc future"></i>`;
           const date = dayDate(x.day).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
           const tip =
-            x.d && x.heat ? `${date}: ${minText(x.d.s)}, верно ${x.d.r}, ошибок ${x.d.x}` : `${date}: не играл(а)`;
+            x.d && x.heat ? `${date}: ${minText(x.d.s)}, верно ${x.d.r}, ошибок ${x.d.x}` : `${date}: игры не было`;
           return `<i class="hc h${x.heat}${x.day === now ? " now" : ""}" title="${esc(tip)}"></i>`;
         })
         .join(""),
@@ -75,7 +72,7 @@ function calendarHTML(dlog: Record<string, DayLog> | undefined, now: string): st
       <div class="hcal-d">${WEEKDAYS.map((w) => `<span>${w}</span>`).join("")}</div>
       <div class="hcal-g">${cells}</div>
     </div>
-    <div class="hlegend"><span>не играл(а)</span><i class="hc h0"></i><i class="hc h1"></i><i class="hc h2"></i><i class="hc h3"></i><span>больше 15 мин</span></div>`;
+    <div class="hlegend"><span>игры не было</span><i class="hc h0"></i><i class="hc h1"></i><i class="hc h2"></i><i class="hc h3"></i><span>больше 15 мин</span></div>`;
 }
 
 function battleHTML(e: BattleLog): string {
@@ -85,7 +82,7 @@ function battleHTML(e: BattleLog): string {
     learned = e.l || [];
   const words = [
     ...miss.map(([w, n]) => `<span class="hword bad">${esc(w)}${n > 1 ? ` ×${n}` : ""}</span>`),
-    ...learned.map((w) => `<span class="hword good">${esc(w)} <small>выучил(а)</small></span>`),
+    ...learned.map((w) => `<span class="hword good">${esc(w)} <small>выучено</small></span>`),
   ];
   return `<li class="hb">
       <div class="hb-head"><b>${esc(time)}</b> <span>${esc(kindText(e))}</span>
@@ -98,7 +95,7 @@ function battleHTML(e: BattleLog): string {
 export function renderHistoryTab(root: HTMLElement, s: Student) {
   const p = s.profile;
   if (!p) {
-    root.innerHTML = `<div class="panel"><p class="note">Ученик ещё не входил(а) в игру по коду.</p></div>`;
+    root.innerHTML = `<div class="panel"><p class="note">Входа в игру по коду ещё не было.</p></div>`;
     return;
   }
   const now = today(),
@@ -114,7 +111,7 @@ export function renderHistoryTab(root: HTMLElement, s: Student) {
         ["Минут", minutes(w.sec)],
         ["Верных", w.r],
         ["Ошибок", w.x],
-        ["Вписал(а)", w.t],
+        ["Вписано", w.t],
         ["Выучено", w.l],
       ]
         .map(([k, v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`)
@@ -124,16 +121,23 @@ export function renderHistoryTab(root: HTMLElement, s: Student) {
       <h2>Бои</h2>
       ${
         days.length
-          ? `<p class="note">Последние бои, новые сверху. Красным — слова с ошибками, зелёным — выученные в этом бою.</p>
+          ? `<p class="note">Последние бои, новые сверху. Красным — слова с ошибками, зелёным — выученные в этом бою. Нажмите на день, чтобы раскрыть его бои.</p>
             ${days
               .map(
-                (d) => `<section class="hday">
-                  <h3>${esc(dayTitle(d.day, now))} <small>${esc(dayTotals(p.dlog?.[d.day] || d.sum))}</small></h3>
+                (d, i) => `<details class="hday"${i < DAYS_OPEN ? " open" : ""}${i >= DAYS_FIRST ? " hidden" : ""}>
+                  <summary><b>${esc(dayTitle(d.day, now))}</b> <small>${esc(dayTotals(p.dlog?.[d.day] || d.sum))}</small></summary>
                   <ul class="hlist">${d.logs.map(battleHTML).join("")}</ul>
-                </section>`,
+                </details>`,
               )
-              .join("")}`
+              .join("")}
+            ${days.length > DAYS_FIRST ? `<button class="link" type="button" id="hmore">Показать ещё ${days.length - DAYS_FIRST} ${plural(days.length - DAYS_FIRST, ["день", "дня", "дней"])}</button>` : ""}`
           : `<p class="note">Боёв пока нет. История появится после первого боя в новой версии игры.</p>`
       }
     </div>`;
+  const hmore = root.querySelector<HTMLButtonElement>("#hmore");
+  if (hmore)
+    hmore.onclick = () => {
+      root.querySelectorAll<HTMLElement>(".hday[hidden]").forEach((x) => (x.hidden = false));
+      hmore.remove();
+    };
 }

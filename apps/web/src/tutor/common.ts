@@ -5,7 +5,9 @@ import { isLearned } from "../content/rules.ts";
 import { HttpError, request } from "../net/http.ts";
 import { DICT } from "./report.ts";
 
-export { DICT, hardWords, rawOf } from "./report.ts";
+import { plural } from "../lib/text.js";
+export { plural };
+export { DICT, hardNow, hardWords, rawOf } from "./report.ts";
 export const app = document.getElementById("app")!;
 export const TOKEN = "tutor_token";
 export const TOTAL_WORDS = DICT.length;
@@ -26,14 +28,8 @@ export const api = async <T>(method: string, path: string, body?: unknown): Prom
   }
 };
 
-export const plural = (n: number, f: [string, string, string]) => {
-  const a = Math.abs(n) % 100,
-    b = a % 10;
-  return f[a > 10 && a < 20 ? 2 : b === 1 ? 0 : b >= 2 && b <= 4 ? 1 : 2];
-};
-
 export function seen(iso: string | null): string {
-  if (!iso) return "ещё не заходил(а)";
+  if (!iso) return "входа ещё не было";
   const d = new Date(iso),
     now = new Date();
   const days = Math.round(
@@ -57,3 +53,29 @@ export function msg(el: Element | null, text: string, kind: "err" | "okm" | "" =
   el.textContent = text;
 }
 export const q = <T extends Element = HTMLElement>(sel: string) => app.querySelector<T>(sel)!;
+
+/** Список учеников, загруженный последним: его же берёт конструктор заданий («Задать и другим ученикам»). */
+let students: Student[] | null = null;
+export const knownStudents = () => students;
+export async function loadStudents(): Promise<Student[]> {
+  students = await api<Student[]>("GET", "/tutor/students");
+  return students;
+}
+
+/**
+ * Страж ухода со страницы: вкладка с несохранёнными правками ставит функцию, которая возвращает true,
+ * если переход надо остановить (и сама объясняет почему). main.ts спрашивает её перед сменой адреса.
+ */
+let leaveGuard: (() => boolean) | null = null;
+export const setLeaveGuard = (fn: (() => boolean) | null) => (leaveGuard = fn);
+export const blocksLeave = () => !!leaveGuard && leaveGuard();
+
+/** Скопировать текст; false — буфер недоступен (старый браузер, не https). */
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}

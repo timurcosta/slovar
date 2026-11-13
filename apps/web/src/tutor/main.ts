@@ -7,7 +7,7 @@ import { BOSSES } from "../content/bosses.js";
 import { drawBoss } from "../render/sprite.js";
 import { esc } from "../lib/dom.js";
 import { HttpError } from "../net/http.ts";
-import { TOKEN, api, app, getToken, msg, setOnUnauthorized } from "./common.ts";
+import { TOKEN, api, app, blocksLeave, getToken, msg, setLeaveGuard, setOnUnauthorized } from "./common.ts";
 import { renderList } from "./list.ts";
 import { renderStudent } from "./student.ts";
 
@@ -124,6 +124,8 @@ async function renderAccount() {
 // ---------- маршруты ----------
 
 function route() {
+  setLeaveGuard(null);
+  window.onbeforeunload = null;
   if (!getToken()) return renderLogin();
   const m = /^#\/s\/([^/]+)(?:\/(\w+))?$/.exec(location.hash);
   if (m) renderStudent(decodeURIComponent(m[1]), m[2] || "");
@@ -131,5 +133,12 @@ function route() {
   else renderList(route);
 }
 setOnUnauthorized(route);
-window.addEventListener("hashchange", route);
+// несохранённые настройки: первый переход останавливается (адрес возвращается), второй — проходит
+let lastHash = location.hash;
+window.addEventListener("hashchange", () => {
+  if (location.hash === lastHash) return;
+  if (blocksLeave()) return history.replaceState(null, "", lastHash || "#/");
+  lastHash = location.hash;
+  route();
+});
 route();

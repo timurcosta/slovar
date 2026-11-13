@@ -1,11 +1,13 @@
 // Расчёты для кабинета по словам ученика: «Трудные», «Забывает», «Не видел ни разу», «Слова на занятие»
 // и недельный отчёт в списке учеников. Чистые функции без DOM и localStorage (тесты — test/report.test.ts).
-import type { BattleLog, DayLog, TutorSettings, WordStat, WordStats } from "@repetitor/shared";
+import type { BattleLog, DayLog, Task, TaskProgress, TutorSettings, WordStat, WordStats } from "@repetitor/shared";
 import { LEARN_N, isLearned } from "../content/rules.ts";
 import { W12, W34 } from "../topics/words/lists.js";
 import { parseEntry, parseList, splitEntries, type WordEntry } from "../topics/words/parse.ts";
 import { summary } from "../progress/history.ts";
+import { monsters, taskState } from "../progress/taskrules.ts";
 import { addDays } from "../lib/date.js";
+import { plural } from "../lib/text.js";
 
 export const PA = parseList(W12),
   PB = parseList(W34);
@@ -22,6 +24,11 @@ export const hardWords = (s: { stats?: WordStats | null }): [string, WordStat][]
   Object.entries(s.stats || ({} as WordStats))
     .filter(([, w]) => w.wrong > 0)
     .sort((a, b) => b[1].wrong - a[1].wrong || a[0].localeCompare(b[0], "ru"));
+
+/** «Трудные» сейчас: с ошибками и ещё не выучены (серия LEARN_N верных подряд не набрана). */
+export const hardNow = (s: { stats?: WordStats | null }) => hardWords(s).filter(([, w]) => !isLearned(w));
+/** Были трудными: ошибки были, но слово уже выучено. */
+export const hardPast = (s: { stats?: WordStats | null }) => hardWords(s).filter(([, w]) => isLearned(w));
 
 /** Свои слова репетитора (по одному на слово, с подсказками). */
 export const customEntries = (custom = ""): WordEntry[] => uniq(splitEntries(custom).map(parseEntry));
@@ -149,7 +156,8 @@ export interface LessonWord {
 
 /**
  * «Слова на занятие» — до n слов для диктанта: сначала слова с ошибками за последние LESSON_DAYS дней
- * (по журналу боёв; больше ошибок — выше, при равенстве недавние), потом «Забывает», потом «Трудные».
+ * (по журналу боёв; больше ошибок — выше, при равенстве недавние), потом «Забывает», потом «Трудные»
+ * (только те, что ещё не выучены: выученное диктовать незачем).
  * Без повторов; слова, которых нет ни в своих словах, ни в словаре (не из чего сделать пропуск), пропускаются.
  */
 export function lessonWords(
@@ -164,7 +172,7 @@ export function lessonWords(
       .sort((a, b) => b[1][0] - a[1][0] || b[1][1] - a[1][1] || a[0].localeCompare(b[0], "ru"))
       .map(([w]): [string, "week"] => [w, "week"]),
     ...forgetting(s).map(({ word }): [string, "forget"] => [word, "forget"]),
-    ...hardWords(s).map(([w]): [string, "hard"] => [w, "hard"]),
+    ...hardNow(s).map(([w]): [string, "hard"] => [w, "hard"]),
   ];
   const out: LessonWord[] = [];
   for (const [word, why] of cand) {
@@ -229,8 +237,147 @@ export function weekReport(
 
 /** Ячейка списка: «4 дн · 34 мин · ввод 30%» и мелко «выучено 5 · забыто 2». */
 export function weekCell(r: WeekReport): { main: string; sub: string } {
-  if (!r.days && !r.forgot) return { main: "не играл(а)", sub: "" };
+  if (!r.days && !r.forgot) return { main: "игры не было", sub: "" };
   const main = [`${r.days} дн`, `${r.min} мин`, ...(r.typedPct === null ? [] : [`ввод ${r.typedPct}%`])].join(" · ");
   const sub = [r.learned ? `выучено ${r.learned}` : "", r.forgot ? `забыто ${r.forgot}` : ""].filter(Boolean);
   return { main, sub: sub.join(" · ") };
+}
+
+// ---------- на кого посмотреть: пометки в списке учеников ----------
+
+/** Пометка у ученика в списке. bad и warn — нужно внимание, soft — к сведению, good — есть за что похвалить. */
+export interface Flag {
+  text: string;
+  level: "bad" | "warn" | "soft" | "good";
+}
+/** Столько дней без игры — жёлтая пометка, столько — красная. */
+export const IDLE_WARN = 3,
+  IDLE_BAD = 7;
+/** Сколько дней помнить про сделанное или просроченное задание. */
+const TASK_FRESH = 7;
+/** Открытое задание без единого ответа столько дней — пометка «не начато». */
+const TASK_IDLE = 2;
+
+const localDay = (ms: number) => {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const daysBetween = (from: string, to: string) => {
+  const t = (k: string) => {
+    const [y, m, d] = k.split("-").map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
+  return Math.round((t(to) - t(from)) / DAY_MS);
+};
+
+interface Watched {
+  profile?: {
+    dlog?: Record<string, DayLog>;
+    hist?: BattleLog[];
+    tasks?: Record<string, TaskProgress>;
+  } | null;
+  stats?: WordStats | null;
+  tasks?: Task[];
+  lastSeenAt?: string | null;
+}
+
+/** Сколько дней назад ученик заходил в игру (по последней синхронизации); null — ни разу. */
+export function idleDays(s: Pick<Watched, "lastSeenAt">, today: string): number | null {
+  if (!s.lastSeenAt) return null;
+  return Math.max(0, daysBetween(localDay(new Date(s.lastSeenAt).getTime()), today));
+}
+
+/**
+ * Пометки ученика для списка: давно не было игры, задание не начато или не сделано в срок, забывает слова;
+ * из хорошего — задание сделано на днях. Порядок: сначала самое важное.
+ */
+export function attention(s: Watched, today: string): Flag[] {
+  if (!s.profile) return [{ text: "входа по коду ещё не было", level: "soft" }];
+  const out: Flag[] = [];
+  const idle = idleDays(s, today);
+  if (idle !== null && idle >= IDLE_WARN)
+    out.push({
+      text: `${idle} ${plural(idle, ["день", "дня", "дней"])} без игры`,
+      level: idle >= IDLE_BAD ? "bad" : "warn",
+    });
+  let late = 0,
+    idleTask = 0,
+    done = 0;
+  for (const t of s.tasks || []) {
+    const p = s.profile.tasks?.[t.id],
+      st = taskState(t, p, today);
+    if (st === "expired" && t.until && daysBetween(t.until, today) <= TASK_FRESH) late++;
+    else if (st === "done" && p?.done && daysBetween(p.done, today) <= TASK_FRESH) done++;
+    else if (st === "open" && t.words.length && !p?.right && !Object.keys(p?.wrong || {}).length) {
+      const since = t.from || localDay(new Date(t.createdAt).getTime());
+      if (daysBetween(since, today) >= TASK_IDLE) idleTask++;
+    }
+  }
+  if (late) out.push({ text: "задание не сделано в срок", level: "warn" });
+  if (idleTask) out.push({ text: "задание не начато", level: "warn" });
+  const forget = forgetting(s).length;
+  if (forget) out.push({ text: `забывает ${forget} ${plural(forget, ["слово", "слова", "слов"])}`, level: "warn" });
+  if (done) out.push({ text: "задание сделано", level: "good" });
+  return out;
+}
+
+/** Насколько ученику нужно внимание: больше — выше в списке. */
+export const attentionScore = (flags: Flag[]) =>
+  flags.reduce((n, f) => n + (f.level === "bad" ? 4 : f.level === "warn" ? 2 : f.level === "soft" ? 1 : 0), 0);
+
+// ---------- отчёт родителям ----------
+
+/** Слова, ставшие выученными в боях журнала не раньше since (мс), без повторов, по порядку. */
+export function learnedSince(hist: BattleLog[] | undefined, since: number): string[] {
+  const out: string[] = [];
+  for (const e of (hist || []).slice().sort((a, b) => a.t - b.t))
+    if (e.t >= since) for (const w of e.l || []) if (!out.includes(w)) out.push(w);
+  return out;
+}
+
+const listed = (ws: string[], n: number) => ws.slice(0, n).join(", ") + (ws.length > n ? " и другие" : "");
+
+/**
+ * Сообщение родителям за 7 дней — готовый текст для мессенджера: сколько дней и минут была игра,
+ * что выучено, над чем работаем, как дела с заданиями. Без оценок и без пола ученика.
+ */
+export function parentReport(
+  s: Watched & { name: string; settings?: TutorSettings },
+  today: string,
+  now: number,
+): string {
+  const head = `${s.name}: неделя в игре «Охотники за ошибками»`;
+  if (!s.profile) return [head, "Входа в игру по коду пока не было."].join("\n");
+  const w = summary(s.profile.dlog, today),
+    since = now - 7 * DAY_MS,
+    lines = [head];
+  if (!w.days) lines.push("На этой неделе игры не было. Хорошо бы заходить каждый день хотя бы на 10 минут.");
+  else {
+    const min = Math.max(1, Math.round(w.sec / 60));
+    lines.push(
+      `Дней с игрой: ${w.days} из 7, всего ${min} ${plural(min, ["минута", "минуты", "минут"])}.`,
+      `Верных ответов: ${w.r}, ошибок: ${w.x}.`,
+    );
+    const learned = learnedSince(s.profile.hist, since);
+    if (w.l) lines.push(`Выучено слов: ${w.l}${learned.length ? ` (${listed(learned, 8)})` : ""}.`);
+  }
+  const work = lessonWords(s, now, 6).map((x) => x.word);
+  if (work.length) lines.push(`Над чем работаем: ${work.join(", ")}.`);
+  for (const t of s.tasks || []) {
+    const p = s.profile.tasks?.[t.id],
+      st = taskState(t, p, today);
+    if (st === "planned" || !t.words.length) continue;
+    if (st === "done") {
+      if (p?.done && daysBetween(p.done, today) <= TASK_FRESH) lines.push(`Задание «${t.title}»: сделано.`);
+    } else if (st === "expired") {
+      if (t.until && daysBetween(t.until, today) <= TASK_FRESH)
+        lines.push(`Задание «${t.title}»: срок прошёл, не доделано.`);
+    } else {
+      const { beaten, total } = monsters(t, p);
+      lines.push(
+        `Задание «${t.title}»: ${beaten === total ? "остался последний шаг" : p?.right ? `в процессе, ${beaten} из ${total}` : "ещё не начато"}.`,
+      );
+    }
+  }
+  return lines.join("\n");
 }

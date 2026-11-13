@@ -1,53 +1,42 @@
-// Страница ученика: вкладки «Обзор», «История», «Задания», «Слова и лимиты», «Вход».
-// В обзоре — списки слов «Трудные», «Забывает», «Не видел» и «Слова на занятие» (расчёты — report.ts).
-// Адрес вкладки: #/s/:id (обзор), #/s/:id/history, #/s/:id/tasks, #/s/:id/words, #/s/:id/login.
-import type { AnswerMode, Student, TutorSettings } from "@repetitor/shared";
+// Страница ученика: вкладки «Обзор», «История», «Задания», «Настройки».
+// В обзоре — неделя, «Отчёт родителям», задания, списки слов («Трудные», «Забывает», «Не видел») и «Слова на занятие»
+// (расчёты — report.ts); у ученика, который ещё не входил, — код для входа. Настройки — settings.ts.
+// Адрес вкладки: #/s/:id (обзор), #/s/:id/history, #/s/:id/tasks, #/s/:id/settings
+// (старые #/s/:id/words и #/s/:id/login ведут в настройки).
+import type { Student } from "@repetitor/shared";
 import { esc } from "../lib/dom.js";
-import { parseEntry, splitEntries, type WordEntry } from "../topics/words/parse.ts";
+import { today } from "../lib/date.js";
+import { type WordEntry } from "../topics/words/parse.ts";
 import { LEARN_N } from "../content/rules.ts";
 import { TITLES, levelOf } from "../progress/levels.ts";
-import { TOTAL_WORDS, api, app, hardWords, learned, msg, plural, q, rawOf, seen, todayOf } from "./common.ts";
-import { LESSON_DAYS, type LessonWord, forgetting, gapped, lessonText, lessonWords, unseenWords } from "./report.ts";
+import { TOTAL_WORDS, api, app, copyText, hardNow, learned, msg, plural, q, rawOf, seen, todayOf } from "./common.ts";
+import {
+  LESSON_DAYS,
+  type LessonWord,
+  forgetting,
+  gapped,
+  hardPast,
+  lessonText,
+  lessonWords,
+  parentReport,
+  unseenWords,
+  weekReport,
+} from "./report.ts";
 import { renderTasksTab, setPrefill, tasksSummary } from "./tasks.ts";
 import { drawHero } from "../render/hero.js";
-import { renderHistoryTab, weekLine } from "./history.ts";
+import { renderHistoryTab } from "./history.ts";
 import { heroInfo } from "./hero.ts";
+import { accessHTML, bindAccess, renderSettingsTab } from "./settings.ts";
 
 const TABS: [string, string][] = [
   ["", "Обзор"],
   ["history", "История"],
   ["tasks", "Задания"],
-  ["words", "Слова и лимиты"],
-  ["login", "Вход"],
+  ["settings", "Настройки"],
 ];
-const MODES: [string, string][] = [
-  ["", "Как выберет ученик"],
-  ["auto", "Как в кампании: сначала 1–2 класс, потом 3–4"],
-  ["a", "Только 1–2 класс"],
-  ["ab", "Все слова вперемешку"],
-  ["b", "Только 3–4 класс"],
-  ["custom", "Только мои слова"],
-];
-/** Режим ответа: значение, название, пояснение для репетитора. */
-const ANSWERS: [string, string, string][] = [
-  ["", "Как выберет ученик", "Переключатель «Выбор буквы | Пишу сам» на главной у ребёнка."],
-  ["pick", "Только выбор буквы", "Из двух вариантов. Проще, но угадать можно в половине случаев."],
-  ["type", "Только пишет сам", "Слово целиком с клавиатуры, награда ×2 и больше времени на ответ."],
-  [
-    "grow",
-    "По росту",
-    "Новое слово — выбором; после 2 верных подряд вписывает целиком. Ошибся при вписывании — слово один раз снова выбором.",
-  ],
-];
-const LIMS: [string, string][] = [
-  ["min", "Минут игры"],
-  ["fresh", "Новых слов"],
-  ["correct", "Верных ответов"],
-  ["battles", "Боёв"],
-  ["mistakes", "Ошибок"],
-];
-const tile = (k: string, v: string | number) => `<div class="stat"><span>${k}</span><b>${esc(String(v))}</b></div>`;
-const tabUrl = (id: string, tab: string) => `#/s/${encodeURIComponent(id)}${tab ? "/" + tab : ""}`;
+const tile = (k: string, v: string | number, cls = "") =>
+  `<div class="stat ${cls}"><span>${k}</span><b>${esc(String(v))}</b></div>`;
+export const tabUrl = (id: string, tab: string) => `#/s/${encodeURIComponent(id)}${tab ? "/" + tab : ""}`;
 
 export async function renderStudent(id: string, tab: string) {
   app.innerHTML = `<section class="screen"><p class="note">Загружаю…</p></section>`;
@@ -58,12 +47,15 @@ export async function renderStudent(id: string, tab: string) {
     app.innerHTML = `<section class="screen"><p class="note">Ученик не найден.</p><a class="link" href="#/">К списку</a></section>`;
     return;
   }
+  // старые адреса: «Слова и лимиты» и «Вход» теперь разделы настроек
+  const section = tab === "login" ? "access" : "";
+  if (tab === "words" || tab === "login") tab = "settings";
   if (!TABS.some(([t]) => t === tab)) tab = "";
   const p = s.profile,
     lvl = p ? levelOf(p.xp) : 0;
   const line = p
-    ? `был(а) ${seen(s.lastSeenAt)} · уровень ${lvl} · выучено ${learned(s)} из ${TOTAL_WORDS}`
-    : "ещё не входил(а) в игру по коду";
+    ? `последний вход: ${seen(s.lastSeenAt)} · уровень ${lvl} · выучено ${learned(s)} из ${TOTAL_WORDS}`
+    : "входа в игру по коду ещё не было";
   app.innerHTML = `
     <section class="screen">
       <div class="row tutor-top"><a class="link" href="#/">← Все ученики</a><a class="link" href="#/account">Пароль</a></div>
@@ -79,12 +71,13 @@ export async function renderStudent(id: string, tab: string) {
   const reload = () => renderStudent(s.id, tab);
   if (tab === "tasks") renderTasksTab(root, s, reload);
   else if (tab === "history") renderHistoryTab(root, s);
-  else if (tab === "words") wordsTab(root, s);
-  else if (tab === "login") loginTab(root, s);
+  else if (tab === "settings") renderSettingsTab(root, s, section, reload);
   else overviewTab(root, s, lvl);
 }
 
-/** Сколько слов «Не видел ни разу» показывать сразу (остальные — по «Показать все»). */
+/** Сколько строк списка слов видно сразу (остальные — по «Показать все»). */
+const ROWS_FIRST = 8;
+/** Сколько слов «Не видел ни разу» показывать сразу. */
 const UNSEEN_FIRST = 30;
 const MAX_GIVE = 40;
 const shortDay = (t: number) => new Date(t).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
@@ -95,30 +88,43 @@ const check = (raw: string | null, word: string, on: boolean) =>
   raw
     ? `<input type="checkbox" class="hw" data-raw="${esc(raw)}"${on ? " checked" : ""} aria-label="${esc(word)}" />`
     : "";
+/** Хвост из пары строк прятать незачем: список режется, только если он заметно длиннее. */
+const cut = (n: number, first: number) => (n > first + 2 ? first : n);
+const more = (n: number, first: number) =>
+  n > cut(n, first) ? `<button class="link more" type="button">Показать все (${n})</button>` : "";
 
-/** Три списка слов (вкладками внутри панели) и «Слова на занятие». */
+/** Три списка слов (вкладками внутри панели) и «Слова на занятие». Длинные списки показывают начало. */
 function wordsPanel(s: Student): string {
   const custom = s.settings?.customWords,
-    hard = hardWords(s),
+    hard = hardNow(s),
+    past = hardPast(s),
     forget = forgetting(s),
     unseen = unseenWords(s);
   const table = (head: string, rows: string[]) =>
-    `<div class="tutor-scroll"><table class="wtable"><thead><tr><th></th><th>Слово</th>${head}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+    `<div class="tutor-scroll"><table class="wtable"><thead><tr><th></th><th>Слово</th>${head}</tr></thead><tbody>${rows.join("")}</tbody></table></div>${more(rows.length, ROWS_FIRST)}`;
+  const tr = (i: number, n: number, cells: string) => `<tr${i >= cut(n, ROWS_FIRST) ? " hidden" : ""}>${cells}</tr>`;
+  const pastHTML = past.length
+    ? `<details class="fold"><summary>Уже выучены, а ошибки были <b>${past.length}</b></summary>
+        <p class="wpast">${past.map(([w, x]) => `${esc(w)} <small>×${x.wrong}</small>`).join(", ")}</p></details>`
+    : "";
   const lists: [string, string, number, string][] = [
     [
       "hard",
       "Трудные",
       hard.length,
-      hard.length
-        ? `<p class="note">Все слова с ошибками, больше ошибок — выше.</p>` +
+      (hard.length
+        ? `<p class="note">Слова с ошибками, которые ещё не выучены (${LEARN_N} верных подряд). Больше ошибок — выше.</p>` +
           table(
             `<th class="n">Ошибок</th><th class="n">Верно</th>`,
-            hard.map(
-              ([w, x], i) =>
-                `<tr><td>${check(rawOf(w, custom), w, i < 8)}</td><td>${esc(w)}</td><td class="n bad">${x.wrong}</td><td class="n">${x.right}</td></tr>`,
+            hard.map(([w, x], i) =>
+              tr(
+                i,
+                hard.length,
+                `<td>${check(rawOf(w, custom), w, i < ROWS_FIRST)}</td><td>${esc(w)}</td><td class="n bad">${x.wrong}</td><td class="n">${x.right}</td>`,
+              ),
             ),
           )
-        : `<p class="note">Ошибок пока нет.</p>`,
+        : `<p class="note">${past.length ? "Все слова с ошибками уже выучены." : "Ошибок пока нет."}</p>`) + pastHTML,
     ],
     [
       "forget",
@@ -128,9 +134,12 @@ function wordsPanel(s: Student): string {
         ? `<p class="note">Были выучены (${LEARN_N} верных подряд), потом ошибка. Пора повторить.</p>` +
           table(
             `<th class="n">Ошибка</th><th class="n">Ошибок</th><th class="n">Верно</th>`,
-            forget.map(
-              (x, i) =>
-                `<tr><td>${check(rawOf(x.word, custom), x.word, i < 8)}</td><td>${esc(x.word)}</td><td class="n">${esc(shortDay(x.at))}</td><td class="n bad">${x.stat.wrong}</td><td class="n">${x.stat.right}</td></tr>`,
+            forget.map((x, i) =>
+              tr(
+                i,
+                forget.length,
+                `<td>${check(rawOf(x.word, custom), x.word, i < ROWS_FIRST)}</td><td>${esc(x.word)}</td><td class="n">${esc(shortDay(x.at))}</td><td class="n bad">${x.stat.wrong}</td><td class="n">${x.stat.right}</td>`,
+              ),
             ),
           )
         : `<p class="note">Выученные слова пока не забываются.</p>`,
@@ -144,10 +153,10 @@ function wordsPanel(s: Student): string {
           <div class="wchips">${unseen.list
             .map(
               (e, i) =>
-                `<label class="wchip"${i >= UNSEEN_FIRST ? " hidden" : ""}>${check(e.raw, e.word, false)}${esc(e.word)}</label>`,
+                `<label class="wchip"${i >= cut(unseen.list.length, UNSEEN_FIRST) ? " hidden" : ""}>${check(e.raw, e.word, false)}${esc(e.word)}</label>`,
             )
             .join("")}</div>
-          ${unseen.list.length > UNSEEN_FIRST ? `<button class="link" type="button" id="unseen-all">Показать все (${unseen.list.length})</button>` : ""}`
+          ${more(unseen.list.length, UNSEEN_FIRST)}`
         : `<p class="note">Все слова набора «${esc(unseen.name)}» уже встречались.</p>`,
     ],
   ];
@@ -187,26 +196,55 @@ function lessonHTML(s: Student): string {
     <div class="row"><button class="btn small" type="button" id="lesson-copy">Скопировать</button><button class="btn primary small" type="button" id="lesson-give">Дать заданием</button><button class="link" type="button" id="lesson-close">Закрыть</button><span class="msg" id="lesson-msg"></span></div>`;
 }
 
+/** Неделя плитками и строка про сегодня; кнопка «Отчёт родителям» раскрывает готовый текст. */
+function weekPanel(s: Student, lvl: number): string {
+  const p = s.profile!,
+    w = weekReport(p, s.stats, today()),
+    d = todayOf(s);
+  const todayLine = d
+    ? `Сегодня: ${Math.floor(d.sec / 60)} мин · верно ${d.correct} · ошибок ${d.mistakes} · новых слов ${d.fresh}`
+    : "Сегодня игры ещё не было";
+  return `<div class="panel">
+      <div class="row tutor-top"><h2>За 7 дней</h2><button class="btn small" id="parent-open">Отчёт родителям</button></div>
+      <div class="lesson" id="parent" hidden>
+        <h3>Сообщение родителям</h3>
+        <p class="note">Готовый текст за неделю. Его можно поправить здесь же и скопировать в мессенджер.</p>
+        <textarea id="parent-text" rows="7" aria-label="Сообщение родителям">${esc(parentReport(s, today(), Date.now()))}</textarea>
+        <div class="row"><button class="btn primary small" type="button" id="parent-copy">Скопировать</button><button class="link" type="button" id="parent-close">Закрыть</button><span class="msg" id="parent-msg"></span></div>
+      </div>
+      <div class="stats wstats">${tile("Дней с игрой", `${w.days} из 7`)}${tile("Минут", w.min)}${tile("Выучено", w.learned)}${tile("Забыто", w.forgot, w.forgot ? "bad" : "")}</div>
+      <p class="note">${esc(todayLine)} · дней подряд: ${p.days?.streak ?? 0} · ${esc(TITLES[lvl - 1])} <a class="link" href="${tabUrl(s.id, "history")}">История →</a></p>
+    </div>`;
+}
+
 function overviewTab(root: HTMLElement, s: Student, lvl: number) {
-  const d = todayOf(s);
+  if (!s.profile) {
+    // ученик ещё не входил: показывать нечего, зато нужен код
+    root.innerHTML = `${accessHTML(s)}
+      <p class="note">Когда ученик войдёт по коду и сыграет первый бой, здесь появятся неделя, слова и задания. Задание и свои слова можно задать уже сейчас — на соседних вкладках.</p>`;
+    bindAccess(s);
+    return;
+  }
+  const tasks = tasksSummary(s);
   root.innerHTML = `
+    ${weekPanel(s, lvl)}
     <div class="panel">
-      <h2>Сегодня</h2>
-      ${
-        d
-          ? `<div class="stats">${tile("Минут", Math.floor(d.sec / 60))}${tile("Верных", d.correct)}${tile("Ошибок", d.mistakes)}${tile("Новых слов", d.fresh)}</div>`
-          : `<p class="note">Сегодня ещё не играл(а).</p>`
-      }
-      ${s.profile ? `<p class="note">${esc(weekLine(s))} <a class="link" href="${tabUrl(s.id, "history")}">История →</a></p>` : ""}
-      ${s.profile ? `<p class="note">${esc(TITLES[lvl - 1])} · дней подряд: ${s.profile.days?.streak ?? 0} · верных ответов всего: ${s.profile.tot?.correct ?? 0}</p>` : ""}
-    </div>
-    <div class="panel">
-      <div class="row tutor-top"><h2>Задания</h2><a class="link" href="${tabUrl(s.id, "tasks")}">Все задания →</a></div>
-      ${tasksSummary(s)}
+      <div class="row tutor-top"><h2>Задания</h2><a class="link" href="${tabUrl(s.id, "tasks")}">${tasks ? "Все задания →" : "Задать →"}</a></div>
+      ${tasks || `<p class="note">Открытых заданий нет.</p>`}
     </div>
     ${wordsPanel(s)}
     ${heroBlock(s, lvl)}`;
-  if (s.profile) animateHero(s.profile);
+  animateHero(s.profile);
+  const parent = q("#parent");
+  q<HTMLButtonElement>("#parent-open").onclick = () => (parent.hidden = !parent.hidden);
+  q<HTMLButtonElement>("#parent-close").onclick = () => (parent.hidden = true);
+  q<HTMLButtonElement>("#parent-copy").onclick = async () => {
+    const text = q<HTMLTextAreaElement>("#parent-text");
+    if (await copyText(text.value)) return msg(q("#parent-msg"), "Скопировано.", "okm");
+    text.focus();
+    text.select();
+    msg(q("#parent-msg"), "Текст выделен — скопируйте его вручную.", "");
+  };
   const panel = q("#words"),
     give = (raws: string[], m: Element) => {
       if (!raws.length) return msg(m, "Отметьте хотя бы одно слово.", "err");
@@ -224,10 +262,16 @@ function overviewTab(root: HTMLElement, s: Student, lvl: number) {
         msg(q("#give-msg"), "");
       }),
   );
-  panel.querySelector<HTMLButtonElement>("#unseen-all")?.addEventListener("click", (ev) => {
-    panel.querySelectorAll<HTMLElement>(".wchip[hidden]").forEach((c) => (c.hidden = false));
-    (ev.target as HTMLElement).remove();
-  });
+  // «Показать все»: открывает спрятанный хвост своего списка
+  panel.querySelectorAll<HTMLButtonElement>(".more").forEach(
+    (b) =>
+      (b.onclick = () => {
+        b.closest(".wlist")!
+          .querySelectorAll<HTMLElement>("tr[hidden], .wchip[hidden]")
+          .forEach((x) => (x.hidden = false));
+        b.remove();
+      }),
+  );
   q<HTMLButtonElement>("#give").onclick = () =>
     give(
       [...panel.querySelectorAll<HTMLInputElement>(".wlist:not([hidden]) .hw:checked")].map((c) => c.dataset.raw!),
@@ -242,16 +286,12 @@ function overviewTab(root: HTMLElement, s: Student, lvl: number) {
     if (!text) return;
     const m = q("#lesson-msg");
     q<HTMLButtonElement>("#lesson-copy").onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(text.value);
-        msg(m, "Скопировано: слова с пропусками и ответы.", "okm");
-      } catch {
-        // без доступа к буферу (старый браузер, не https): показываем текст выделенным
-        text.hidden = false;
-        text.focus();
-        text.select();
-        msg(m, "Текст выделен — скопируйте его вручную.", "");
-      }
+      if (await copyText(text.value)) return msg(m, "Скопировано: слова с пропусками и ответы.", "okm");
+      // без доступа к буферу (старый браузер, не https): показываем текст выделенным
+      text.hidden = false;
+      text.focus();
+      text.select();
+      msg(m, "Текст выделен — скопируйте его вручную.", "");
     };
     q<HTMLButtonElement>("#lesson-give").onclick = () =>
       give(
@@ -287,7 +327,7 @@ function heroBlock(s: Student, lvl: number): string {
         `<tr><td>${esc(r.slot)}</td><td>${r.name ? esc(r.name) : "—"}</td><td>${r.name ? `<span class="rar" style="color:${r.color}">${esc(r.rarity)}</span>` : ""}</td></tr>`,
     )
     .join("");
-  return `<details class="panel thero" open>
+  return `<details class="panel thero">
       <summary>Герой: уровень ${lvl} · ${esc(TITLES[lvl - 1])}</summary>
       <div class="thero-in">
         <div class="thero-av" id="thero-aura"><canvas id="thero-cv" aria-label="Герой ученика"></canvas></div>
@@ -296,113 +336,4 @@ function heroBlock(s: Student, lvl: number): string {
       <p class="note">Вещей: ${h.owned} · монет: ${h.coins} · лучший этаж башни: ${h.towerBest} · боссов кампании побеждено: ${h.beaten}</p>
       <p class="note">${h.medals.length ? `Медали заданий: ${h.medals.map(esc).join(", ")}` : "Медалей за задания пока нет."}</p>
     </details>`;
-}
-
-function wordsTab(root: HTMLElement, s: Student) {
-  const set = s.settings || {};
-  root.innerHTML = `
-    <form class="panel" id="settings">
-      <h2>Какие слова</h2>
-      ${MODES.map(
-        ([v, t]) =>
-          `<label class="mode"><input type="radio" name="words" value="${v}"${(set.words || "") === v ? " checked" : ""} /><span><b>${esc(t)}</b></span></label>`,
-      ).join("")}
-      <h2>Как отвечает</h2>
-      ${ANSWERS.map(
-        ([v, t, d]) =>
-          `<label class="mode"><input type="radio" name="answer" value="${v}"${(set.answer || "") === v ? " checked" : ""} /><span><b>${esc(t)}${v === "grow" ? ' <em class="rec">рекомендую</em>' : ""}</b><small>${esc(d)}</small></span></label>`,
-      ).join("")}
-      <h2>Мои слова</h2>
-      <p class="note">Одно слово в строке, трудная буква в скобках: м(о)локо, неправильный вариант через черту: м(о/а)локо.</p>
-      <p class="note">Подсказка после черты «|»: м(о)локо | корова мычит: мо-о — ученик увидит её только после ошибки.</p>
-      <textarea id="custom" rows="6" placeholder="м(о)локо&#10;с(о)бака">${esc(set.customWords ?? "")}</textarea>
-      <h2>Лимиты на день</h2>
-      <p class="note">0 — без лимита. Когда лимит достигнут, игра мягко останавливается до завтра. Задания открыты и после лимита.</p>
-      <div class="tutor-lims">
-        ${LIMS.map(([k, t]) => `<label>${esc(t)} <input type="number" min="0" max="2000" name="lim-${k}" value="${set.lim?.[k] ?? 0}" /></label>`).join("")}
-      </div>
-      <div class="row"><button class="btn primary small" type="submit">Сохранить</button><span class="msg" id="set-msg"></span></div>
-      <p class="note">Ученик получит настройки при следующем запуске игры.</p>
-    </form>`;
-  q<HTMLFormElement>("#settings").onsubmit = async (ev) => {
-    ev.preventDefault();
-    const f = ev.target as HTMLFormElement;
-    const words = f.querySelector<HTMLInputElement>('input[name="words"]:checked')?.value || "";
-    const customWords = q<HTMLTextAreaElement>("#custom").value;
-    const bad = splitEntries(customWords).filter((l) => !parseEntry(l));
-    const lim = Object.fromEntries(
-      LIMS.map(([k]) => [k, Number(f.querySelector<HTMLInputElement>(`[name="lim-${k}"]`)!.value) || 0]),
-    );
-    const answer = (f.querySelector<HTMLInputElement>('input[name="answer"]:checked')?.value || "") as AnswerMode;
-    const settings: TutorSettings = { ...(words ? { words } : {}), customWords, lim, ...(answer ? { answer } : {}) };
-    try {
-      await api("PATCH", `/tutor/students/${s.id}`, { settings });
-      s.settings = settings;
-      msg(
-        q("#set-msg"),
-        bad.length
-          ? `Сохранено. Не понял слова: ${bad.slice(0, 4).join(", ")}${bad.length > 4 ? "…" : ""}`
-          : "Сохранено.",
-        bad.length ? "err" : "okm",
-      );
-    } catch {
-      msg(q("#set-msg"), "Не получилось сохранить.", "err");
-    }
-  };
-}
-
-function loginTab(root: HTMLElement, s: Student) {
-  root.innerHTML = `
-    <div class="panel">
-      <h2>Код для входа</h2>
-      <div class="row"><span class="tutor-code" id="code">${esc(s.code)}</span><button class="btn small" id="copy">Скопировать</button></div>
-      <p class="note">В игре: «Кто играет?» после заставки или «Код учителя» в настройках. После входа прогресс ученика сохраняется здесь.</p>
-      <div class="row"><button class="btn small" id="new-code">Выдать новый код</button><span class="msg" id="code-msg"></span></div>
-    </div>
-    <div class="panel">
-      <h2>Имя</h2>
-      <form class="pinrow" id="rename">
-        <input id="name" type="text" maxlength="30" value="${esc(s.name)}" aria-label="Имя ученика" />
-        <button class="btn small" type="submit">Переименовать</button>
-      </form>
-    </div>
-    <div class="panel">
-      <h2>Удалить</h2>
-      <div class="row"><button class="btn small" id="delete">Удалить ученика</button><span class="msg" id="del-msg"></span></div>
-    </div>`;
-  q<HTMLButtonElement>("#copy").onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(q("#code").textContent || "");
-      msg(q("#code-msg"), "Код скопирован.", "okm");
-    } catch {
-      msg(q("#code-msg"), "Не получилось скопировать: выделите код и скопируйте вручную.", "err");
-    }
-  };
-  let codeArm = false;
-  q<HTMLButtonElement>("#new-code").onclick = async () => {
-    if (!codeArm) {
-      codeArm = true;
-      return msg(q("#code-msg"), "Старый код перестанет работать, ученику нужно будет войти заново. Нажмите ещё раз.");
-    }
-    codeArm = false;
-    const r = await api<Student>("POST", `/tutor/students/${s.id}/code`);
-    q("#code").textContent = r.code;
-    msg(q("#code-msg"), "Новый код выдан.", "okm");
-  };
-  q<HTMLFormElement>("#rename").onsubmit = async (ev) => {
-    ev.preventDefault();
-    const name = q<HTMLInputElement>("#name").value.trim();
-    if (!name) return;
-    await api("PATCH", `/tutor/students/${s.id}`, { name });
-    renderStudent(s.id, "login");
-  };
-  let delArm = false;
-  q<HTMLButtonElement>("#delete").onclick = async () => {
-    if (!delArm) {
-      delArm = true;
-      return msg(q("#del-msg"), "Весь прогресс ученика на сервере будет удалён. Нажмите ещё раз.", "err");
-    }
-    await api("DELETE", `/tutor/students/${s.id}`);
-    location.hash = "#/";
-  };
 }

@@ -6,14 +6,6 @@
 .tutor-scroll {
   overflow-x: auto;
 }
-.tutor-table tbody tr {
-  cursor: pointer;
-}
-.tutor-table tbody tr:hover,
-.tutor-table tbody tr:focus-visible {
-  background: #eef4ff;
-  outline: none;
-}
 .tutor-code {
   font-family: var(--font-pixel);
   font-size: 28px;
@@ -23,20 +15,19 @@
 }
 .tutor-lims {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px 16px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px 16px;
 }
 .tutor-lims label {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
 }
 #settings textarea {
   width: 100%;
   font: inherit;
   padding: 8px;
-  margin-bottom: 8px;
 }
 .sheet .pinrow input:not(#pass) {
   width: min(320px, 100%);
@@ -109,7 +100,6 @@
 }
 .ttabs {
   display: flex;
-  flex-wrap: wrap;
   gap: 6px;
   border-bottom: 3px solid var(--ink);
   margin-bottom: 14px;
@@ -128,6 +118,18 @@
   background: var(--card);
   color: var(--pen);
   padding-bottom: 11px;
+}
+/* на телефоне четыре вкладки делят строку поровну и не переносятся */
+@media (max-width: 480px) {
+  .ttabs {
+    gap: 3px;
+  }
+  .ttab {
+    flex: 1 1 auto;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 14px;
+  }
 }
 .tutor-code {
   font-size: 22px;
@@ -263,6 +265,24 @@
 .tform label.tinline {
   align-items: center;
 }
+/* «Когда» и «Награда» — в строку, пока помещаются */
+.tfield.trow {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+.tform .panel label.wchip,
+.tform label.wchip {
+  flex-direction: row;
+  align-items: center;
+}
+#t-note {
+  min-height: 0;
+}
+#t-texts .tfield {
+  gap: 12px;
+}
 
 /* история: календарь занятий (12 недель × 7 дней) и бои по дням */
 .hcal {
@@ -334,21 +354,35 @@
 .hlegend span {
   margin: 0 4px;
 }
-.hday h3 {
-  font-size: 16px;
-  margin: 8px 0 6px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
+.hday {
+  border-top: 2px solid var(--grid);
 }
-.hday h3::first-letter {
+.hday summary {
+  cursor: pointer;
+  padding: 8px 0;
+  font-size: 16px;
+}
+.hday summary b {
+  display: inline-block;
+}
+.hday summary b::first-letter {
   text-transform: uppercase;
 }
-.hday h3 small {
+.hday summary small {
+  display: block;
+  margin-left: 18px;
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-soft);
+}
+.hday[open] summary {
+  padding-bottom: 2px;
+}
+.hday .hb:first-child {
+  border-top: 0;
+}
+#hmore {
+  align-self: flex-start;
 }
 .hlist {
   list-style: none;
@@ -550,19 +584,6 @@
   font-size: 14px;
 }
 
-/* список учеников: неделя одной ячейкой */
-td.wk span {
-  display: block;
-  white-space: nowrap;
-  font-weight: 800;
-}
-td.wk small {
-  display: block;
-  white-space: nowrap;
-  font-size: 12px;
-  color: var(--ink-soft);
-  font-weight: 700;
-}
 @media (max-width: 480px) {
   .wtabs {
     gap: 4px;
@@ -582,10 +603,267 @@ td.wk small {
     font-size: 16px;
     padding-top: 6px;
   }
-  /* неделя в списке переносится, чтобы таблица не росла вширь */
-  td.wk span,
-  td.wk small {
-    white-space: normal;
-    min-width: 110px;
+}
+
+/* список учеников: карточка-ссылка; на телефоне столбиком, на широком экране строкой */
+.list-bar {
+  justify-content: space-between;
+}
+.slist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.scard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 14px;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  text-decoration: none;
+}
+.scard:hover,
+.scard:focus-visible {
+  background: #eef4ff;
+  box-shadow: 3px 3px 0 var(--ink);
+  outline: none;
+}
+.sc-name,
+.sc-flags {
+  grid-column: 1 / -1;
+}
+.sc-name {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.sc-name b {
+  font-size: 19px;
+  font-weight: 900;
+}
+.sc-name small {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+.sc-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.flag {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 1px 7px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+}
+.flag.bad {
+  background: var(--pen);
+  border-color: var(--pen);
+  color: #fff;
+}
+.flag.warn {
+  background: #fff3c4;
+}
+.flag.soft {
+  border-style: dashed;
+  color: var(--ink-soft);
+}
+.flag.good {
+  background: #d8f5df;
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.sc-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sc-l {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+.sc-v {
+  font-size: 15px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.sc-s {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.sc-s .bad {
+  color: var(--pen);
+  font-weight: 900;
+}
+@media (min-width: 720px) {
+  .scard {
+    grid-template-columns: 1.3fr 1.5fr 1fr 1.3fr;
   }
+}
+
+/* вкладка ученика: панели с воздухом между ними */
+#tab {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* сворачиваемый раздел: заголовок с текущим значением, по нажатию — содержимое */
+.panel.sect {
+  display: block;
+}
+.sect > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.sect > summary::-webkit-details-marker {
+  display: none;
+}
+.sect > summary::before {
+  content: "▸";
+  font-weight: 900;
+  color: var(--ink-soft);
+}
+.sect[open] > summary::before {
+  content: "▾";
+}
+.sect > summary b {
+  font-size: 16px;
+  font-weight: 900;
+}
+.sect > summary .sv {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  text-align: right;
+}
+.sect[open] > summary {
+  margin-bottom: 10px;
+}
+.sect-in {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* панели внутри раздела — без своей рамки, разделяются чертой */
+.sect-in > .panel {
+  border: 0;
+  padding: 0;
+}
+.sect-in > .panel + .panel {
+  border-top: 2px dashed var(--grid);
+  padding-top: 12px;
+}
+.sect-in > .tcard-t:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.tset {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* «Сохранить» прилипает к низу экрана, пока есть несохранённое */
+.savebar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.savebar .msg {
+  flex: 1 1 200px;
+}
+
+/* лёгкий свёрток внутри панели: «уже выучены», «как спросит игра», «другим ученикам» */
+.fold > summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+.fold > summary b {
+  color: var(--ink);
+}
+.fold[open] > summary {
+  margin-bottom: 8px;
+}
+.wpast {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.wpast small {
+  color: var(--ink-soft);
+  font-weight: 800;
+}
+.pchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pchip {
+  font-size: 15px;
+  font-weight: 800;
+  padding: 1px 8px;
+  border: 2px solid var(--grid);
+  background: var(--paper);
+}
+.pchip u {
+  color: var(--pen);
+  text-decoration-thickness: 2px;
+}
+.pchip small {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.pchip i {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--ok);
+  margin-left: 4px;
+}
+.wlist > .more {
+  align-self: flex-start;
+}
+
+/* обзор: неделя плитками, отчёт родителям */
+.stats.wstats {
+  grid-template-columns: 1fr 1fr;
+}
+@media (min-width: 720px) {
+  .stats.wstats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.stat.bad b {
+  color: var(--pen);
+}
+#parent-text {
+  min-height: 0;
+  font-size: 15px;
+  background: var(--card);
+}
+#access .tutor-code {
+  margin-right: 4px;
 }

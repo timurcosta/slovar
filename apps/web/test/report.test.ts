@@ -1,15 +1,22 @@
 // Кабинет: «Трудные», «Забывает», «Не видел», «Слова на занятие», недельный отчёт (tutor/report.ts).
 import { describe, expect, it } from "vitest";
-import type { BattleLog, DayLog, WordStat, WordStats } from "@repetitor/shared";
+import type { BattleLog, DayLog, Task, WordStat, WordStats } from "@repetitor/shared";
 import {
   DICT,
   PA,
+  attention,
+  attentionScore,
   forgetTimes,
   forgetting,
   gapped,
+  hardNow,
+  hardPast,
   hardWords,
+  idleDays,
+  learnedSince,
   lessonText,
   lessonWords,
+  parentReport,
   rawOf,
   recentMisses,
   unseenWords,
@@ -124,6 +131,16 @@ describe("«Трудные» и rawOf", () => {
     expect(hardWords({ stats }).map(([w]) => w)).toEqual(["б", "a"]);
   });
 
+  it("«трудные сейчас» — без уже выученных: те уходят в «были трудными»", () => {
+    const stats = {
+      ворона: st({ right: 5, wrong: 4, streak: 2 }),
+      молоко: st({ right: 9, wrong: 3, streak: 3 }), // три верных подряд — выучено
+      пенал: st({ right: 0, wrong: 1, streak: 0 }),
+    };
+    expect(hardNow({ stats }).map(([w]) => w)).toEqual(["ворона", "пенал"]);
+    expect(hardPast({ stats }).map(([w]) => w)).toEqual(["молоко"]);
+  });
+
   it("запись слова: сначала свои слова (с подсказкой), потом словарь", () => {
     expect(rawOf("молоко", "м(о)локо | корова мычит: мо-о")).toBe("м(о)локо | корова мычит: мо-о");
     expect(rawOf("берёза")).toBe(DICT.find((e) => e.word === "берёза")!.raw);
@@ -170,6 +187,9 @@ describe("«Слова на занятие»", () => {
       ["собака", "forget", 0],
       ["пенал", "hard", 0],
     ]);
+    // выученное слово с давними ошибками в диктант не идёт
+    const solid = { ...s, stats: { ...s.stats, пенал: st({ right: 8, wrong: 5, streak: 3 }) } };
+    expect(lessonWords(solid, NOW).map((x) => x.word)).toEqual(["берёза", "молоко", "собака"]);
     expect(ws[1].entry.raw).toBe("м(о)локо | корова мычит: мо-о");
     expect(lessonWords(s, NOW, 2).length).toBe(2);
     expect(lessonText("Маша", ws.slice(0, 2))).toBe(
@@ -200,10 +220,144 @@ describe("неделя в списке учеников", () => {
   });
 
   it("не играл; без верных ответов доли ввода нет", () => {
-    expect(weekCell(weekReport({}, null, TODAY))).toEqual({ main: "не играл(а)", sub: "" });
+    expect(weekCell(weekReport({}, null, TODAY))).toEqual({ main: "игры не было", sub: "" });
     expect(weekCell(weekReport({ dlog: { [TODAY]: day({ s: 120, x: 4 }) } }, {}, TODAY))).toEqual({
       main: "1 дн · 2 мин",
       sub: "",
     });
+  });
+});
+
+describe("пометки в списке учеников", () => {
+  const task = (x: Partial<Task>): Task => ({
+    id: "t1",
+    title: "Удвоенные",
+    words: ["кла(сс)", "гру(пп)а"],
+    coins: 0,
+    createdAt: "2026-10-10T08:00:00.000Z",
+    ...x,
+  });
+  const seenAt = (n: number) => new Date(NOW - n * DAY).toISOString();
+
+  it("ученик ещё не входил — одна мягкая пометка", () => {
+    const f = attention({ profile: null, lastSeenAt: null }, TODAY);
+    expect(f).toEqual([{ text: "входа по коду ещё не было", level: "soft" }]);
+    expect(attentionScore(f)).toBe(1);
+  });
+
+  it("дни без игры: с трёх — жёлтая, с семи — красная; вчера и позавчера — тихо", () => {
+    expect(idleDays({ lastSeenAt: null }, TODAY)).toBeNull();
+    expect(idleDays({ lastSeenAt: seenAt(0) }, TODAY)).toBe(0);
+    expect(attention({ profile: {}, lastSeenAt: seenAt(2) }, TODAY)).toEqual([]);
+    expect(attention({ profile: {}, lastSeenAt: seenAt(3) }, TODAY)).toEqual([
+      { text: "3 дня без игры", level: "warn" },
+    ]);
+    expect(attention({ profile: {}, lastSeenAt: seenAt(12) }, TODAY)).toEqual([
+      { text: "12 дней без игры", level: "bad" },
+    ]);
+  });
+
+  it("задания: не начато два дня, срок прошёл недавно, сделано на днях; давние не напоминают", () => {
+    const flags = (tasks: Task[], done: Record<string, string> = {}) =>
+      attention(
+        {
+          profile: {
+            tasks: Object.fromEntries(
+              Object.entries(done).map(([id, d]) => [
+                id,
+                { title: "", hp: {}, wrong: {}, right: 4, guard: 1, done: d },
+              ]),
+            ),
+          },
+          tasks,
+          lastSeenAt: seenAt(0),
+        },
+        TODAY,
+      ).map((f) => f.text);
+    expect(flags([task({ createdAt: "2026-10-14T08:00:00.000Z" })])).toEqual([]); // задано вчера
+    expect(flags([task({})])).toEqual(["задание не начато"]);
+    expect(flags([task({ from: "2026-10-20" })])).toEqual([]); // ещё не открылось
+    expect(flags([task({ words: [] })])).toEqual([]); // подарок без слов
+    expect(flags([task({ until: "2026-10-12" })])).toEqual(["задание не сделано в срок"]);
+    expect(flags([task({ until: "2026-09-01" })])).toEqual([]);
+    expect(flags([task({})], { t1: "2026-10-13" })).toEqual(["задание сделано"]);
+    expect(flags([task({})], { t1: "2026-09-01" })).toEqual([]);
+  });
+
+  it("забывает слова — пометка; чем больше пометок, тем выше в списке", () => {
+    const calm = attention({ profile: {}, lastSeenAt: seenAt(0) }, TODAY);
+    const busy = attention(
+      {
+        profile: { hist: [battle(5, "молоко", ["молоко"]), battle(2, "молоко!")] },
+        stats: { молоко: st({ right: 3, wrong: 1, streak: 0 }) },
+        lastSeenAt: seenAt(8),
+      },
+      TODAY,
+    );
+    expect(busy.map((f) => f.text)).toEqual(["8 дней без игры", "забывает 1 слово"]);
+    expect(attentionScore(busy)).toBeGreaterThan(attentionScore(calm));
+  });
+});
+
+describe("отчёт родителям", () => {
+  const day = (d: Partial<DayLog>): DayLog => ({ s: 0, r: 0, x: 0, n: 1, t: 0, l: 0, ...d });
+
+  it("слова, выученные за неделю, без повторов и по порядку", () => {
+    const hist = [
+      battle(9, "пенал", ["пенал"]),
+      battle(1, "собака", ["собака"]),
+      battle(3, "молоко", ["молоко", "собака"]),
+    ];
+    expect(learnedSince(hist, NOW - 7 * DAY)).toEqual(["молоко", "собака"]);
+  });
+
+  it("неделя с игрой: дни и минуты, ответы, выучено, над чем работаем, задания", () => {
+    const text = parentReport(
+      {
+        name: "Маша",
+        profile: {
+          dlog: { "2026-10-15": day({ s: 600, r: 20, x: 3, l: 1 }), "2026-10-12": day({ s: 900, r: 9, x: 2, l: 1 }) },
+          hist: [battle(3, "молоко берёза!", ["молоко"]), battle(0, "собака берёза! ворона!", ["собака"])],
+          tasks: { t2: { title: "", hp: {}, wrong: {}, right: 5, guard: 1, done: "2026-10-14" } },
+        },
+        stats: {
+          берёза: st({ right: 1, wrong: 2, streak: 0 }),
+          ворона: st({ right: 0, wrong: 1, streak: 0 }),
+        },
+        tasks: [
+          { id: "t1", title: "Удвоенные", words: ["кла(сс)"], coins: 0, createdAt: "2026-10-14T08:00:00.000Z" },
+          { id: "t2", title: "Парные", words: ["ду(б)"], coins: 0, createdAt: "2026-10-10T08:00:00.000Z" },
+          { id: "t3", title: "Подарок", words: [], coins: 50, createdAt: "2026-10-10T08:00:00.000Z" },
+          {
+            id: "t4",
+            title: "На потом",
+            words: ["м(о)локо"],
+            coins: 0,
+            from: "2026-10-20",
+            createdAt: "2026-10-10T08:00:00.000Z",
+          },
+        ],
+      },
+      TODAY,
+      NOW,
+    );
+    expect(text).toBe(
+      [
+        "Маша: неделя в игре «Охотники за ошибками»",
+        "Дней с игрой: 2 из 7, всего 25 минут.",
+        "Верных ответов: 29, ошибок: 5.",
+        "Выучено слов: 2 (молоко, собака).",
+        "Над чем работаем: берёза, ворона.",
+        "Задание «Удвоенные»: ещё не начато.",
+        "Задание «Парные»: сделано.",
+      ].join("\n"),
+    );
+  });
+
+  it("неделя без игры и ученик без входа", () => {
+    expect(parentReport({ name: "Петя", profile: {} }, TODAY, NOW)).toBe(
+      "Петя: неделя в игре «Охотники за ошибками»\nНа этой неделе игры не было. Хорошо бы заходить каждый день хотя бы на 10 минут.",
+    );
+    expect(parentReport({ name: "Оля", profile: null }, TODAY, NOW)).toContain("Входа в игру по коду пока не было.");
   });
 });

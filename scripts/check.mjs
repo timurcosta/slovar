@@ -1159,9 +1159,9 @@ if (wanted("online")) {
     expect((rec?.profile?.tot?.correct ?? 0) + Object.keys(rec?.stats ?? {}).length > 0, "на сервер не дошли ответы");
 
     await t.goto(online.base + "tutor.html#/");
-    await t.waitForSelector("tr[data-id]");
+    await t.waitForSelector(".scard");
     await tutor.shot("04-list");
-    await t.click("tr[data-id]");
+    await t.click(".scard");
     await t.waitForSelector(".ttabs");
     await tutor.shot("05-student");
     // история: только что сыгранный бой с его словами
@@ -1182,9 +1182,13 @@ if (wanted("online")) {
     await t.waitForSelector("#t-suggest [data-raw]");
     await tutor.shot("05b-task-form");
     await t.click("#t-suggest [data-raw]");
+    await t.click("#t-texts > summary");
     await t.fill("#t-note", "Читай слово целиком!");
     await t.click("#t-save");
     await t.waitForSelector(".tcard-t");
+    // задания уже есть — конструктор спрятан за кнопкой
+    expect(await t.locator("#tform").isHidden(), "конструктор задания не свернулся после сохранения");
+    await t.click("#t-new");
     await t.fill("#t-title", "Словарные на завтра");
     await t.fill("#t-words", "м(о)локо");
     await t.click('[name="t-when"][value="date"]');
@@ -1196,16 +1200,38 @@ if (wanted("online")) {
       tasks.length === 2 && tasks[0].words.length === 3 && tasks[1].from === "2026-10-16",
       "задания из конструктора не дошли до сервера",
     );
-    await t.click('.ttab[href$="/words"]');
+    await t.click('.ttab[href$="/settings"]');
     await t.waitForSelector("#settings");
+    // настройки — свёрнутые разделы с текущим значением в заголовке
+    await tutor.shot("06a-settings-folded");
+    const sect = (id) => t.click(`.sect[data-sect="${id}"] > summary`);
+    await sect("words");
     await t.click('label.mode:has(input[value="custom"])');
     // свои слова с подсказками репетитора: ученик увидит подсказку после ошибки
+    await sect("custom");
+    await t.fill("#custom", KID_CUSTOM + "\nбез скобок");
+    expect((await t.textContent("#custom-bad")).includes("без скобок"), "свои слова: нет живой проверки строк");
+    await t.click("#custom-preview summary");
+    expect(
+      (await t.textContent("#custom-preview")).includes("не «а»") && (await t.textContent("#sv-custom")) === "2 слова",
+      "свои слова: нет предпросмотра ловушек или счётчика в заголовке",
+    );
+    await tutor.shot("06b-settings-custom");
     await t.fill("#custom", KID_CUSTOM);
+    await sect("lim");
     await t.fill('[name="lim-min"]', "30");
+    await sect("answer");
     await t.click('label.mode:has(input[name="answer"][value="grow"])');
+    // несохранённое: первый уход со вкладки останавливается и объясняет почему
+    await t.click('.ttab[href$="/history"]');
+    await t.waitForSelector("#set-msg.err");
+    expect(
+      (await t.locator("#settings").count()) === 1 && (await t.evaluate(() => location.hash)).endsWith("/settings"),
+      "несохранённые настройки: вкладка сменилась без предупреждения",
+    );
     await t.click("#settings button[type=submit]");
     await t.waitForSelector("#set-msg.okm");
-    await tutor.shot("06-settings-saved", ["#code"]);
+    await tutor.shot("06-settings-saved");
     expect((await store.listStudents())[0].settings.answer === "grow", "режим ответа «по росту» не дошёл до сервера");
 
     const pulled = k.waitForResponse((r) => r.url().endsWith("/api/me"));
@@ -1250,12 +1276,13 @@ if (wanted("online")) {
       (await t.textContent(".tcard-t:last-child .tstate")).startsWith("в процессе"),
       "в кабинете нет статуса задания",
     );
-    await t.click('.ttab[href$="/login"]');
+    // вход по коду и имя — раздел настроек; старый адрес вкладки «Вход» открывает его сразу
+    await t.goto(online.base + "tutor.html#/s/" + (await store.listStudents())[0].id + "/login");
     await t.waitForSelector("#copy");
     await fixCode(t);
     await tutor.shot("08-login-tab");
     await t.goto(online.base + "tutor.html#/");
-    await t.waitForSelector("tr[data-id]");
+    await t.waitForSelector(".scard");
     await tutor.shot("09-list-task");
     const ls = await kid.dump("online-kid");
     expect(ls.sb_settings?.words === "custom", "ученик не получил режим слов от репетитора");
@@ -1271,14 +1298,15 @@ if (wanted("online")) {
       fs.writeFileSync(path.join(outDir, f), text);
     }
     // репетитор ставит «Только пишет сам»: в бою сразу поле ввода
-    await t.click("tr[data-id]");
+    await t.click(".scard");
     await t.waitForSelector(".ttabs");
-    await t.click('.ttab[href$="/words"]');
+    await t.click('.ttab[href$="/settings"]');
     await t.waitForSelector("#settings");
+    await t.click('.sect[data-sect="answer"] > summary');
     await t.click('label.mode:has(input[name="answer"][value="type"])');
     await t.click("#settings button[type=submit]");
     await t.waitForSelector("#set-msg.okm");
-    await tutor.shot("10-answer-type", ["#code"]);
+    await tutor.shot("10-answer-type");
     const pulled2 = k.waitForResponse((r) => r.url().endsWith("/api/me"));
     await k.reload();
     await pulled2;
@@ -1343,17 +1371,48 @@ if (wanted("online")) {
       settings: { words: "a", customWords: VETERAN_CUSTOM },
     });
     await t.goto(online.base + "tutor.html#/");
-    await t.waitForFunction(() => document.querySelectorAll("tr[data-id]").length === 2);
+    await t.waitForFunction(() => document.querySelectorAll(".scard").length === 2);
     await tutor.shot("11-list-week");
     expect(
-      (await t.textContent('tr[data-id="kid-VET234"] td.wk')).includes("4 дн · 34 мин · ввод") &&
-        (await t.textContent('tr[data-id="kid-VET234"] td.wk small')).includes("забыто 2"),
+      (await t.textContent('.scard[data-id="kid-VET234"] .wk')).includes("4 дн · 34 мин · ввод") &&
+        (await t.textContent('.scard[data-id="kid-VET234"] .wk .sc-s')).includes("забыто 2"),
       "в списке нет недели ученика",
     );
-    await t.click('tr[data-id="kid-VET234"]');
+    // «сначала важное»: ученик с пометкой («забывает») выше, хотя по имени он второй; «По имени» возвращает порядок
+    const order = () => t.locator(".scard .sc-name b").allTextContents();
+    expect(
+      (await order()).join() === "Тест,Маша" &&
+        (await t.textContent('.scard[data-id="kid-VET234"] .sc-flags')).includes("забывает 3 слова"),
+      "список: нет пометки «забывает» или ученик с пометкой не наверху",
+    );
+    await t.click('[data-sort="name"]');
+    await t.waitForFunction(() => document.querySelector(".scard .sc-name b")?.textContent === "Маша");
+    await t.click('[data-sort="care"]');
+    await t.waitForFunction(() => document.querySelector(".scard .sc-name b")?.textContent === "Тест");
+    await t.click('.scard[data-id="kid-VET234"]');
     await t.waitForSelector(".ttabs");
     await tutor.shot("12-overview-week", [], { fullPage: true });
-    expect((await t.textContent("#tab")).includes("За 7 дней: 4 дня"), "в обзоре нет строки «за 7 дней»");
+    expect((await t.textContent(".wstats")).includes("4 из 7"), "в обзоре нет недели плитками");
+    // отчёт родителям: готовый текст, копируется
+    await tutor.ctx.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await t.click("#parent-open");
+    await tutor.shot("12a-parent-report");
+    await t.click("#parent-copy");
+    await t.waitForSelector("#parent-msg.okm");
+    const parentText = await t.evaluate(() => navigator.clipboard.readText());
+    expect(
+      parentText.startsWith("Тест: неделя в игре") &&
+        parentText.includes("Дней с игрой: 4 из 7, всего 34 минуты.") &&
+        parentText.includes("Над чем работаем: ворона"),
+      `отчёт родителям: ${parentText}`,
+    );
+    await t.click("#parent-close");
+    // «Трудные» — только ещё не выученные; длинный список показывает начало
+    expect(
+      (await t.locator('.wlist[data-list="hard"] tbody tr:visible').count()) === 9 &&
+        (await t.textContent('.wtab[data-list="hard"]')).includes("9"),
+      "«Трудные»: не все 9 слов (хвост из одной строки прятать незачем)",
+    );
     const wtab = async (k) => {
       await t.click(`.wtab[data-list="${k}"]`);
       return (await t.locator(`.wlist[data-list="${k}"]`).textContent()) || "";
@@ -1367,7 +1426,7 @@ if (wanted("online")) {
     await wtab("unseen");
     await tutor.shot("12c-words-unseen");
     const unseenShown = await t.locator(".wchip:visible").count();
-    await t.click("#unseen-all");
+    await t.click('.wlist[data-list="unseen"] .more');
     expect(
       unseenShown === 30 && (await t.locator(".wchip:visible").count()) > 30,
       "«Не видел»: не 30 слов сразу или «Показать все» не работает",
@@ -1386,7 +1445,6 @@ if (wanted("online")) {
       gaps.length === 10 && gaps[0] === "в_рона" && (await t.textContent(".lesson-t")).includes("кар-кар"),
       `«Слова на занятие»: ${gaps.join(", ")}`,
     );
-    await tutor.ctx.grantPermissions(["clipboard-read", "clipboard-write"]);
     await t.click("#lesson-copy");
     await t.waitForSelector("#lesson-msg.okm");
     const copied = await t.evaluate(() => navigator.clipboard.readText());
@@ -1397,9 +1455,30 @@ if (wanted("online")) {
     await t.click("#lesson-give");
     await t.waitForSelector("#tform");
     expect((await t.inputValue("#t-words")).split("\n").length === 10, "«Слова на занятие» не дошли до конструктора");
+    // то же задание — сразу второму ученику
+    await t.fill("#t-title", "Работа над ошибками");
+    await t.click("#t-others > summary");
+    await t.click('#t-others-list label:has-text("Маша")');
+    await tutor.shot("12e-task-others", [], { fullPage: true });
+    await t.click("#t-save");
+    await t.waitForSelector("#t-flash.okm");
+    await tutor.shot("12f-task-given");
+    const given = await store.listStudents();
+    expect(
+      given.every((x) => x.tasks?.some((y) => y.title === "Работа над ошибками" && y.words.length === 10)),
+      "задание не дошло до обоих учеников",
+    );
+    // «Повторить»: конструктор с теми же словами, но как новое задание
+    await t.click("[data-again]");
+    expect(
+      (await t.inputValue("#t-title")) === "Работа над ошибками" && (await t.textContent("#t-save")) === "Задать",
+      "«Повторить» не открыл конструктор с копией задания",
+    );
+    await t.click("#t-cancel");
     await t.goto(online.base + "tutor.html#/s/kid-VET234");
     await t.waitForSelector(".ttabs");
     await t.setViewportSize({ width: 390, height: 844 });
+    await t.click(".thero > summary");
     await t.locator("#thero-cv").scrollIntoViewIfNeeded();
     await t.waitForTimeout(400);
     expect(await t.locator(".thero[open] #thero-cv").count(), "в блоке «Герой» нет аватарки");
@@ -1414,6 +1493,7 @@ if (wanted("online")) {
     expect(
       (await t.locator(".hcal-g .hc:not(.h0):not(.future)").count()) > 30 &&
         (await t.locator(".hday").count()) === 4 &&
+        (await t.locator(".hday[open]").count()) === 2 &&
         (await t.locator(".hword.good").count()) === 4,
       "история прокачанного ученика неполная",
     );
@@ -1423,9 +1503,20 @@ if (wanted("online")) {
     await t.click("#lesson-open");
     await t.waitForSelector("#lesson:not([hidden])");
     await tutor.shot("15-overview-phone", [], { fullPage: true });
+    await t.click('.ttab[href$="/tasks"]');
+    await t.waitForSelector(".tcard-t");
+    await tutor.shot("15b-tasks-phone", [], { fullPage: true });
+    await t.click('.ttab[href$="/settings"]');
+    await t.waitForSelector("#settings");
+    await t.click('.sect[data-sect="lim"] > summary');
+    await tutor.shot("15c-settings-phone", [], { fullPage: true });
     await t.goto(online.base + "tutor.html#/");
-    await t.waitForSelector('tr[data-id="kid-VET234"]');
+    await t.waitForSelector('.scard[data-id="kid-VET234"]');
     await tutor.shot("16-list-phone", [], { fullPage: true });
+    expect(
+      await t.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      "список учеников на телефоне шире экрана",
+    );
   } catch (e) {
     errors.push(`[online] шаг упал: ${e.message.split("\n")[0]}`);
     await tutor.shot("FAILED");
