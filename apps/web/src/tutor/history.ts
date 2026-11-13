@@ -46,9 +46,6 @@ export function weekLine(s: Student): string {
   return `За 7 дней: ${w.days} ${plural(w.days, ["день", "дня", "дней"])}, ${minutes(w.sec)} ${plural(minutes(w.sec), ["минута", "минуты", "минут"])}.`;
 }
 
-/** Сколько дней играл за последние 7 (список учеников). */
-export const weekDays = (s: Student) => summary(s.profile?.dlog, today()).days;
-
 function calendarHTML(dlog: Record<string, DayLog> | undefined, now: string): string {
   const cols = calendar(dlog, now);
   // подпись месяца — над первой неделей месяца; у первой колонки, только если месяц в ней не кончается

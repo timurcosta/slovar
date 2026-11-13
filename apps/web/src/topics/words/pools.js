@@ -1,6 +1,6 @@
 // Наборы слов для боя: по классам, слова учителя, работа над ошибками, новые слова.
 import { W12, W34 } from "./lists.js";
-import { parseEntry, parseList } from "./parse.ts";
+import { parseEntry, parseList, splitEntries } from "./parse.ts";
 import { errorWords } from "./schedule.ts";
 import { stats } from "../../state/stats.ts";
 import { LS } from "../../state/storage.ts";
@@ -14,7 +14,7 @@ export let customRaw = LS.get("sb_custom", "");
 export function setCustomRaw(v) {
   customRaw = v;
 }
-export const customPool = () => customRaw.split(/\n|,/).map(parseEntry).filter(Boolean);
+export const customPool = () => splitEntries(customRaw).map(parseEntry).filter(Boolean);
 export function poolFor(b) {
   if (b.pool === "train" && G && G.trainPool) return G.trainPool;
   if (settings.words === "custom") {

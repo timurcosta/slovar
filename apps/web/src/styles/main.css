@@ -1491,6 +1491,15 @@ textarea:focus-visible {
 .feedback u {
   text-decoration-thickness: 3px;
 }
+/* подсказка репетитора после ошибки: второй строкой, мельче и спокойнее */
+.feedback .fb-hint {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
 
 .overlay {
   position: relative;

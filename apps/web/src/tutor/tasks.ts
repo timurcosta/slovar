@@ -3,7 +3,7 @@
 import type { Student, Task, TaskInput } from "@repetitor/shared";
 import { esc } from "../lib/dom.js";
 import { today } from "../lib/date.js";
-import { parseEntry } from "../topics/words/parse.ts";
+import { parseEntry, splitEntries } from "../topics/words/parse.ts";
 import {
   DEFAULT_CONGRATS,
   GUARD_FORGIVES,
@@ -104,6 +104,7 @@ function formHTML(): string {
       <div class="tsuggest" id="t-suggest"></div>
       <textarea id="t-words" rows="7" placeholder="б(е)рёза&#10;кла(сс)&#10;м(о/а)локо"></textarea>
       <p class="note">Одно слово в строке, трудная буква в скобках: м(о)локо, ловушка через черту: м(о/а)локо. Без слов задание — просто подарок.</p>
+      <p class="note">Подсказка после «|»: м(о)локо | корова мычит: мо-о — ученик увидит её только после ошибки.</p>
       <p class="msg" id="t-bad"></p>
     </div>
     <fieldset class="tfield">
@@ -137,11 +138,7 @@ export function renderTasksTab(root: HTMLElement, s: Student, reload: () => void
 
   let editing: Task | null = null;
   const words = q<HTMLTextAreaElement>("#t-words");
-  const lines = () =>
-    words.value
-      .split(/\n|,/)
-      .map((l) => l.trim())
-      .filter(Boolean);
+  const lines = () => splitEntries(words.value);
   const recount = () => {
     const ls = lines(),
       bad = ls.filter((l) => !parseEntry(l));

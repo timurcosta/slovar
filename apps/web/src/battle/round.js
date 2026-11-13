@@ -1331,6 +1331,8 @@ function resolve(ok, timeout) {
       outcome = "dodge";
       fb.innerHTML = "Увернулся! Правильно: " + shown;
     } else fb.innerHTML = (timeout ? "Время вышло! " : "") + "Правильно: " + shown;
+    // подсказка репетитора к слову (м(о)локо | корова мычит: мо-о) — только после ошибки, никогда до ответа
+    if (e.hint) fb.insertAdjacentHTML("beforeend", `<span class="fb-hint">Подсказка: ${esc(e.hint)}</span>`);
     const dmg = outcome === "hit" ? (G.boss.ab.includes("double") ? 2 : 1) : 0;
     const hitAt = bossAttack(outcome);
     const land = (n) => {
@@ -1391,7 +1393,8 @@ function resolve(ok, timeout) {
     addCharge();
     renderHUD();
     save();
-    later(() => continueOrLose(guardianGone() ? guardianLeaves : nextQ), 1900);
+    // с подсказкой пауза дольше: ребёнку нужно успеть её прочитать
+    later(() => continueOrLose(guardianGone() ? guardianLeaves : nextQ), e.hint ? 3400 : 1900);
   }
   save();
 }

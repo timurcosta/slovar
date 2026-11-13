@@ -254,6 +254,7 @@ for (const [kind, makeStore] of factories) {
       for (const junk of [
         { ...ok, title: "" },
         { ...ok, words: ["класс"] },
+        { ...ok, words: ["класс | (подсказка) в скобках"] },
         { ...ok, words: Array.from({ length: 41 }, (_, i) => `с(о)${i}`) },
         { ...ok, coins: 1001 },
         { ...ok, coins: -1 },
@@ -281,6 +282,11 @@ for (const [kind, makeStore] of factories) {
         note: "Удачи!",
         createdAt: "2026-10-15T10:00:00.000Z",
       });
+      // слово с подсказкой репетитора: подсказка длиннее старых 60 символов не обрезается
+      const hint = "м(о)локо | корова мычит: мо-о, а молоко у неё белое-белое и очень вкусное, пей на здоровье";
+      const hinted = await call("POST", url, { ...ok, words: [hint] }, t);
+      expect(hinted.body.words).toEqual([hint]);
+      await call("DELETE", `${url}/${hinted.body.id}`, undefined, t);
       // подарок без слов
       const gift = (await call("POST", url, { title: "Подарок от Ралины", words: [], coins: 100 }, t)).body;
 

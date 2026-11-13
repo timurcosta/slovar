@@ -62,7 +62,7 @@ const text = (v: unknown, max: number) =>
     .trim()
     .slice(0, max);
 
-/** Задание из кабинета: обрезает лишнее, null — если что-то не так. Слова — в формате м(о)локо. */
+/** Задание из кабинета: обрезает лишнее, null — если что-то не так. Слова — в формате м(о)локо (| подсказка). */
 function cleanTask(v: unknown): TaskInput | null {
   if (!v || typeof v !== "object") return null;
   const t = v as Record<string, unknown>;
@@ -70,8 +70,9 @@ function cleanTask(v: unknown): TaskInput | null {
   if (!title || !Array.isArray(t.words) || t.words.length > MAX_TASK_WORDS) return null;
   const words: string[] = [];
   for (const w of t.words) {
-    const s = text(w, 60);
-    if (!/\([^()]+\)/.test(s)) return null;
+    // слово до «|», после — подсказка репетитора (м(о)локо | корова мычит: мо-о)
+    const s = text(w, 160);
+    if (!/\([^()]+\)/.test(s.split("|")[0])) return null;
     if (!words.includes(s)) words.push(s);
   }
   const coins = Math.floor(Number(t.coins));

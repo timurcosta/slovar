@@ -425,3 +425,167 @@
     grid-template-columns: repeat(6, 1fr);
   }
 }
+
+/* обзор: списки слов вкладками внутри панели */
+.wtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.wtab {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.wtab b {
+  font-weight: 900;
+  color: var(--ink-soft);
+  margin-left: 2px;
+}
+.wtab.on {
+  background: var(--ink);
+  color: #fff;
+}
+.wtab.on b {
+  color: var(--gold-l);
+}
+.wlist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wlist .note {
+  margin: 0;
+}
+.wtable td:first-child,
+.wtable th:first-child {
+  width: 28px;
+  padding-right: 0;
+}
+.wchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.panel label.wchip {
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 2px 8px 2px 4px;
+  border: 2px solid var(--grid);
+  background: var(--paper);
+  cursor: pointer;
+}
+.wlist > .link {
+  align-self: flex-start;
+}
+
+/* «Слова на занятие»: крупно, для диктанта */
+.lesson {
+  border: 3px solid var(--ink);
+  background: var(--paper);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lesson h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.lesson h3 small {
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-weight: 800;
+}
+.lesson .note {
+  margin: 0;
+}
+.lesson-t td {
+  vertical-align: top;
+  padding: 5px 6px;
+}
+.lesson-t td.ln {
+  width: 1px;
+  padding-right: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  line-height: 32px;
+}
+.lesson-t td.lgap {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  line-height: 32px;
+  white-space: nowrap;
+}
+.lesson-t td.lans {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  padding-top: 8px;
+}
+.lesson-t u {
+  color: var(--pen);
+  text-decoration-thickness: 2px;
+}
+.lesson-t small,
+.lesson-t i {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.lesson-t i {
+  color: var(--ink);
+}
+#lesson-text {
+  min-height: 0;
+  font-size: 14px;
+}
+
+/* список учеников: неделя одной ячейкой */
+td.wk span {
+  display: block;
+  white-space: nowrap;
+  font-weight: 800;
+}
+td.wk small {
+  display: block;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+@media (max-width: 480px) {
+  .wtabs {
+    gap: 4px;
+  }
+  .wtab {
+    font-size: 13px;
+    padding: 4px 6px;
+  }
+  .lesson {
+    padding: 10px 8px;
+  }
+  .lesson-t td.lgap {
+    font-size: 20px;
+    letter-spacing: 0.5px;
+  }
+  .lesson-t td.lans {
+    font-size: 16px;
+    padding-top: 6px;
+  }
+  /* неделя в списке переносится, чтобы таблица не росла вширь */
+  td.wk span,
+  td.wk small {
+    white-space: normal;
+    min-width: 110px;
+  }
+}

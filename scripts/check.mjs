@@ -167,6 +167,8 @@ async function addKid(store, { name, code = "ABC234", profile = null, stats = nu
 }
 
 // задания Ралины: сегодня 2026-10-15
+/** Свои слова, которые репетитор задаёт в online: с подсказками после «|». */
+const KID_CUSTOM = "м(о)локо | корова мычит: мо-о\nс(о)бака | у собаки нос, а нос — с «о»";
 const TASK_WORDS = ["кла(сс)", "а(лл)ея", "гру(пп)а", "ми(лл)ион", "ко(лл)екция"];
 const TASKS = [
   {
@@ -342,6 +344,35 @@ for (const e of VETERAN_HIST) {
   d.l += e.l?.length || 0;
 }
 const VETERAN_LOG = { hist: VETERAN_HIST, dlog: VETERAN_DLOG };
+/**
+ * Статистика слов прокачанного ученика для кабинета: трудные, «Забывает» (до последней ошибки точно была
+ * серия из 3 верных: пальто, тетрадь, сапоги) и выученные. Остальные слова 1–2 класса — «Не видел».
+ */
+const wordAt = (n, hm) => {
+  const [h, mi] = hm.split(":").map(Number),
+    t = new Date(NOW.getTime() - n * DAY_MS);
+  t.setHours(h, mi, 0, 0);
+  return t.getTime();
+};
+const VETERAN_STATS = {
+  ворона: { right: 5, wrong: 4, streak: 2, last: wordAt(4, "16:52"), lastWrong: wordAt(4, "16:45") },
+  тетрадь: { right: 5, wrong: 1, streak: 1, last: wordAt(4, "16:55"), lastWrong: wordAt(4, "16:41") },
+  пальто: { right: 4, wrong: 1, streak: 1, last: wordAt(1, "15:34"), lastWrong: wordAt(1, "15:32") },
+  сапоги: { right: 7, wrong: 2, streak: 0, last: wordAt(9, "17:00"), lastWrong: wordAt(9, "17:00") },
+  ученик: { right: 2, wrong: 2, streak: 0, last: wordAt(4, "16:42"), lastWrong: wordAt(4, "16:42") },
+  карандаш: { right: 3, wrong: 1, streak: 1, last: wordAt(4, "16:40"), lastWrong: wordAt(12, "16:00") },
+  дорога: { right: 1, wrong: 2, streak: 0, last: wordAt(15, "17:00"), lastWrong: wordAt(15, "17:00") },
+  деревня: { right: 2, wrong: 1, streak: 2, last: wordAt(15, "17:05"), lastWrong: wordAt(20, "17:00") },
+  лягушка: { right: 0, wrong: 1, streak: 0, last: wordAt(20, "17:10"), lastWrong: wordAt(20, "17:10") },
+  молоко: { right: 6, wrong: 0, streak: 6, typed: 2, last: wordAt(1, "15:36") },
+  собака: { right: 4, wrong: 0, streak: 4, typed: 1, last: wordAt(1, "15:36") },
+  корова: { right: 4, wrong: 0, streak: 4, typed: 1, last: wordAt(1, "15:36") },
+  берёза: { right: 5, wrong: 0, streak: 5, typed: 1, last: wordAt(1, "15:36") },
+  пенал: { right: 4, wrong: 0, streak: 4, typed: 1, last: wordAt(1, "15:36") },
+  класс: { right: 3, wrong: 0, streak: 3, typed: 2, last: wordAt(2, "18:10") },
+};
+/** Свои слова с подсказками: «Слова на занятие» берут запись слова (и подсказку) отсюда. */
+const VETERAN_CUSTOM = "в(о)рона | ворона каркает: кар-кар, а не вар\nп(а)льто | пальто не склоняется";
 
 // всё оружие и питомцы: у каждого свой удар (сценарий weapons)
 const WEAPONS = [
@@ -1168,7 +1199,8 @@ if (wanted("online")) {
     await t.click('.ttab[href$="/words"]');
     await t.waitForSelector("#settings");
     await t.click('label.mode:has(input[value="custom"])');
-    await t.fill("#custom", "м(о)локо\nс(о)бака");
+    // свои слова с подсказками репетитора: ученик увидит подсказку после ошибки
+    await t.fill("#custom", KID_CUSTOM);
     await t.fill('[name="lim-min"]', "30");
     await t.click('label.mode:has(input[name="answer"][value="grow"])');
     await t.click("#settings button[type=submit]");
@@ -1228,7 +1260,7 @@ if (wanted("online")) {
     const ls = await kid.dump("online-kid");
     expect(ls.sb_settings?.words === "custom", "ученик не получил режим слов от репетитора");
     expect(ls.sb_settings?.lim?.min === 30, "ученик не получил лимит минут");
-    expect(ls.sb_custom === "м(о)локо\nс(о)бака", "ученик не получил свои слова репетитора");
+    expect(ls.sb_custom === KID_CUSTOM, "ученик не получил свои слова репетитора");
     expect(ls.sb_settings?.answer === "grow", "ученик не получил режим ответа «по росту»");
     const { code: _c, id: _i, ...stable } = (await store.listStudents())[0];
     fs.writeFileSync(path.join(outDir, "online-server.json"), JSON.stringify(stable, stableTimes, 2));
@@ -1263,6 +1295,16 @@ if (wanted("online")) {
       (await k.locator("#typer").isVisible()) && (await k.locator("#opts").isHidden()),
       "«только пишет сам»: в бою нет поля ввода",
     );
+    // подсказки до ответа нет, после ошибки — под правильным словом
+    expect(await k.locator("#feedback .fb-hint").isHidden(), "подсказка видна до ответа");
+    await k.fill("#type-in", "мелоко");
+    await k.click("#type-go");
+    await tick(k, 1200);
+    await kid.shot("09d-type-hint");
+    expect(
+      /Подсказка: (корова мычит|у собаки)/.test((await k.textContent("#feedback .fb-hint")) || ""),
+      "после ошибки нет подсказки репетитора",
+    );
     await k.click("#btn-quit");
     await tick(k, 600);
     // учитель дала поиграть со своего телефона: ученик выходит, на устройстве никого, прогресс у учителя
@@ -1291,15 +1333,72 @@ if (wanted("online")) {
       "после выхода на устройстве остались данные ученика",
     );
     expect(((await store.listStudents())[0].profile?.xp ?? 0) > 0, "после выхода прогресс пропал с сервера");
-    // ученик с журналом за 12 недель: «Дней за неделю» в списке, заполненный календарь и бои по дням
-    await addKid(store, { name: "Тест", code: "VET234", profile: { ...VETERAN, ...VETERAN_LOG } });
+    // ученик с журналом за 12 недель: неделя в списке (дни, минуты, ввод, выучено и забыто), три списка слов
+    // и «Слова на занятие» в обзоре, заполненный календарь и бои по дням
+    await addKid(store, {
+      name: "Тест",
+      code: "VET234",
+      profile: { ...VETERAN, ...VETERAN_LOG },
+      stats: VETERAN_STATS,
+      settings: { words: "a", customWords: VETERAN_CUSTOM },
+    });
     await t.goto(online.base + "tutor.html#/");
     await t.waitForFunction(() => document.querySelectorAll("tr[data-id]").length === 2);
     await tutor.shot("11-list-week");
+    expect(
+      (await t.textContent('tr[data-id="kid-VET234"] td.wk')).includes("4 дн · 34 мин · ввод") &&
+        (await t.textContent('tr[data-id="kid-VET234"] td.wk small')).includes("забыто 2"),
+      "в списке нет недели ученика",
+    );
     await t.click('tr[data-id="kid-VET234"]');
     await t.waitForSelector(".ttabs");
-    await tutor.shot("12-overview-week");
+    await tutor.shot("12-overview-week", [], { fullPage: true });
     expect((await t.textContent("#tab")).includes("За 7 дней: 4 дня"), "в обзоре нет строки «за 7 дней»");
+    const wtab = async (k) => {
+      await t.click(`.wtab[data-list="${k}"]`);
+      return (await t.locator(`.wlist[data-list="${k}"]`).textContent()) || "";
+    };
+    const forgetText = await wtab("forget");
+    await tutor.shot("12b-words-forget");
+    expect(
+      ["пальто", "тетрадь", "сапоги"].every((w) => forgetText.includes(w)) && !forgetText.includes("ученик"),
+      "«Забывает»: не те слова",
+    );
+    await wtab("unseen");
+    await tutor.shot("12c-words-unseen");
+    const unseenShown = await t.locator(".wchip:visible").count();
+    await t.click("#unseen-all");
+    expect(
+      unseenShown === 30 && (await t.locator(".wchip:visible").count()) > 30,
+      "«Не видел»: не 30 слов сразу или «Показать все» не работает",
+    );
+    await t.click(".wchip:visible >> nth=0");
+    await t.click("#give");
+    await t.waitForSelector("#tform");
+    expect((await t.inputValue("#t-words")).split("\n").length === 1, "«Дать заданием» из «Не видел» не сработало");
+    await t.click('.ttab[href="#/s/kid-VET234"]');
+    await t.waitForSelector("#lesson-open");
+    await t.click("#lesson-open");
+    await t.waitForSelector("#lesson:not([hidden])");
+    await tutor.shot("12d-lesson", [], { fullPage: true });
+    const gaps = await t.locator(".lesson-t td.lgap").allTextContents();
+    expect(
+      gaps.length === 10 && gaps[0] === "в_рона" && (await t.textContent(".lesson-t")).includes("кар-кар"),
+      `«Слова на занятие»: ${gaps.join(", ")}`,
+    );
+    await tutor.ctx.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await t.click("#lesson-copy");
+    await t.waitForSelector("#lesson-msg.okm");
+    const copied = await t.evaluate(() => navigator.clipboard.readText());
+    expect(
+      copied.startsWith("Слова на занятие (Тест)\n1. в_рона") && copied.includes("Ответы\n1. ворона — ворона каркает"),
+      "скопирован не тот текст",
+    );
+    await t.click("#lesson-give");
+    await t.waitForSelector("#tform");
+    expect((await t.inputValue("#t-words")).split("\n").length === 10, "«Слова на занятие» не дошли до конструктора");
+    await t.goto(online.base + "tutor.html#/s/kid-VET234");
+    await t.waitForSelector(".ttabs");
     await t.click('.ttab[href$="/history"]');
     await t.waitForSelector(".hcal");
     await tutor.shot("13-history", [], { fullPage: true });
@@ -1311,6 +1410,15 @@ if (wanted("online")) {
         (await t.locator(".hword.good").count()) === 4,
       "история прокачанного ученика неполная",
     );
+    // кабинет на телефоне: обзор со списками слов и «Слова на занятие», список учеников с неделей
+    await t.click('.ttab[href="#/s/kid-VET234"]');
+    await t.waitForSelector("#lesson-open");
+    await t.click("#lesson-open");
+    await t.waitForSelector("#lesson:not([hidden])");
+    await tutor.shot("15-overview-phone", [], { fullPage: true });
+    await t.goto(online.base + "tutor.html#/");
+    await t.waitForSelector('tr[data-id="kid-VET234"]');
+    await tutor.shot("16-list-phone", [], { fullPage: true });
   } catch (e) {
     errors.push(`[online] шаг упал: ${e.message.split("\n")[0]}`);
     await tutor.shot("FAILED");

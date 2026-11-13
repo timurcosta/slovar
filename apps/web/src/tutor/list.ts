@@ -1,10 +1,18 @@
-// Список учеников: кто когда играл, сколько выучил, трудные слова и текущее задание.
+// Список учеников: кто когда играл, неделя (дни, минуты, ввод, выучено и забыто), трудные слова, задание.
 import type { Student } from "@repetitor/shared";
 import { esc } from "../lib/dom.js";
+import { today } from "../lib/date.js";
 import { levelOf } from "../progress/levels.ts";
 import { TOKEN, api, app, hardWords, learned, msg, seen, todayOf } from "./common.ts";
 import { taskCell } from "./tasks.ts";
-import { weekDays } from "./history.ts";
+import { weekCell, weekReport } from "./report.ts";
+
+/** Неделя ученика одной ячейкой: «4 дн · 34 мин · ввод 30%», под ней мелко «выучено 5 · забыто 2». */
+function weekTd(s: Student): string {
+  if (!s.profile) return `<td class="wk">—</td>`;
+  const c = weekCell(weekReport(s.profile, s.stats, today()));
+  return `<td class="wk"><span>${esc(c.main)}</span>${c.sub ? `<small>${esc(c.sub)}</small>` : ""}</td>`;
+}
 
 export async function renderList(onLogout: () => void) {
   app.innerHTML = `<section class="screen"><h1>Ученики</h1><p class="note">Загружаю…</p></section>`;
@@ -25,7 +33,7 @@ export async function renderList(onLogout: () => void) {
         <td class="n">${p ? levelOf(p.xp) : "—"}</td>
         <td>${esc(seen(s.lastSeenAt))}</td>
         <td class="n">${d ? `${Math.floor(d.sec / 60)} мин · ${d.correct} верно` : "—"}</td>
-        <td class="n">${p ? weekDays(s) : "—"}</td>
+        ${weekTd(s)}
         <td class="n">${learned(s)}</td>
         <td class="n${hardWords(s).length ? " bad" : ""}">${hardWords(s).length}</td>
         <td class="tcell ${task.cls}">${esc(task.text)}</td>
@@ -46,7 +54,7 @@ export async function renderList(onLogout: () => void) {
       ${
         list.length
           ? `<div class="panel tutor-scroll"><table class="tutor-table">
-              <thead><tr><th>Имя</th><th class="n">Уровень</th><th>Последний раз</th><th class="n">Сегодня</th><th class="n">Дней за неделю</th><th class="n">Выучено</th><th class="n">Трудных слов</th><th>Задание</th></tr></thead>
+              <thead><tr><th>Имя</th><th class="n">Уровень</th><th>Последний раз</th><th class="n">Сегодня</th><th>За 7 дней</th><th class="n">Выучено</th><th class="n">Трудных слов</th><th>Задание</th></tr></thead>
               <tbody>${rows}</tbody></table></div>`
           : `<p class="note">Добавьте первого ученика: он получит код, по которому войдёт в игру.</p>`
       }

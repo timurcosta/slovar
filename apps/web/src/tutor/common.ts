@@ -1,14 +1,13 @@
 // Общее для страниц кабинета: запросы к API, даты, мелкие помощники.
-import type { Student, WordStats } from "@repetitor/shared";
+import type { Student } from "@repetitor/shared";
 import { today } from "../lib/date.js";
 import { isLearned } from "../content/rules.ts";
-import { W12, W34 } from "../topics/words/lists.js";
-import { parseEntry, parseList } from "../topics/words/parse.ts";
 import { HttpError, request } from "../net/http.ts";
+import { DICT } from "./report.ts";
 
+export { DICT, hardWords, rawOf } from "./report.ts";
 export const app = document.getElementById("app")!;
 export const TOKEN = "tutor_token";
-export const DICT = parseList(W12).concat(parseList(W34));
 export const TOTAL_WORDS = DICT.length;
 
 export const getToken = () => localStorage.getItem(TOKEN);
@@ -50,23 +49,7 @@ export function seen(iso: string | null): string {
 }
 
 export const learned = (s: Student) => Object.values(s.stats || {}).filter(isLearned).length;
-export const hardWords = (s: Pick<Student, "stats">) =>
-  Object.entries(s.stats || ({} as WordStats))
-    .filter(([, w]) => w.wrong > 0)
-    .sort((a, b) => b[1].wrong - a[1].wrong || a[0].localeCompare(b[0], "ru"));
 export const todayOf = (s: Student) => (s.profile?.day && s.profile.day.date === today() ? s.profile.day : null);
-
-/**
- * Слово из статистики («берёза») → запись в формате заданий («б(е)рёза»): ищем в своих словах
- * ученика, потом в словаре. null — если слово не нашлось.
- */
-export function rawOf(word: string, custom = ""): string | null {
-  for (const line of custom.split(/\n|,/)) {
-    const e = parseEntry(line);
-    if (e && e.word === word) return e.raw;
-  }
-  return DICT.find((e) => e.word === word)?.raw ?? null;
-}
 
 export function msg(el: Element | null, text: string, kind: "err" | "okm" | "" = "") {
   if (!el) return;
