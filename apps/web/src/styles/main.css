@@ -2100,6 +2100,17 @@ body.hurt .sheet {
 .panel h2 {
   font-size: 11px;
 }
+.thero summary {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  cursor: pointer;
+}
+.thero[open] summary {
+  margin-bottom: 10px;
+}
+.thero .rar {
+  font-size: 9px;
+}
 .panel label {
   display: flex;
   gap: 8px;

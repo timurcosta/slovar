@@ -136,7 +136,7 @@ Vite, ES-модули, без фреймворка. `index.html` — разме�
 
 Кабинет (`src/tutor/`: `main.ts` — вход, пароль, маршруты; `list.ts`, `student.ts` — вкладки ученика
 `#/s/:id[/history|tasks|words|login]`, `history.ts` — «История»: календарь занятий за 12 недель по `P.dlog` и бои по дням
-из `P.hist`, `tasks.ts` — конструктор и отчёт, `common.ts`) импортирует только чистые модули (`lib`, `content`, `progress/levels`,
+из `P.hist`, `tasks.ts` — конструктор и отчёт, `common.ts`; в обзоре свёрнутый блок «Герой» — `hero.ts`) импортирует только чистые модули (`lib`, `content`, `progress/levels`,
 `progress/taskrules`, `progress/history`, `topics/words/parse`, `net/http`). Модули `state/*` при загрузке читают и сохраняют профиль игрока —
 в кабинет их не тянуть.
 

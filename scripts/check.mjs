@@ -1300,6 +1300,11 @@ if (wanted("online")) {
     await t.waitForSelector(".ttabs");
     await tutor.shot("12-overview-week");
     expect((await t.textContent("#tab")).includes("За 7 дней: 4 дня"), "в обзоре нет строки «за 7 дней»");
+    await t.setViewportSize({ width: 390, height: 844 });
+    await t.click(".thero summary");
+    expect((await t.textContent(".thero")).includes("Оружие"), "блок «Герой» не раскрылся");
+    await tutor.shot("15-hero", [], { fullPage: true });
+    await t.setViewportSize(wide);
     await t.click('.ttab[href$="/history"]');
     await t.waitForSelector(".hcal");
     await tutor.shot("13-history", [], { fullPage: true });
