@@ -1399,6 +1399,13 @@ if (wanted("online")) {
     expect((await t.inputValue("#t-words")).split("\n").length === 10, "«Слова на занятие» не дошли до конструктора");
     await t.goto(online.base + "tutor.html#/s/kid-VET234");
     await t.waitForSelector(".ttabs");
+    await t.setViewportSize({ width: 390, height: 844 });
+    await t.locator("#thero-cv").scrollIntoViewIfNeeded();
+    await t.waitForTimeout(400);
+    expect(await t.locator(".thero[open] #thero-cv").count(), "в блоке «Герой» нет аватарки");
+    expect((await t.textContent(".thero")).includes("Оружие"), "блок «Герой» не раскрылся");
+    await tutor.shot("15-hero", [], { fullPage: true });
+    await t.setViewportSize(wide);
     await t.click('.ttab[href$="/history"]');
     await t.waitForSelector(".hcal");
     await tutor.shot("13-history", [], { fullPage: true });

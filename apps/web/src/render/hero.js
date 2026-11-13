@@ -4,7 +4,11 @@ import { PET_CAP, PET_PAL, PET_SPR, PET_SPR2 } from "../content/pets.js";
 import { AURA_COL, AURA_GLOWC, EPIC_AURA } from "../content/auras.js";
 import { COSTUMES, COSTUME_KEY } from "../content/costumes.js";
 import { shadeHex } from "./color.js";
-import { heroLook } from "../state/profile.ts";
+// Внешность игрока по умолчанию задаёт игра (setLookSource в ui/herolook.js): render не читает профиль сам,
+// поэтому героя может нарисовать и кабинет, передав look в eq.
+const BASE_LOOK = { hair: "auto", skin: "auto", eye: "auto", style: "classic" };
+let lookSource = () => BASE_LOOK;
+export const setLookSource = (fn) => (lookSource = fn);
 
 // guns and blasters are drawn level, the rest lean forward (see the weapon block)
 const LEVEL_WEAPONS = ["dualblaster", "railgun", "annihilator", "rocket", "blackhole", "blaster", "cannon"];
@@ -57,7 +61,7 @@ export function drawHero(cv, eq, wrap, fr = 0) {
   }; // mirrored pair
   const ck = COSTUME_KEY[eq.costume];
   const C = { ...COSTUMES[ck || "school"] };
-  const look = eq.look || heroLook(),
+  const look = eq.look || lookSource(),
     masked = LOOK_MASKED.includes(ck);
   if (!masked) {
     if (LOOK_HAIR[look.hair] && LOOK_HAIR[look.hair][1]) C.hair = LOOK_HAIR[look.hair][1];

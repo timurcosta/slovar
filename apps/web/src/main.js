@@ -20,6 +20,7 @@ import "./topics/words/parse.ts";
 import "./topics/words/pools.js";
 import "./state/stats.ts";
 import "./state/profile.ts";
+import "./ui/herolook.js";
 import "./state/storage.ts";
 import "./state/savecode.ts";
 import "./state/settings.ts";
